@@ -1,0 +1,19 @@
+# terraform.tfvars.example
+# Copy this file, fill in your account ID, and deploy.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#   terraform init
+#   terraform apply
+
+# ── Required ──────────────────────────────────────────────────────────────────
+# Find your account ID: aws sts get-caller-identity --query Account --output text
+aws_account_id = "123456789012"
+
+# ── Optional (defaults shown) ─────────────────────────────────────────────────
+aws_region  = "us-east-1"
+environment = "production"
+prefix      = "cloudline"
+
+# Emails to receive security alerts via SNS. Leave empty to skip.
+alert_emails = []
+# alert_emails = ["security@yourcompany.com", "devops@yourcompany.com"]

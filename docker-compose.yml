@@ -1,0 +1,101 @@
+services:
+  # --- FastAPI Backend ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cloudline-backend
+    ports:
+      - "9710:9710"
+    env_file:
+      - .env
+    environment:
+      - OPA_MODE=http
+      - OPA_HTTP_URL=http://opa:9720
+      - OPA_POLICY_DIR=/policies
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - APP_ENV=development
+    volumes:
+      - ./backend/app:/app/app:z
+      - ./policies:/policies:z,ro
+    depends_on:
+      opa:
+        condition: service_started
+      dynamodb-local:
+        condition: service_healthy
+    networks:
+      - cloudline-net
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 9710 --reload --reload-dir /app/app
+    restart: unless-stopped
+
+  # --- OPA Sidecar ---
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: cloudline-opa
+    ports:
+      - "9720:9720"
+    volumes:
+      - ./policies:/policies:z,ro
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:9720"
+      - "--log-level=info"
+      - "--watch"
+      - "/policies"
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:9720/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - cloudline-net
+    restart: unless-stopped
+
+  # --- DynamoDB Local ---
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: cloudline-dynamodb
+    user: root
+    ports:
+      - "9730:8000"
+    command: >
+      -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://localhost:8000 || exit 0" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - cloudline-net
+    restart: unless-stopped
+
+  # --- DynamoDB Table Init (one-shot) ---
+  dynamodb-init:
+    image: amazon/aws-cli:latest
+    container_name: cloudline-dynamodb-init
+    depends_on:
+      dynamodb-local:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: [ "/bin/sh", "/scripts/init-dynamodb.sh" ]
+    volumes:
+      - ./scripts:/scripts:z,ro
+    networks:
+      - cloudline-net
+
+volumes:
+  dynamodb_data:
+
+networks:
+  cloudline-net:
+    driver: bridge
+

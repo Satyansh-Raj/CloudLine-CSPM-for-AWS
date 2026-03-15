@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base theme ────────────────────────────────────── */
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  /* Light mode: pure white everywhere */
+  body {
+    @apply bg-white text-gray-900;
+  }
+
+  /* Dark mode: pitch black */
+  .dark body {
+    @apply bg-black text-gray-100;
+  }
+
+  /* Smooth transitions between modes */
+  *,
+  ::before,
+  ::after {
+    transition-property: background-color, border-color, color;
+    transition-duration: 120ms;
+    transition-timing-function: ease;
+  }
+  /* Exclude animations and transforms from transition override */
+  [class*="animate-"],
+  [class*="transition-"] {
+    transition-property: unset;
+  }
+
+  /* ── Scrollbar — light mode ───────────────────────── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #d1d5db; /* gray-300 */
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af; /* gray-400 */
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* ── Scrollbar — dark mode ────────────────────────── */
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+  .dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+}
