@@ -3,18 +3,18 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { GroupNode } from "@/types/iamGraph";
 
 export default memo(function GroupNodeComponent({
-  id,
   data,
 }: NodeProps<GroupNode>) {
-  const { label, alarmCount, isCollapsed, onToggleCollapse } =
-    data;
+  const { label, alarmCount, isCollapsed } = data;
 
   return (
     <div
       className={[
-        "w-40 rounded-lg shadow-md border select-none",
+        "w-40 rounded-lg shadow-md border",
         "bg-white dark:bg-[#111]",
         "border-gray-200 dark:border-white/10",
+        "cursor-pointer select-none",
+        "hover:shadow-lg transition-shadow",
       ].join(" ")}
     >
       {/* Header */}
@@ -46,15 +46,12 @@ export default memo(function GroupNodeComponent({
           {label}
         </span>
         {/* Collapse chevron */}
-        <button
-          onClick={() => onToggleCollapse(id)}
+        <span
           className={[
             "shrink-0 text-gray-400 dark:text-gray-600",
-            "hover:text-gray-700 dark:hover:text-gray-300",
             "transition-transform duration-200",
             isCollapsed ? "rotate-180" : "",
           ].join(" ")}
-          title={isCollapsed ? "Expand" : "Collapse"}
         >
           <svg
             className="w-3.5 h-3.5"
@@ -69,7 +66,7 @@ export default memo(function GroupNodeComponent({
               d="M19 9l-7 7-7-7"
             />
           </svg>
-        </button>
+        </span>
       </div>
 
       {/* Alarm badge */}

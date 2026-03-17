@@ -3,21 +3,23 @@ import type { Severity, Violation } from "@/types";
 
 // --- ReactFlow node data ---
 
-export interface AccountData {
+export type AccountData = {
   count: number;
   label: string;
-}
+  isCollapsed: boolean;
+  onToggleCollapse: (id: string) => void;
+};
 
-export interface GroupData {
+export type GroupData = {
   groupId: string;
   label: string;
   alarmCount: number;
   childIds: string[];
   isCollapsed: boolean;
   onToggleCollapse: (id: string) => void;
-}
+};
 
-export interface UserData {
+export type UserData = {
   userId: string;
   username: string;
   arn: string;
@@ -30,15 +32,15 @@ export interface UserData {
   policyCount?: number;
   groupCount?: number;
   violationCount?: number;
-}
+};
 
 export type RoleData = UserData;
 
-export interface CheckData {
+export type CheckData = {
   checkId: string;
   violation: Violation;
   onSelect: (violation: Violation) => void;
-}
+};
 
 export type AccountNode = Node<AccountData, "accountNode">;
 export type GroupNode = Node<GroupData, "groupNode">;
@@ -46,16 +48,19 @@ export type UserNode = Node<UserData, "userNode">;
 export type RoleNode = Node<RoleData, "roleNode">;
 export type CheckNode = Node<CheckData, "checkNode">;
 
-export interface PolicyNodeData {
+export type PolicyNodeData = {
   policyName: string;
   policyType: "inline" | "managed";
   groupName?: string;
-}
+  resourceName?: string;
+};
 
-export interface ServiceNodeData {
+export type ServiceNodeData = {
   serviceName: string;
   actions: string[];
-}
+  resourceName?: string;
+  resources?: string[];
+};
 
 export type PolicyNodeRF = Node<
   PolicyNodeData,
@@ -112,6 +117,12 @@ export type EffectivePermissions = Record<
   string[]
 >;
 
+/** Resource ARNs per service from policy documents. */
+export type ServiceResources = Record<
+  string,
+  string[]
+>;
+
 export interface IamGraphUser {
   name: string;
   arn: string;
@@ -120,6 +131,7 @@ export interface IamGraphUser {
   attached_policies: IamGraphPolicy[];
   groups: IamGraphGroup[];
   effective_permissions: EffectivePermissions;
+  resources?: ServiceResources;
   violations: IamGraphViolation[];
 }
 

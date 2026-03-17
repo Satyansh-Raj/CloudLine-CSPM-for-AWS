@@ -62,6 +62,9 @@ vi.mock("@/utils/iamGraphBuilder", () => ({
       return { nodes: [], edges: [] };
     },
   ),
+  getInitialCollapsedIds: vi
+    .fn()
+    .mockReturnValue(new Set<string>()),
 }));
 
 // ── Helpers ───────────────────────────────────────

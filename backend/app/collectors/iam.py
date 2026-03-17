@@ -57,6 +57,69 @@ def summarize_permissions(
     return perms
 
 
+def summarize_resources(
+    policy_docs: list[dict],
+) -> dict[str, list[str]]:
+    """Extract resource ARNs/names per service.
+
+    Returns:
+        Dict of {service: [resource_arns]}.
+        {"*": ["*"]} means all resources.
+    """
+    resources: dict[str, list[str]] = {}
+    for doc in policy_docs:
+        if not doc:
+            continue
+        stmts = doc.get("Statement", [])
+        if isinstance(stmts, dict):
+            stmts = [stmts]
+        for stmt in stmts:
+            if stmt.get("Effect") != "Allow":
+                continue
+            res = stmt.get("Resource", [])
+            if isinstance(res, str):
+                res = [res]
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            # Determine services from actions
+            svcs = set()
+            for action in actions:
+                if action == "*":
+                    svcs.add("*")
+                elif ":" in action:
+                    svcs.add(
+                        action.split(":", 1)[0].lower()
+                    )
+            for r in res:
+                if r == "*":
+                    for s in svcs:
+                        resources.setdefault(
+                            s, []
+                        )
+                        if "*" not in resources[s]:
+                            resources[s].append("*")
+                    continue
+                # Parse ARN to get resource name
+                # arn:aws:s3:::bucket-name/*
+                parts = r.split(":")
+                if len(parts) >= 6:
+                    svc = parts[2].lower()
+                    res_name = ":".join(parts[5:])
+                    if res_name:
+                        resources.setdefault(
+                            svc, []
+                        )
+                        if (
+                            res_name
+                            not in resources[svc]
+                        ):
+                            resources[svc].append(
+                                res_name
+                            )
+    return resources
+
+
 class IAMCollector(BaseCollector):
     """Collects IAM account summary, password policy,
     users with access keys/MFA, and Access Analyzer."""
@@ -328,6 +391,7 @@ class IAMCollector(BaseCollector):
                 )
 
         effective = summarize_permissions(all_docs)
+        resources = summarize_resources(all_docs)
 
         # Strip policy documents from response
         for p in inline:
@@ -346,6 +410,7 @@ class IAMCollector(BaseCollector):
             "attached_policies": managed,
             "groups": groups,
             "effective_permissions": effective,
+            "resources": resources,
         }
 
     def _get_inline_policies(

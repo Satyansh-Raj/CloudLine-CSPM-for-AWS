@@ -98,7 +98,6 @@ do_start() {
   echo -e "${GREEN}${BOLD}CloudLine is running!${NC}"
   echo ""
   echo "  Dashboard:  http://localhost:9710"
-  echo "  API Docs:   http://localhost:9710/api/docs"
   echo ""
 }
 

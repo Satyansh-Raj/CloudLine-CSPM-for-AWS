@@ -48,10 +48,74 @@ install_package() {
   fi
 }
 
+# ── Resolve Docker-compatible distro and codename ─────
+# Docker only publishes repos for specific Debian/Ubuntu
+# codenames. Derivatives (Kali, Parrot, Mint, Pop!_OS,
+# Zorin, MX, Deepin, elementary, etc.) must map to their
+# upstream parent to avoid "no Release file" errors.
+VALID_DOCKER_DEBIAN="bookworm bullseye buster trixie sid"
+VALID_DOCKER_UBUNTU="noble jammy focal bionic"
+
+resolve_docker_repo() {
+  local distro_id codename
+
+  if [[ -f /etc/os-release ]]; then
+    . /etc/os-release
+    distro_id="${ID:-}"
+  fi
+
+  case "${distro_id:-}" in
+    ubuntu)
+      DOCKER_DISTRO="ubuntu"
+      codename="${UBUNTU_CODENAME:-$(
+        lsb_release -cs 2>/dev/null || echo noble
+      )}"
+      if ! echo "$VALID_DOCKER_UBUNTU" \
+           | grep -qw "$codename"; then
+        codename="noble"
+      fi
+      ;;
+    *)
+      DOCKER_DISTRO="debian"
+      codename="${VERSION_CODENAME:-}"
+      if ! echo "$VALID_DOCKER_DEBIAN" \
+           | grep -qw "$codename"; then
+        codename="bookworm"
+      fi
+      ;;
+  esac
+
+  DOCKER_CODENAME="$codename"
+}
+
 # ═══════════════════════════════════════════════════
 # PHASE 1 — Install System Dependencies
 # ═══════════════════════════════════════════════════
 banner "Phase 1 — Installing Dependencies"
+
+# ── Fix broken Docker apt source on derivatives ───────
+# Distros like Kali, Parrot, Mint, Zorin, MX, Deepin,
+# Pop!_OS, elementary, etc. may have a docker.list with
+# an unsupported codename from a prior install attempt.
+if [[ "$OS" == "Linux" ]] \
+   && [[ -f /etc/apt/sources.list.d/docker.list ]]; then
+  resolve_docker_repo
+  CURRENT_CODENAME=$(
+    grep -oP \
+      'download\.docker\.com/linux/\w+\s+\K\S+' \
+      /etc/apt/sources.list.d/docker.list \
+      2>/dev/null || echo ""
+  )
+  ALL_VALID="$VALID_DOCKER_DEBIAN $VALID_DOCKER_UBUNTU"
+  if [[ -n "$CURRENT_CODENAME" ]] \
+     && ! echo "$ALL_VALID" \
+          | grep -qw "$CURRENT_CODENAME"; then
+    sudo sed -i \
+      "s|${CURRENT_CODENAME}|${DOCKER_CODENAME}|g" \
+      /etc/apt/sources.list.d/docker.list
+    sudo apt-get update -qq
+  fi
+fi
 
 # ── Python 3.11+ ──
 if command -v python3 &>/dev/null; then
@@ -83,6 +147,20 @@ else
   success "Node.js installed: $(node --version)"
 fi
 
+# ── npm ──
+if command -v npm &>/dev/null; then
+  success "npm found: $(npm --version)"
+else
+  info "Installing npm..."
+  if [[ "$OS" == "Linux" ]]; then
+    sudo apt-get update -qq
+    sudo apt-get install -y npm >/dev/null 2>&1
+  elif [[ "$OS" == "Darwin" ]]; then
+    brew install npm >/dev/null 2>&1
+  fi
+  success "npm installed: $(npm --version)"
+fi
+
 # ── Docker / Podman ──
 if command -v docker &>/dev/null; then
   success "Docker found: $(docker --version)"
@@ -91,9 +169,49 @@ elif command -v podman &>/dev/null; then
 else
   info "Installing Docker..."
   if [[ "$OS" == "Linux" ]]; then
-    curl -fsSL https://get.docker.com | sudo sh >/dev/null 2>&1
+    # Works on all Debian-based distros (Debian, Ubuntu,
+    # Kali, Pop!_OS, Mint, etc.)
+    sudo apt-get update -qq
+    sudo apt-get install -y \
+      ca-certificates curl gnupg >/dev/null 2>&1
+
+    # Resolve upstream distro + codename for Docker repo
+    resolve_docker_repo
+
+    # Add Docker's official GPG key
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL \
+      "https://download.docker.com/linux/${DOCKER_DISTRO}/gpg" \
+      | sudo gpg --dearmor --yes \
+        -o /etc/apt/keyrings/docker.gpg
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+    # Add the Docker repository
+    echo \
+      "deb [arch=$(dpkg --print-architecture) \
+      signed-by=/etc/apt/keyrings/docker.gpg] \
+      https://download.docker.com/linux/${DOCKER_DISTRO} \
+      ${DOCKER_CODENAME} stable" \
+      | sudo tee /etc/apt/sources.list.d/docker.list \
+        >/dev/null
+
+    sudo apt-get update -qq
+    sudo apt-get install -y \
+      docker-ce docker-ce-cli containerd.io \
+      docker-buildx-plugin \
+      docker-compose-plugin >/dev/null 2>&1
+
     sudo usermod -aG docker "$USER" 2>/dev/null || true
-    warn "Log out and back in for Docker group to apply"
+    success "Docker installed"
+    echo ""
+    echo -e "${YELLOW}${BOLD}ACTION REQUIRED:${NC}" \
+      "Docker was just installed."
+    echo -e "  You must ${BOLD}log out and log back in${NC}" \
+      "so your user can run Docker commands."
+    echo -e "  After logging back in, re-run:" \
+      "${BOLD}./setup.sh${NC}"
+    echo ""
+    exit 0
   elif [[ "$OS" == "Darwin" ]]; then
     warn "Install Docker Desktop: https://docker.com/products/docker-desktop"
     exit 1
@@ -367,14 +485,43 @@ alert_phone    = ""
 EOF
 success "terraform.tfvars generated"
 
+# Build Lambda deployment zip (required by terraform plan)
+if [[ ! -f "$ROOT_DIR/deployment.zip" ]]; then
+  info "Building Lambda deployment package..."
+  if ! bash "$ROOT_DIR/scripts/package_lambda.sh" \
+       > /tmp/lambda_pkg.log 2>&1; then
+    fail "Lambda packaging failed:"
+    cat /tmp/lambda_pkg.log
+    rm -f /tmp/lambda_pkg.log
+    exit 1
+  fi
+  rm -f /tmp/lambda_pkg.log
+  success "Lambda deployment.zip built"
+else
+  success "Lambda deployment.zip already exists"
+fi
+
 cd "$TF_DIR"
 
 info "Running terraform init..."
-terraform init -input=false >/dev/null 2>&1
+if ! terraform init -input=false > /tmp/tf_init.log 2>&1; then
+  fail "Terraform init failed:"
+  cat /tmp/tf_init.log
+  rm -f /tmp/tf_init.log
+  exit 1
+fi
+rm -f /tmp/tf_init.log
 success "Terraform initialized"
 
 info "Running terraform plan..."
-terraform plan -input=false -out=tfplan >/dev/null 2>&1
+if ! terraform plan -input=false -out=tfplan \
+     > /tmp/tf_plan.log 2>&1; then
+  fail "Terraform plan failed:"
+  cat /tmp/tf_plan.log
+  rm -f /tmp/tf_plan.log
+  exit 1
+fi
+rm -f /tmp/tf_plan.log
 success "Terraform plan ready"
 
 echo ""
@@ -419,6 +566,17 @@ cd "$ROOT_DIR"
 # ═══════════════════════════════════════════════════
 banner "Phase 6 — Building & Launching"
 
+# Build frontend first (backend container serves dist/)
+info "Installing frontend dependencies..."
+cd "$ROOT_DIR/frontend"
+npm install --silent 2>&1 | tail -3
+success "Frontend dependencies installed"
+
+info "Building frontend for production..."
+npm run build 2>&1 | tail -5
+success "Frontend built"
+cd "$ROOT_DIR"
+
 # Start Docker containers
 info "Starting Docker containers..."
 docker compose -f "$ROOT_DIR/docker-compose.yml" up -d --build 2>&1 \
@@ -438,16 +596,6 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-# Install frontend deps & build
-info "Installing frontend dependencies..."
-cd "$ROOT_DIR/frontend"
-npm install --silent 2>&1 | tail -3
-success "Frontend dependencies installed"
-
-info "Building frontend for production..."
-npm run build 2>&1 | tail -5
-success "Frontend built — serving from backend on :9710"
-
 # ═══════════════════════════════════════════════════
 # DONE
 # ═══════════════════════════════════════════════════
@@ -456,7 +604,6 @@ banner "Setup Complete"
 echo -e "${GREEN}${BOLD}CloudLine is running!${NC}"
 echo ""
 echo "  Dashboard:  http://localhost:9710"
-echo "  API Docs:   http://localhost:9710/api/docs"
 echo ""
 echo -e "  ${BOLD}Quick commands:${NC}"
 echo "    ./start.sh          — Start app (skip setup)"

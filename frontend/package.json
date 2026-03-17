@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "docker compose -f ../docker-compose.yml up -d",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

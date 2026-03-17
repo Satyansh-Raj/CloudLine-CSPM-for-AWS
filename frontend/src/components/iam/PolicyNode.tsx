@@ -14,7 +14,12 @@ const TYPE_CLS: Record<string, string> = {
 export default memo(function PolicyNodeComponent({
   data,
 }: NodeProps<PolicyNodeRF>) {
-  const { policyName, policyType, groupName } = data;
+  const {
+    policyName,
+    policyType,
+    groupName,
+    resourceName,
+  } = data;
 
   return (
     <div
@@ -71,6 +76,17 @@ export default memo(function PolicyNodeComponent({
             </span>
           )}
         </div>
+        {resourceName && (
+          <p
+            className={[
+              "text-[9px] truncate mt-0.5",
+              "text-gray-400 dark:text-gray-500",
+            ].join(" ")}
+            title={resourceName}
+          >
+            → {resourceName}
+          </p>
+        )}
       </div>
       <Handle
         type="target"

@@ -11,6 +11,9 @@ import type {
   CheckNode,
   PolicyNodeRF,
   ServiceNodeRF,
+  PolicyNodeData,
+  ServiceNodeData,
+  CheckData,
   IamGraphResponse,
   IamGraphUser,
   IamGraphViolation,
@@ -74,7 +77,7 @@ function toViolation(
 interface ChildInfo {
   nodeId: string;
   type: "policyNode" | "serviceNode" | "checkNode";
-  data: Record<string, unknown>;
+  data: PolicyNodeData | ServiceNodeData | CheckData;
   edgeColor: string;
   animated: boolean;
 }
@@ -94,6 +97,7 @@ function buildUserChildren(
       data: {
         policyName: p.name,
         policyType: "inline",
+        resourceName: uid,
       },
       edgeColor: "#3b82f6",
       animated: false,
@@ -108,6 +112,7 @@ function buildUserChildren(
       data: {
         policyName: p.name,
         policyType: "managed",
+        resourceName: uid,
       },
       edgeColor: "#3b82f6",
       animated: false,
@@ -124,6 +129,7 @@ function buildUserChildren(
           policyName: p.name,
           policyType: p.type as "inline" | "managed",
           groupName: g.name,
+          resourceName: uid,
         },
         edgeColor: "#3b82f6",
         animated: false,
@@ -132,13 +138,20 @@ function buildUserChildren(
   }
 
   // Effective permissions (services)
+  const userResources = user.resources ?? {};
   for (const [svc, actions] of Object.entries(
     user.effective_permissions,
   )) {
+    const svcResources = userResources[svc] ?? [];
     children.push({
       nodeId: `svc-${uid}-${svc}`,
       type: "serviceNode",
-      data: { serviceName: svc, actions },
+      data: {
+        serviceName: svc,
+        actions,
+        resourceName: uid,
+        resources: svcResources,
+      },
       edgeColor: "#14b8a6",
       animated: false,
     });
@@ -168,6 +181,24 @@ export interface IamGraphData {
   edges: IamEdge[];
 }
 
+/**
+ * Returns a Set of all collapsible node IDs so the
+ * graph starts fully collapsed. Users click to expand.
+ */
+export function getInitialCollapsedIds(
+  response: IamGraphResponse,
+): Set<string> {
+  const ids = new Set<string>();
+  ids.add("account");
+  for (const user of response.users) {
+    ids.add(`user-${user.name}`);
+  }
+  if (response.account_violations.length > 0) {
+    ids.add("acct-checks");
+  }
+  return ids;
+}
+
 export function buildIamGraph(
   response: IamGraphResponse,
   collapsedIds: Set<string>,
@@ -177,7 +208,9 @@ export function buildIamGraph(
   const nodes: IamNode[] = [];
   const edges: IamEdge[] = [];
 
-  // Pre-compute user blocks
+  const accountCollapsed = collapsedIds.has("account");
+
+  // Pre-compute user blocks (only if account expanded)
   interface Block {
     user: IamGraphUser;
     nodeId: string;
@@ -187,44 +220,48 @@ export function buildIamGraph(
 
   const blocks: Block[] = [];
 
-  for (const user of response.users) {
-    const nodeId = `user-${user.name}`;
-    const collapsed = collapsedIds.has(nodeId);
-    const allChildren = buildUserChildren(
-      user,
-      onSelect,
-    );
-    const visible = collapsed ? [] : allChildren;
-    const childrenH =
-      visible.length > 0
-        ? visible.length * (CHILD_H + CHILD_GAP) -
-          CHILD_GAP
-        : 0;
-    const blockH = Math.max(USER_H, childrenH);
-    blocks.push({
-      user,
-      nodeId,
-      children: visible,
-      blockH,
-    });
+  if (!accountCollapsed) {
+    for (const user of response.users) {
+      const nodeId = `user-${user.name}`;
+      const collapsed = collapsedIds.has(nodeId);
+      const allChildren = buildUserChildren(
+        user,
+        onSelect,
+      );
+      const visible = collapsed ? [] : allChildren;
+      const childrenH =
+        visible.length > 0
+          ? visible.length * (CHILD_H + CHILD_GAP) -
+            CHILD_GAP
+          : 0;
+      const blockH = Math.max(USER_H, childrenH);
+      blocks.push({
+        user,
+        nodeId,
+        children: visible,
+        blockH,
+      });
+    }
   }
 
   // Account-level violations as a pseudo-block
   const acctViols = response.account_violations;
   const acctChildren: ChildInfo[] = [];
-  for (const v of acctViols) {
-    const isAlarm = v.status === "alarm";
-    acctChildren.push({
-      nodeId: `chk-acct-${v.check_id}`,
-      type: "checkNode",
-      data: {
-        checkId: v.check_id,
-        violation: toViolation(v, v.resource),
-        onSelect,
-      },
-      edgeColor: isAlarm ? "#ef4444" : "#22c55e",
-      animated: isAlarm,
-    });
+  if (!accountCollapsed) {
+    for (const v of acctViols) {
+      const isAlarm = v.status === "alarm";
+      acctChildren.push({
+        nodeId: `chk-acct-${v.check_id}`,
+        type: "checkNode",
+        data: {
+          checkId: v.check_id,
+          violation: toViolation(v, v.resource),
+          onSelect,
+        },
+        edgeColor: isAlarm ? "#ef4444" : "#22c55e",
+        animated: isAlarm,
+      });
+    }
   }
 
   const acctBlockNodeId = "acct-checks";
@@ -239,7 +276,7 @@ export function buildIamGraph(
         CHILD_GAP
       : 0;
   const acctBlockH =
-    acctViols.length > 0
+    !accountCollapsed && acctViols.length > 0
       ? Math.max(USER_H, acctChildrenH)
       : 0;
 
@@ -248,9 +285,10 @@ export function buildIamGraph(
     ...blocks.map((b) => b.blockH),
     ...(acctBlockH > 0 ? [acctBlockH] : []),
   ];
-  const totalH =
-    allBlocks.reduce((s, h) => s + h, 0) +
-    (allBlocks.length - 1) * USER_GAP;
+  const totalH = accountCollapsed
+    ? ACCOUNT_H
+    : allBlocks.reduce((s, h) => s + h, 0) +
+      (allBlocks.length - 1) * USER_GAP;
 
   // Account node (column 0, vertically centered)
   nodes.push({
@@ -260,10 +298,17 @@ export function buildIamGraph(
     data: {
       count: response.users.length,
       label: "users",
+      isCollapsed: accountCollapsed,
+      onToggleCollapse,
     },
     draggable: false,
     selectable: false,
   } as AccountNode);
+
+  // If account is collapsed, return only the account node
+  if (accountCollapsed) {
+    return { nodes, edges };
+  }
 
   // Position user blocks
   let curY = 0;

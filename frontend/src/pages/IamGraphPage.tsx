@@ -17,6 +17,7 @@ import {
 import { useIamGraph } from "@/hooks";
 import {
   buildIamGraph,
+  getInitialCollapsedIds,
   type IamGraphData,
 } from "@/utils/iamGraphBuilder";
 import {
@@ -291,8 +292,12 @@ function DetailPanel({
 
 function FlowCanvas({
   graphData,
+  onToggleCollapse,
+  onSelect,
 }: {
   graphData: IamGraphData | null;
+  onToggleCollapse: (id: string) => void;
+  onSelect: (v: Violation) => void;
 }) {
   const [nodes, setNodes, onNodesChange] =
     useNodesState<IamNode>([]);
@@ -311,13 +316,33 @@ function FlowCanvas({
     return () => clearTimeout(t);
   }, [graphData, setNodes, setEdges, fitView]);
 
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: IamNode) => {
+      if (
+        node.type === "accountNode" ||
+        node.type === "userNode" ||
+        node.type === "groupNode"
+      ) {
+        onToggleCollapse(node.id);
+      } else if (node.type === "checkNode") {
+        const v = (
+          node.data as { violation: Violation }
+        ).violation;
+        onSelect(v);
+      }
+    },
+    [onToggleCollapse, onSelect],
+  );
+
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onNodeClick={handleNodeClick}
       nodeTypes={nodeTypes}
+      nodesDraggable={false}
       fitView
       minZoom={0.1}
       maxZoom={2}
@@ -338,6 +363,7 @@ export default function IamGraphPage() {
   const [collapsedIds, setCollapsedIds] = useState(
     () => new Set<string>(),
   );
+  const [initialized, setInitialized] = useState(false);
   const [selectedViolation, setSelectedViolation] =
     useState<Violation | null>(null);
   const [isFullscreen, setIsFullscreen] =
@@ -349,6 +375,14 @@ export default function IamGraphPage() {
     isLoading,
     isError,
   } = useIamGraph();
+
+  // Collapse all nodes on first data load
+  useEffect(() => {
+    if (apiData && !initialized) {
+      setCollapsedIds(getInitialCollapsedIds(apiData));
+      setInitialized(true);
+    }
+  }, [apiData, initialized]);
 
   const onToggleCollapse = useCallback(
     (id: string) => {
@@ -560,7 +594,11 @@ export default function IamGraphPage() {
         {!isLoading && !isError && hasData && (
           <ReactFlowProvider>
             <div className="absolute inset-0">
-              <FlowCanvas graphData={graphData} />
+              <FlowCanvas
+                graphData={graphData}
+                onToggleCollapse={onToggleCollapse}
+                onSelect={onSelect}
+              />
             </div>
 
             {/* No-matches overlay */}

@@ -188,9 +188,20 @@ async def health_check():
 
 # --- Serve built frontend (npm run build) ---
 # Must be registered AFTER all API routes.
-_frontend_dist = (
-    Path(__file__).resolve().parent.parent.parent
-    / "frontend" / "dist"
+# Local dev: main.py → app/ → backend/ → repo_root/frontend/dist
+# Docker:    main.py → app/ → /app/frontend/dist (volume mount)
+_repo_root = Path(__file__).resolve().parent.parent.parent
+_frontend_dist = next(
+    (
+        p
+        for p in [
+            _repo_root / "frontend" / "dist",
+            Path(__file__).resolve().parent.parent
+            / "frontend" / "dist",
+        ]
+        if p.is_dir()
+    ),
+    _repo_root / "frontend" / "dist",
 )
 
 if _frontend_dist.is_dir():

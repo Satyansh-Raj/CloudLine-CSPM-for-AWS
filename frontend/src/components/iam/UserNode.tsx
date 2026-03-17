@@ -10,7 +10,6 @@ const SEVERITY_RING: Record<string, string> = {
 };
 
 export default memo(function UserNodeComponent({
-  id,
   data,
 }: NodeProps<UserNode>) {
   const {
@@ -19,7 +18,6 @@ export default memo(function UserNodeComponent({
     worstSeverity,
     alarmCount,
     isCollapsed,
-    onToggleCollapse,
     mfaEnabled,
     policyCount,
     groupCount,
@@ -34,8 +32,10 @@ export default memo(function UserNodeComponent({
   return (
     <div
       className={[
-        `w-48 rounded-lg shadow-md border-2 select-none`,
+        `w-48 rounded-lg shadow-md border-2`,
         "bg-white dark:bg-[#111]",
+        "cursor-pointer select-none",
+        "hover:shadow-lg transition-shadow",
         ringCls,
       ].join(" ")}
     >
@@ -65,15 +65,12 @@ export default memo(function UserNodeComponent({
           {username}
         </span>
         {/* Collapse chevron */}
-        <button
-          onClick={() => onToggleCollapse(id)}
+        <span
           className={[
             "shrink-0 text-gray-400 dark:text-gray-600",
-            "hover:text-gray-700 dark:hover:text-gray-300",
             "transition-transform duration-200",
             isCollapsed ? "-rotate-90" : "",
           ].join(" ")}
-          title={isCollapsed ? "Expand" : "Collapse"}
         >
           <svg
             className="w-3.5 h-3.5"
@@ -88,7 +85,7 @@ export default memo(function UserNodeComponent({
               d="M19 9l-7 7-7-7"
             />
           </svg>
-        </button>
+        </span>
       </div>
 
       {/* ARN */}

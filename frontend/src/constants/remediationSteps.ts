@@ -8554,7 +8554,7 @@ resource "aws_cloudwatch_log_group" "apigw" {
   }),
 
   // apigw_02 — API Gateway execution logging not enabled
-  apigw_02: ({ resourceId, region }) => ({
+  apigw_02: ({ resourceId, region: _region }) => ({
     console: [
       `Open API Gateway console → select API → Stages → "${resourceId}".`,
       "Logs/Tracing tab → Edit.",
@@ -9256,7 +9256,7 @@ resource "aws_cognito_identity_pool" "fix" {
   }),
 
   // cognito_14 — Cognito app client uses plain password auth
-  cognito_14: ({ resourceId, region }) => ({
+  cognito_14: ({ resourceId, region: _region }) => ({
     console: [
       `Open Cognito console → User pools → App clients → "${resourceId}".`,
       "Edit → Authentication flows.",
@@ -9669,7 +9669,7 @@ resource "aws_kms_key" "s3" {
   }),
 
   // kms_13 — No CloudWatch alarm for KMS key deletion
-  kms_13: ({ resourceId, region }) => ({
+  kms_13: ({ resourceId: _resourceId, region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Select CloudTrail metric for KMS key deletion events.",

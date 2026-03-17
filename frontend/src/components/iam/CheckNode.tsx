@@ -15,7 +15,7 @@ const STATUS_BG: Record<string, string> = {
 export default memo(function CheckNodeComponent({
   data,
 }: NodeProps<CheckNode>) {
-  const { checkId, violation, onSelect } = data;
+  const { checkId, violation } = data;
   const { status, severity, risk_score } = violation;
 
   const bgCls =
@@ -29,7 +29,7 @@ export default memo(function CheckNodeComponent({
         "transition-shadow hover:shadow-md",
         bgCls,
       ].join(" ")}
-      onClick={() => onSelect(violation)}
+      /* click handled via onNodeClick in FlowCanvas */
     >
       <div className="px-3 pt-2.5 pb-2">
         {/* Check name */}
