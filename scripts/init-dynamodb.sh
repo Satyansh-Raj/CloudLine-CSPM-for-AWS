@@ -54,6 +54,38 @@ else
         --endpoint-url "$ENDPOINT" 2>/dev/null || true
 fi
 
+# ---- resource-inventory (5 GSIs) ----
+if table_exists "resource-inventory"; then
+    echo "Table resource-inventory already exists, skipping."
+else
+    echo "Creating table: resource-inventory"
+    aws dynamodb create-table \
+        --table-name "resource-inventory" \
+        --attribute-definitions \
+            AttributeName=pk,AttributeType=S \
+            AttributeName=sk,AttributeType=S \
+            AttributeName=technology_category,AttributeType=S \
+            AttributeName=risk_score,AttributeType=N \
+            AttributeName=exposure,AttributeType=S \
+            AttributeName=violation_count,AttributeType=N \
+            AttributeName=service,AttributeType=S \
+            AttributeName=last_seen,AttributeType=S \
+            AttributeName=region,AttributeType=S \
+            AttributeName=account_id,AttributeType=S \
+        --key-schema \
+            AttributeName=pk,KeyType=HASH \
+            AttributeName=sk,KeyType=RANGE \
+        --global-secondary-indexes \
+            'IndexName=category-index,KeySchema=[{AttributeName=technology_category,KeyType=HASH},{AttributeName=risk_score,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+            'IndexName=exposure-index,KeySchema=[{AttributeName=exposure,KeyType=HASH},{AttributeName=violation_count,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+            'IndexName=service-index,KeySchema=[{AttributeName=service,KeyType=HASH},{AttributeName=last_seen,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+            'IndexName=region-index,KeySchema=[{AttributeName=region,KeyType=HASH},{AttributeName=technology_category,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+            'IndexName=account-index,KeySchema=[{AttributeName=account_id,KeyType=HASH},{AttributeName=last_seen,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+        --billing-mode PAY_PER_REQUEST \
+        --endpoint-url "$ENDPOINT"
+    echo "Created: resource-inventory (5 GSIs)"
+fi
+
 # ---- Simple composite-key tables (pk + sk) ----
 create_composite_table() {
     TABLE_NAME="$1"
@@ -79,6 +111,7 @@ create_composite_table() {
 
 create_composite_table "compliance-trends"
 create_composite_table "event-correlation"
+create_composite_table "target-accounts"
 
 # Enable TTL on tables that need it
 for TTL_TABLE in "event-correlation"; do

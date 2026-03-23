@@ -17,6 +17,7 @@ services:
       - APP_ENV=development
     volumes:
       - ./backend/app:/app/app:z
+      - ./backend/config:/app/config:z,ro
       - ./frontend/dist:/app/frontend/dist:z,ro
       - ./policies:/policies:z,ro
     depends_on:

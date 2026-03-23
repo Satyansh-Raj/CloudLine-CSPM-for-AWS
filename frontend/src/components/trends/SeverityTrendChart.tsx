@@ -10,13 +10,44 @@ import {
 } from "recharts";
 import type { TrendPoint } from "@/hooks";
 
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  label?: string;
+}
+
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs">
+      <p className="font-semibold text-gray-700 dark:text-gray-100 mb-1">
+        {label}
+      </p>
+      {payload.map((p) => (
+        <div key={p.name} className="flex items-center gap-2">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: p.color }}
+          />
+          <span className="text-gray-500 dark:text-gray-300">{p.name}:</span>
+          <span className="font-semibold text-gray-800 dark:text-white">
+            {p.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface Props {
   data: TrendPoint[];
 }
 
-export default function SeverityTrendChart({
-  data,
-}: Props) {
+export default function SeverityTrendChart({ data }: Props) {
   return (
     <div>
       <div className="mb-1">
@@ -53,13 +84,7 @@ export default function SeverityTrendChart({
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip
-              contentStyle={{
-                fontSize: 12,
-                borderRadius: 8,
-                border: "1px solid #e5e7eb",
-              }}
-            />
+            <Tooltip content={<ChartTooltip />} />
             <Legend
               iconType="circle"
               iconSize={7}

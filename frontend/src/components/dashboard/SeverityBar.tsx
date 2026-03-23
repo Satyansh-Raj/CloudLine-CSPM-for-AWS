@@ -26,15 +26,20 @@ const SEVERITIES = [
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: Array<{ value: number }>;
-  label?: string;
+  payload?: Array<{
+    value: number;
+    payload: { name: string };
+  }>;
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
+  const { value, payload: item } = payload[0];
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs">
-      <span className="font-semibold text-gray-700 dark:text-gray-200 capitalize">{label}: {payload[0].value}</span>
+    <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-1.5 shadow-lg">
+      <span className="text-sm font-bold text-gray-800 dark:text-white">
+        {value} {item.name}
+      </span>
     </div>
   );
 }
@@ -57,7 +62,10 @@ export default function SeverityBar({ bySeverity = {} }: Props) {
       </p>
       <div className="flex-1 min-h-[11rem]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 4, right: 4, left: -24, bottom: 0 }}
+          >
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="currentColor"
@@ -78,7 +86,7 @@ export default function SeverityBar({ bySeverity = {} }: Props) {
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar dataKey="count" maxBarSize={48} radius={[6, 6, 0, 0]}>
               {data.map((entry) => (
                 <Cell key={entry.key} fill={entry.color} />
