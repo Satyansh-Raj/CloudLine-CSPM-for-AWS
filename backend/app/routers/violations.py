@@ -125,6 +125,8 @@ def list_violations(
             "region": rgn,
             "ticket_id": s.ticket_id,
             "ticket_url": s.ticket_url,
+            "status_history": s.status_history,
+            "regression_count": s.regression_count,
         })
 
     return results

@@ -14,6 +14,7 @@ vi.mock("@/pages", () => ({
   CategoryResourcesPage: () => <div>CategoryResources</div>,
   ResourceDetailPage: () => <div>ResourceDetail</div>,
   CompliancePage: () => <div>Compliance</div>,
+  ResolvedDetailPage: () => <div>ResolvedDetail</div>,
 }));
 
 vi.mock("@/components/layout", () => ({

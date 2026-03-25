@@ -254,3 +254,60 @@ class TestViolationsStatusOkFilter:
         items = resp.json()
         assert len(items) == 1
         assert items[0]["resolved_at"] is None
+
+
+class TestViolationsStatusHistoryFields:
+    """Verify status_history and regression_count in response."""
+
+    def setup_method(self):
+        history = [
+            {
+                "status": "alarm",
+                "timestamp": "2026-03-01T10:00:00Z",
+            },
+            {
+                "status": "ok",
+                "timestamp": "2026-03-05T12:00:00Z",
+            },
+        ]
+        state = _make_alarm_state()
+        state.status_history = history
+        state.regression_count = 1
+        self._mgr = _mock_mgr(states=[state])
+        app.dependency_overrides[
+            get_state_manager
+        ] = lambda: self._mgr
+        app.dependency_overrides[
+            get_settings
+        ] = lambda: Settings(
+            aws_region=REGION,
+            aws_account_id=ACCOUNT,
+        )
+
+    def teardown_method(self):
+        app.dependency_overrides.pop(
+            get_state_manager, None
+        )
+        app.dependency_overrides.pop(
+            get_settings, None
+        )
+
+    def test_response_includes_status_history(self):
+        """status_history list present in response."""
+        client = TestClient(app)
+        resp = client.get("/api/v1/violations")
+        items = resp.json()
+        assert "status_history" in items[0]
+        assert len(items[0]["status_history"]) == 2
+        assert (
+            items[0]["status_history"][0]["status"]
+            == "alarm"
+        )
+
+    def test_response_includes_regression_count(self):
+        """regression_count present in response."""
+        client = TestClient(app)
+        resp = client.get("/api/v1/violations")
+        items = resp.json()
+        assert "regression_count" in items[0]
+        assert items[0]["regression_count"] == 1

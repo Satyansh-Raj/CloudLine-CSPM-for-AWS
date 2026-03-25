@@ -23,6 +23,7 @@ def _make_prev_state(
     resource_arn=ARN,
     resolved_at=None,
     regression_count=0,
+    status_history=None,
 ):
     """Build a previous ViolationState."""
     return ViolationState(
@@ -39,6 +40,7 @@ def _make_prev_state(
         last_evaluated="2026-02-27T11:00:00Z",
         resolved_at=resolved_at,
         regression_count=regression_count,
+        status_history=status_history or [],
     )
 
 
@@ -557,3 +559,200 @@ class TestBuildUpdatedState:
             compliance=new_comp,
         )
         assert state.compliance == new_comp
+
+
+class TestStatusHistory:
+    """Test status_history tracking in build_updated_state."""
+
+    def setup_method(self):
+        self.detector = DriftDetector()
+
+    def test_first_seen_initializes_history(self):
+        """First seen creates 1-entry status_history."""
+        alert = self.detector.detect(
+            previous=None,
+            current_status="alarm",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        state = self.detector.build_updated_state(
+            previous=None, alert=alert
+        )
+        assert len(state.status_history) == 1
+        assert (
+            state.status_history[0]["status"]
+            == "alarm"
+        )
+        assert "timestamp" in state.status_history[0]
+
+    def test_first_seen_ok_initializes_history(self):
+        """First seen ok creates 1-entry history."""
+        alert = self.detector.detect(
+            previous=None,
+            current_status="ok",
+            check_id="s3_check",
+            resource_arn="arn:aws:s3:::b",
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        state = self.detector.build_updated_state(
+            previous=None, alert=alert
+        )
+        assert len(state.status_history) == 1
+        assert (
+            state.status_history[0]["status"] == "ok"
+        )
+
+    def test_transition_appends_to_history(self):
+        """alarm->ok appends new entry."""
+        prev_history = [
+            {
+                "status": "alarm",
+                "timestamp": "2026-02-27T10:00:00Z",
+            }
+        ]
+        prev = _make_prev_state(
+            status="alarm",
+            status_history=prev_history,
+        )
+        alert = self.detector.detect(
+            previous=prev,
+            current_status="ok",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        state = self.detector.build_updated_state(
+            previous=prev, alert=alert
+        )
+        assert len(state.status_history) == 2
+        assert (
+            state.status_history[0]["status"]
+            == "alarm"
+        )
+        assert (
+            state.status_history[1]["status"] == "ok"
+        )
+
+    def test_no_change_does_not_append(self):
+        """alarm->alarm does NOT append to history."""
+        prev_history = [
+            {
+                "status": "alarm",
+                "timestamp": "2026-02-27T10:00:00Z",
+            }
+        ]
+        prev = _make_prev_state(
+            status="alarm",
+            status_history=prev_history,
+        )
+        alert = self.detector.detect(
+            previous=prev,
+            current_status="alarm",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        state = self.detector.build_updated_state(
+            previous=prev, alert=alert
+        )
+        assert len(state.status_history) == 1
+
+    def test_full_lifecycle_history(self):
+        """alarm->ok->alarm->ok produces 4 entries."""
+        detector = self.detector
+
+        # Step 1: first seen alarm
+        a1 = detector.detect(
+            previous=None,
+            current_status="alarm",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        s1 = detector.build_updated_state(
+            previous=None,
+            alert=a1,
+            domain="network",
+        )
+        assert len(s1.status_history) == 1
+
+        # Step 2: alarm -> ok
+        a2 = detector.detect(
+            previous=s1,
+            current_status="ok",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        s2 = detector.build_updated_state(
+            previous=s1, alert=a2
+        )
+        assert len(s2.status_history) == 2
+
+        # Step 3: ok -> alarm (regression)
+        a3 = detector.detect(
+            previous=s2,
+            current_status="alarm",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        s3 = detector.build_updated_state(
+            previous=s2, alert=a3
+        )
+        assert len(s3.status_history) == 3
+
+        # Step 4: alarm -> ok again
+        a4 = detector.detect(
+            previous=s3,
+            current_status="ok",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        s4 = detector.build_updated_state(
+            previous=s3, alert=a4
+        )
+        assert len(s4.status_history) == 4
+        statuses = [
+            e["status"] for e in s4.status_history
+        ]
+        assert statuses == [
+            "alarm", "ok", "alarm", "ok",
+        ]
+
+    def test_history_preserves_previous_entries(self):
+        """New entries don't mutate previous list."""
+        prev_history = [
+            {
+                "status": "alarm",
+                "timestamp": "2026-02-27T10:00:00Z",
+            }
+        ]
+        prev = _make_prev_state(
+            status="alarm",
+            status_history=prev_history,
+        )
+        alert = self.detector.detect(
+            previous=prev,
+            current_status="ok",
+            check_id="ec2_no_open_ssh",
+            resource_arn=ARN,
+            account_id=ACCOUNT,
+            region=REGION,
+        )
+        state = self.detector.build_updated_state(
+            previous=prev, alert=alert
+        )
+        # Original list should be unchanged
+        assert len(prev_history) == 1
+        assert len(state.status_history) == 2

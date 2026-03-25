@@ -73,6 +73,12 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/hooks", () => ({
   useViolations: () => mockViolationsData,
   useCreateJiraTicket: () => mockMutationState,
+  useDeleteJiraTicket: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
 }));
 
 vi.mock("@/hooks/useAccount", () => ({

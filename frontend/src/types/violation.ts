@@ -28,6 +28,13 @@ export interface Violation {
   ticket_url?: string;
   account_id?: string;
   region?: string;
+  status_history?: StatusHistoryEntry[];
+  regression_count?: number;
+}
+
+export interface StatusHistoryEntry {
+  status: string;
+  timestamp: string;
 }
 
 export interface JiraTicketResponse {

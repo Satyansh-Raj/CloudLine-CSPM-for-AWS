@@ -359,4 +359,7 @@ def _item_to_state(item: dict) -> ViolationState:
             if item["ttl"]
             else None
         )
+    # Legacy items may lack status_history
+    if "status_history" not in item:
+        item["status_history"] = []
     return ViolationState(**item)

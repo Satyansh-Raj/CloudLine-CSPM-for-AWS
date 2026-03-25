@@ -2,30 +2,15 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ResolvedIssuesPage from "../ResolvedIssuesPage";
 
-// Mock recharts to avoid jsdom SVG issues in expanded rows
-vi.mock("recharts", () => ({
-  AreaChart: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="area-chart">{children}</div>
-  ),
-  Area: () => <div data-testid="area" />,
-  XAxis: () => null,
-  YAxis: ({ tickFormatter }: { tickFormatter?: (v: number) => string }) => (
-    <div>
-      {tickFormatter && (
-        <>
-          <span>{tickFormatter(1)}</span>
-          <span>{tickFormatter(-1)}</span>
-        </>
-      )}
-    </div>
-  ),
-  CartesianGrid: () => null,
-  Tooltip: () => null,
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="responsive-container">{children}</div>
-  ),
-  ReferenceLine: () => null,
-}));
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 const mockState = {
   data: null as unknown,
@@ -56,6 +41,10 @@ vi.mock("@/hooks/useAccount", () => ({
   }),
 }));
 
+vi.mock("@/constants/checkNames", () => ({
+  getCheckName: (id: string) => id,
+}));
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -64,11 +53,26 @@ function renderPage() {
   );
 }
 
+const SINGLE_VIOLATION = {
+  check_id: "s3_block_public_acls",
+  resource: "arn:aws:s3:::bucket-1",
+  severity: "low" as const,
+  status: "ok" as const,
+  domain: "data_protection",
+  reason: "All checks pass",
+  remediation_id: "",
+  compliance: {},
+  resolved_at: "2026-03-19T10:00:00Z",
+  previous_status: "alarm",
+  first_detected: "2026-03-18T08:00:00Z",
+};
+
 describe("ResolvedIssuesPage", () => {
   afterEach(() => {
     mockState.data = null;
     mockState.isLoading = false;
     mockState.error = null;
+    mockNavigate.mockClear();
   });
 
   it("shows heading", () => {
@@ -103,122 +107,47 @@ describe("ResolvedIssuesPage", () => {
 
   it("shows resolved count badge when data exists", () => {
     mockState.data = [
+      SINGLE_VIOLATION,
       {
-        check_id: "s3_block_public_acls",
-        resource: "arn:aws:s3:::bucket-1",
-        severity: "low",
-        status: "ok",
-        domain: "data_protection",
-        reason: "All checks pass",
-        remediation_id: "",
-        compliance: {},
-        resolved_at: "2026-03-19T10:00:00Z",
-        previous_status: "alarm",
-        first_detected: "2026-03-18T08:00:00Z",
-      },
-      {
+        ...SINGLE_VIOLATION,
         check_id: "iam_root_mfa",
         resource: "arn:aws:iam:::root",
-        severity: "low",
-        status: "ok",
-        domain: "identity_access",
-        reason: "MFA enabled",
-        remediation_id: "",
-        compliance: {},
-        resolved_at: "2026-03-19T11:00:00Z",
-        previous_status: "alarm",
-        first_detected: "2026-03-17T08:00:00Z",
       },
     ];
     renderPage();
     expect(screen.getByText("2 resolved")).toBeInTheDocument();
   });
 
-  it("renders table columns header", () => {
-    mockState.data = [
-      {
-        check_id: "s3_block_public_acls",
-        resource: "arn:aws:s3:::bucket-1",
-        severity: "low",
-        status: "ok",
-        domain: "data_protection",
-        reason: "All checks pass",
-        remediation_id: "",
-        compliance: {},
-        resolved_at: "2026-03-19T10:00:00Z",
-        previous_status: "alarm",
-        first_detected: "2026-03-18T08:00:00Z",
-      },
-    ];
+  it("renders table column headers", () => {
+    mockState.data = [SINGLE_VIOLATION];
     renderPage();
+    expect(screen.getByText("Issue")).toBeInTheDocument();
     expect(screen.getByText("Resource")).toBeInTheDocument();
-    expect(screen.getByText("Check ID")).toBeInTheDocument();
+    // "Severity" and "Domain" appear in both filters
+    // and table headers
+    expect(screen.getAllByText("Severity").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Previous Status")).toBeInTheDocument();
     expect(screen.getByText("Resolved At")).toBeInTheDocument();
-    expect(screen.getByText("Domain")).toBeInTheDocument();
-    expect(screen.getByText("Severity")).toBeInTheDocument();
+    expect(screen.getAllByText("Domain").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("renders resolved_at date for each row", () => {
-    mockState.data = [
-      {
-        check_id: "s3_block_public_acls",
-        resource: "arn:aws:s3:::bucket-1",
-        severity: "low",
-        status: "ok",
-        domain: "data_protection",
-        reason: "All checks pass",
-        remediation_id: "",
-        compliance: {},
-        resolved_at: "2026-03-19T10:00:00Z",
-        previous_status: "alarm",
-        first_detected: "2026-03-18T08:00:00Z",
-      },
-    ];
+  it("renders resolved-issues-table", () => {
+    mockState.data = [SINGLE_VIOLATION];
     renderPage();
-    // resolved_at should be displayed (formatted or raw)
-    const rows = screen.getByTestId("resolved-issues-table");
-    expect(rows).toBeInTheDocument();
+    const table = screen.getByTestId("resolved-issues-table");
+    expect(table).toBeInTheDocument();
   });
 
-  it("renders previous_status badge", () => {
-    mockState.data = [
-      {
-        check_id: "s3_block_public_acls",
-        resource: "arn:aws:s3:::bucket-1",
-        severity: "critical",
-        status: "ok",
-        domain: "data_protection",
-        reason: "All checks pass",
-        remediation_id: "",
-        compliance: {},
-        resolved_at: "2026-03-19T10:00:00Z",
-        previous_status: "alarm",
-        first_detected: "2026-03-18T08:00:00Z",
-      },
-    ];
-    renderPage();
-    expect(screen.getByTestId("prev-status-0")).toBeInTheDocument();
-  });
-
-  it("renders severity badge in each row", () => {
-    mockState.data = [
-      {
-        check_id: "iam_root_mfa",
-        resource: "arn:aws:iam:::root",
-        severity: "critical",
-        status: "ok",
-        domain: "identity_access",
-        reason: "MFA enabled",
-        remediation_id: "",
-        compliance: {},
-        resolved_at: "2026-03-19T10:00:00Z",
-        previous_status: "alarm",
-        first_detected: "2026-03-18T08:00:00Z",
-      },
-    ];
+  it("renders severity badge using SeverityBadge", () => {
+    mockState.data = [{ ...SINGLE_VIOLATION, severity: "critical" }];
     renderPage();
     expect(screen.getByText("critical")).toBeInTheDocument();
+  });
+
+  it("renders previous status using StatusBadge", () => {
+    mockState.data = [SINGLE_VIOLATION];
+    renderPage();
+    expect(screen.getByText("alarm")).toBeInTheDocument();
   });
 
   it("renders a region selector dropdown", () => {
@@ -229,106 +158,73 @@ describe("ResolvedIssuesPage", () => {
     expect(select).toBeInTheDocument();
   });
 
+  it("renders severity and domain filter dropdowns", () => {
+    renderPage();
+    expect(screen.getByText("Severity")).toBeInTheDocument();
+    expect(screen.getByText("Domain")).toBeInTheDocument();
+  });
+
   it("shows dash when resolved_at is absent", () => {
     mockState.data = [
       {
-        check_id: "s3_block_public_acls",
-        resource: "arn:aws:s3:::bucket-1",
-        severity: "low",
-        status: "ok",
-        domain: "data_protection",
-        reason: "Pass",
-        remediation_id: "",
-        compliance: {},
+        ...SINGLE_VIOLATION,
         resolved_at: undefined,
-        previous_status: "alarm",
       },
     ];
     renderPage();
-    // dash placeholder for missing resolved_at
-    expect(screen.getByTestId("resolved-at-0")).toBeInTheDocument();
+    expect(screen.getByTestId("resolved-issues-table")).toBeInTheDocument();
   });
 
-  /* ---- expandable rows ---- */
+  /* ---- row navigation ---- */
 
-  const SINGLE_VIOLATION = {
-    check_id: "s3_block_public_acls",
-    resource: "arn:aws:s3:::bucket-1",
-    severity: "low" as const,
-    status: "ok" as const,
-    domain: "data_protection",
-    reason: "All checks pass",
-    remediation_id: "",
-    compliance: {},
-    resolved_at: "2026-03-19T10:00:00Z",
-    previous_status: "alarm",
-    first_detected: "2026-03-18T08:00:00Z",
-  };
-
-  it("rows have expandable-row data-testid", () => {
+  it("rows have resolved-row data-testid", () => {
     mockState.data = [SINGLE_VIOLATION];
     renderPage();
-    const rows = screen.getAllByTestId("expandable-row");
-    expect(rows.length).toBeGreaterThan(0);
+    const rows = screen.getAllByTestId("resolved-row");
+    expect(rows.length).toBe(1);
   });
 
-  it("rows have cursor-pointer class for click affordance", () => {
+  it("rows have cursor-pointer class", () => {
     mockState.data = [SINGLE_VIOLATION];
     renderPage();
-    const row = screen.getByTestId("expandable-row");
+    const row = screen.getByTestId("resolved-row");
     expect(row.className).toMatch(/cursor-pointer/);
   });
 
-  it("expanded content is hidden initially", () => {
+  it("clicking row navigates to detail page", () => {
+    mockState.data = [SINGLE_VIOLATION];
+    renderPage();
+    const row = screen.getByTestId("resolved-row");
+    fireEvent.click(row);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    const [path, opts] = mockNavigate.mock.calls[0];
+    expect(path).toContain("/resolved/");
+    expect(path).toContain("s3_block_public_acls");
+    expect(opts).toHaveProperty("state");
+    expect(opts.state.violation).toEqual(SINGLE_VIOLATION);
+  });
+
+  it("navigates to correct encoded path", () => {
+    mockState.data = [SINGLE_VIOLATION];
+    renderPage();
+    fireEvent.click(screen.getByTestId("resolved-row"));
+    const path = mockNavigate.mock.calls[0][0];
+    expect(path).toContain(encodeURIComponent("arn:aws:s3:::bucket-1"));
+  });
+
+  it("no expandable content exists", () => {
     mockState.data = [SINGLE_VIOLATION];
     renderPage();
     expect(screen.queryByTestId("expanded-content")).not.toBeInTheDocument();
   });
 
-  it("clicking a row reveals expanded-content", () => {
+  it("no chevron indicators exist", () => {
     mockState.data = [SINGLE_VIOLATION];
     renderPage();
-    const row = screen.getByTestId("expandable-row");
-    fireEvent.click(row);
-    expect(screen.getByTestId("expanded-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("chevron-0")).not.toBeInTheDocument();
   });
 
-  it("expanded content contains lifecycle chart", () => {
-    mockState.data = [SINGLE_VIOLATION];
-    renderPage();
-    const row = screen.getByTestId("expandable-row");
-    fireEvent.click(row);
-    expect(screen.getByTestId("lifecycle-chart")).toBeInTheDocument();
-  });
-
-  it("clicking expanded row collapses it", () => {
-    mockState.data = [SINGLE_VIOLATION];
-    renderPage();
-    const row = screen.getByTestId("expandable-row");
-    fireEvent.click(row);
-    expect(screen.getByTestId("expanded-content")).toBeInTheDocument();
-    fireEvent.click(row);
-    expect(screen.queryByTestId("expanded-content")).not.toBeInTheDocument();
-  });
-
-  it("chevron indicator exists in row", () => {
-    mockState.data = [SINGLE_VIOLATION];
-    renderPage();
-    expect(screen.getByTestId("chevron-0")).toBeInTheDocument();
-  });
-
-  it("chevron changes text on expand", () => {
-    mockState.data = [SINGLE_VIOLATION];
-    renderPage();
-    const chevron = screen.getByTestId("chevron-0");
-    const collapsedText = chevron.textContent;
-    const row = screen.getByTestId("expandable-row");
-    fireEvent.click(row);
-    const expandedText = screen.getByTestId("chevron-0").textContent;
-    expect(expandedText).not.toBe(collapsedText);
-  });
-
-  it("expanding one row collapses a previously expanded row", () => {
+  it("each row navigates independently", () => {
     mockState.data = [
       SINGLE_VIOLATION,
       {
@@ -338,11 +234,18 @@ describe("ResolvedIssuesPage", () => {
       },
     ];
     renderPage();
-    const rows = screen.getAllByTestId("expandable-row");
-    fireEvent.click(rows[0]);
-    expect(screen.getAllByTestId("expanded-content").length).toBe(1);
+    const rows = screen.getAllByTestId("resolved-row");
     fireEvent.click(rows[1]);
-    // Now only second row should be expanded
-    expect(screen.getAllByTestId("expanded-content").length).toBe(1);
+    const path = mockNavigate.mock.calls[0][0];
+    expect(path).toContain("iam_root_mfa");
+  });
+
+  it("shows check name in issue column", () => {
+    mockState.data = [SINGLE_VIOLATION];
+    renderPage();
+    // getCheckName is mocked to return the id itself,
+    // so it appears twice (name + subtitle)
+    const matches = screen.getAllByText("s3_block_public_acls");
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -5,15 +5,18 @@
  * e.g.  /violations/s3_01/arn%3Aaws%3As3%3A%3A%3Abucket-1
  */
 
-export function toViolationPath(
-  checkId: string,
-  resource: string,
-): string {
+export function toViolationPath(checkId: string, resource: string): string {
   return `/violations/${encodeURIComponent(checkId)}/${encodeURIComponent(resource)}`;
 }
 
-export function fromViolationResource(
-  encodedResource: string,
-): string {
+export function fromViolationResource(encodedResource: string): string {
+  return decodeURIComponent(encodedResource);
+}
+
+export function toResolvedPath(checkId: string, resource: string): string {
+  return `/resolved/${encodeURIComponent(checkId)}/${encodeURIComponent(resource)}`;
+}
+
+export function fromResolvedResource(encodedResource: string): string {
   return decodeURIComponent(encodedResource);
 }

@@ -193,6 +193,9 @@ class ViolationState(BaseModel):
     last_evaluated: str = ""
     resolved_at: str | None = None
     regression_count: int = 0
+    status_history: list[dict] = Field(
+        default_factory=list
+    )
     ttl: int | None = None
     ticket_id: str | None = None
     ticket_url: str | None = None

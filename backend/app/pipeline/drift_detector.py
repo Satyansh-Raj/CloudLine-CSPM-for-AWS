@@ -254,6 +254,12 @@ class DriftDetector:
                     else None
                 ),
                 regression_count=0,
+                status_history=[
+                    {
+                        "status": alert.current_status,
+                        "timestamp": now,
+                    }
+                ],
             )
 
         regression = previous.regression_count
@@ -269,6 +275,17 @@ class DriftDetector:
             resolved_at = now
         elif alert.current_status == "alarm":
             resolved_at = None
+
+        # Build status_history: copy previous and
+        # append on actual state transitions only
+        history = list(previous.status_history)
+        if alert.drift_type != DriftType.NO_CHANGE:
+            history.append(
+                {
+                    "status": alert.current_status,
+                    "timestamp": now,
+                }
+            )
 
         return ViolationState(
             pk=pk,
@@ -295,6 +312,7 @@ class DriftDetector:
             last_evaluated=now,
             resolved_at=resolved_at,
             regression_count=regression,
+            status_history=history,
         )
 
 

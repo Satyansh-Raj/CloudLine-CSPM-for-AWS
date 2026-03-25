@@ -21,6 +21,7 @@ import {
   CategoryResourcesPage,
   ResourceDetailPage,
   CompliancePage,
+  ResolvedDetailPage,
 } from "@/pages";
 
 const IamGraphPage = lazy(() => import("@/pages/IamGraphPage"));
@@ -71,6 +72,10 @@ const router = createBrowserRouter([
       {
         path: "resolved",
         element: <ResolvedIssuesPage />,
+      },
+      {
+        path: "resolved/:checkId/:resource",
+        element: <ResolvedDetailPage />,
       },
       {
         path: "inventory",

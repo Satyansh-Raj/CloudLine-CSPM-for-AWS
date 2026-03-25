@@ -5,6 +5,7 @@ export type {
   ViolationStatus,
   ComplianceMapping,
   Violation,
+  StatusHistoryEntry,
   JiraTicketResponse,
   CreateTicketParams,
 } from "./violation";

@@ -681,3 +681,66 @@ class TestErrorBranches:
         mgr = self._broken_mgr()
         result = mgr.count_by_status("alarm")
         assert result == 0
+
+
+class TestStatusHistoryRoundtrip:
+    """Test status_history DynamoDB serialization."""
+
+    def test_roundtrip_with_history(self, state_mgr):
+        """status_history survives put/get cycle."""
+        history = [
+            {
+                "status": "alarm",
+                "timestamp": "2026-02-27T10:00:00Z",
+            },
+            {
+                "status": "ok",
+                "timestamp": "2026-02-27T11:00:00Z",
+            },
+        ]
+        state = _make_state()
+        state.status_history = history
+        state_mgr.put_state(state)
+
+        result = state_mgr.get_state(
+            ACCOUNT,
+            REGION,
+            "ec2_no_open_ssh",
+            "arn:aws:ec2:us-east-1:123:sg/sg-1",
+        )
+        assert result is not None
+        assert len(result.status_history) == 2
+        assert (
+            result.status_history[0]["status"]
+            == "alarm"
+        )
+        assert (
+            result.status_history[1]["status"]
+            == "ok"
+        )
+
+    def test_legacy_item_missing_history(self):
+        """Item without status_history defaults to []."""
+        item = {
+            "pk": f"{ACCOUNT}#{REGION}",
+            "sk": "iam_root_mfa#arn",
+            "check_id": "iam_root_mfa",
+            "status": "alarm",
+        }
+        state = _item_to_state(item)
+        assert state.status_history == []
+
+    def test_empty_history_roundtrip(self, state_mgr):
+        """Empty status_history survives roundtrip."""
+        state = _make_state()
+        state.status_history = []
+        state_mgr.put_state(state)
+
+        result = state_mgr.get_state(
+            ACCOUNT,
+            REGION,
+            "ec2_no_open_ssh",
+            "arn:aws:ec2:us-east-1:123:sg/sg-1",
+        )
+        assert result is not None
+        assert result.status_history == []
