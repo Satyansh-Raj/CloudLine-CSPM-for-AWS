@@ -61,11 +61,11 @@ _good_input := {
 # =========================================================================
 test_awssec_01_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/status", "value": "SUSPENDED"}])
-	_violations_for("awssec_01", inp) == 1
+	_violations_for("awssec_guardduty_enabled", inp) == 1
 }
 
 test_awssec_01_pass if {
-	_violations_for("awssec_01", _good_input) == 0
+	_violations_for("awssec_guardduty_enabled", _good_input) == 0
 }
 
 # =========================================================================
@@ -73,11 +73,11 @@ test_awssec_01_pass if {
 # =========================================================================
 test_awssec_02_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors", "value": []}])
-	_violations_for("awssec_02", inp) == 1
+	_violations_for("awssec_guardduty_detector", inp) == 1
 }
 
 test_awssec_02_pass if {
-	_violations_for("awssec_02", _good_input) == 0
+	_violations_for("awssec_guardduty_detector", _good_input) == 0
 }
 
 # =========================================================================
@@ -85,11 +85,11 @@ test_awssec_02_pass if {
 # =========================================================================
 test_awssec_03_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/data_sources/s3_logs/status", "value": "DISABLED"}])
-	_violations_for("awssec_03", inp) == 1
+	_violations_for("awssec_guardduty_s3_protection", inp) == 1
 }
 
 test_awssec_03_pass if {
-	_violations_for("awssec_03", _good_input) == 0
+	_violations_for("awssec_guardduty_s3_protection", _good_input) == 0
 }
 
 # =========================================================================
@@ -97,11 +97,11 @@ test_awssec_03_pass if {
 # =========================================================================
 test_awssec_04_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/features/malware_protection/status", "value": "DISABLED"}])
-	_violations_for("awssec_04", inp) == 1
+	_violations_for("awssec_guardduty_malware_ec2", inp) == 1
 }
 
 test_awssec_04_pass if {
-	_violations_for("awssec_04", _good_input) == 0
+	_violations_for("awssec_guardduty_malware_ec2", _good_input) == 0
 }
 
 # =========================================================================
@@ -110,17 +110,17 @@ test_awssec_04_pass if {
 test_awssec_05_alarm if {
 	bad_filter := {"name": "hide-high", "action": "ARCHIVE", "severity_threshold": 5}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/filters", "value": [bad_filter]}])
-	_violations_for("awssec_05", inp) == 1
+	_violations_for("awssec_guardduty_no_suppress_crit", inp) == 1
 }
 
 test_awssec_05_pass_no_filters if {
-	_violations_for("awssec_05", _good_input) == 0
+	_violations_for("awssec_guardduty_no_suppress_crit", _good_input) == 0
 }
 
 test_awssec_05_pass_high_threshold if {
 	ok_filter := {"name": "hide-low", "action": "ARCHIVE", "severity_threshold": 8}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/filters", "value": [ok_filter]}])
-	_violations_for("awssec_05", inp) == 0
+	_violations_for("awssec_guardduty_no_suppress_crit", inp) == 0
 }
 
 # =========================================================================
@@ -128,16 +128,16 @@ test_awssec_05_pass_high_threshold if {
 # =========================================================================
 test_awssec_06_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/finding_publishing_frequency", "value": "TWENTY_FOUR_HOURS"}])
-	_violations_for("awssec_06", inp) == 1
+	_violations_for("awssec_guardduty_publish_frequency", inp) == 1
 }
 
 test_awssec_06_pass if {
-	_violations_for("awssec_06", _good_input) == 0
+	_violations_for("awssec_guardduty_publish_frequency", _good_input) == 0
 }
 
 test_awssec_06_pass_one_hour if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/guardduty/detectors/0/finding_publishing_frequency", "value": "ONE_HOUR"}])
-	_violations_for("awssec_06", inp) == 0
+	_violations_for("awssec_guardduty_publish_frequency", inp) == 0
 }
 
 # =========================================================================
@@ -145,11 +145,11 @@ test_awssec_06_pass_one_hour if {
 # =========================================================================
 test_awssec_07_alarm if {
 	inp := json.patch(_good_input, [{"op": "remove", "path": "/guardduty/detectors/0/high_severity_sns_arn"}])
-	_violations_for("awssec_07", inp) == 1
+	_violations_for("awssec_guardduty_sns_high", inp) == 1
 }
 
 test_awssec_07_pass if {
-	_violations_for("awssec_07", _good_input) == 0
+	_violations_for("awssec_guardduty_sns_high", _good_input) == 0
 }
 
 test_awssec_07_pass_disabled_detector if {
@@ -157,7 +157,7 @@ test_awssec_07_pass_disabled_detector if {
 		{"op": "replace", "path": "/guardduty/detectors/0/status", "value": "SUSPENDED"},
 		{"op": "remove", "path": "/guardduty/detectors/0/high_severity_sns_arn"},
 	])
-	_violations_for("awssec_07", inp) == 0
+	_violations_for("awssec_guardduty_sns_high", inp) == 0
 }
 
 # =========================================================================
@@ -165,11 +165,11 @@ test_awssec_07_pass_disabled_detector if {
 # =========================================================================
 test_awssec_08_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/securityhub/hub_enabled", "value": false}])
-	_violations_for("awssec_08", inp) == 1
+	_violations_for("awssec_securityhub_enabled", inp) == 1
 }
 
 test_awssec_08_pass if {
-	_violations_for("awssec_08", _good_input) == 0
+	_violations_for("awssec_securityhub_enabled", _good_input) == 0
 }
 
 # =========================================================================
@@ -179,11 +179,11 @@ test_awssec_09_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/securityhub/standards", "value": [
 		{"standards_arn": "arn:aws:securityhub:::standards/aws-foundational-security-best-practices/v/1.0.0"},
 	]}])
-	_violations_for("awssec_09", inp) == 1
+	_violations_for("awssec_securityhub_cis_standard", inp) == 1
 }
 
 test_awssec_09_pass if {
-	_violations_for("awssec_09", _good_input) == 0
+	_violations_for("awssec_securityhub_cis_standard", _good_input) == 0
 }
 
 # =========================================================================
@@ -193,11 +193,11 @@ test_awssec_10_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/securityhub/standards", "value": [
 		{"standards_arn": "arn:aws:securityhub:::standards/cis-aws-foundations-benchmark/v/1.4.0"},
 	]}])
-	_violations_for("awssec_10", inp) == 1
+	_violations_for("awssec_securityhub_fsbp_standard", inp) == 1
 }
 
 test_awssec_10_pass if {
-	_violations_for("awssec_10", _good_input) == 0
+	_violations_for("awssec_securityhub_fsbp_standard", _good_input) == 0
 }
 
 # =========================================================================
@@ -210,7 +210,7 @@ test_awssec_11_alarm if {
 		"severity": {"label": "CRITICAL"},
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/securityhub/findings", "value": [bad_finding]}])
-	_violations_for("awssec_11", inp) == 1
+	_violations_for("awssec_securityhub_no_suppress_crit", inp) == 1
 }
 
 test_awssec_11_pass_has_note if {
@@ -221,7 +221,7 @@ test_awssec_11_pass_has_note if {
 		"note": {"text": "Accepted risk per CISO approval"},
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/securityhub/findings", "value": [ok_finding]}])
-	_violations_for("awssec_11", inp) == 0
+	_violations_for("awssec_securityhub_no_suppress_crit", inp) == 0
 }
 
 test_awssec_11_pass_not_critical if {
@@ -231,7 +231,7 @@ test_awssec_11_pass_not_critical if {
 		"severity": {"label": "HIGH"},
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/securityhub/findings", "value": [ok_finding]}])
-	_violations_for("awssec_11", inp) == 0
+	_violations_for("awssec_securityhub_no_suppress_crit", inp) == 0
 }
 
 # =========================================================================
@@ -242,11 +242,11 @@ test_awssec_12_alarm if {
 		{"op": "replace", "path": "/securityhub/is_org_management_account", "value": true},
 	])
 	# Good input has no delegated_admin_account_id, and now is_org_management_account is true
-	_violations_for("awssec_12", inp) == 1
+	_violations_for("awssec_securityhub_delegated_admin", inp) == 1
 }
 
 test_awssec_12_pass_not_management if {
-	_violations_for("awssec_12", _good_input) == 0
+	_violations_for("awssec_securityhub_delegated_admin", _good_input) == 0
 }
 
 test_awssec_12_pass_has_delegated_admin if {
@@ -254,7 +254,7 @@ test_awssec_12_pass_has_delegated_admin if {
 		{"op": "replace", "path": "/securityhub/is_org_management_account", "value": true},
 		{"op": "add", "path": "/securityhub/delegated_admin_account_id", "value": "987654321098"},
 	])
-	_violations_for("awssec_12", inp) == 0
+	_violations_for("awssec_securityhub_delegated_admin", inp) == 0
 }
 
 # =========================================================================
@@ -262,11 +262,11 @@ test_awssec_12_pass_has_delegated_admin if {
 # =========================================================================
 test_awssec_13_alarm if {
 	inp := json.patch(_good_input, [{"op": "remove", "path": "/securityhub/critical_findings_sns_arn"}])
-	_violations_for("awssec_13", inp) == 1
+	_violations_for("awssec_securityhub_sns_critical", inp) == 1
 }
 
 test_awssec_13_pass if {
-	_violations_for("awssec_13", _good_input) == 0
+	_violations_for("awssec_securityhub_sns_critical", _good_input) == 0
 }
 
 test_awssec_13_pass_hub_disabled if {
@@ -274,7 +274,7 @@ test_awssec_13_pass_hub_disabled if {
 		{"op": "replace", "path": "/securityhub/hub_enabled", "value": false},
 		{"op": "remove", "path": "/securityhub/critical_findings_sns_arn"},
 	])
-	_violations_for("awssec_13", inp) == 0
+	_violations_for("awssec_securityhub_sns_critical", inp) == 0
 }
 
 # =========================================================================
@@ -282,11 +282,11 @@ test_awssec_13_pass_hub_disabled if {
 # =========================================================================
 test_awssec_14_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/ec2_scanning_enabled", "value": false}])
-	_violations_for("awssec_14", inp) == 1
+	_violations_for("awssec_inspector_ec2_scanning", inp) == 1
 }
 
 test_awssec_14_pass if {
-	_violations_for("awssec_14", _good_input) == 0
+	_violations_for("awssec_inspector_ec2_scanning", _good_input) == 0
 }
 
 # =========================================================================
@@ -294,11 +294,11 @@ test_awssec_14_pass if {
 # =========================================================================
 test_awssec_15_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/ecr_scanning_enabled", "value": false}])
-	_violations_for("awssec_15", inp) == 1
+	_violations_for("awssec_inspector_ecr_scanning", inp) == 1
 }
 
 test_awssec_15_pass if {
-	_violations_for("awssec_15", _good_input) == 0
+	_violations_for("awssec_inspector_ecr_scanning", _good_input) == 0
 }
 
 # =========================================================================
@@ -306,11 +306,11 @@ test_awssec_15_pass if {
 # =========================================================================
 test_awssec_16_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/lambda_scanning_enabled", "value": false}])
-	_violations_for("awssec_16", inp) == 1
+	_violations_for("awssec_inspector_lambda_scanning", inp) == 1
 }
 
 test_awssec_16_pass if {
-	_violations_for("awssec_16", _good_input) == 0
+	_violations_for("awssec_inspector_lambda_scanning", _good_input) == 0
 }
 
 # =========================================================================
@@ -325,7 +325,7 @@ test_awssec_17_alarm if {
 		"age_days": 45,
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/findings", "value": [bad_finding]}])
-	_violations_for("awssec_17", inp) == 1
+	_violations_for("awssec_inspector_critical_cve_30d", inp) == 1
 }
 
 test_awssec_17_pass_within_sla if {
@@ -337,7 +337,7 @@ test_awssec_17_pass_within_sla if {
 		"age_days": 15,
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/findings", "value": [ok_finding]}])
-	_violations_for("awssec_17", inp) == 0
+	_violations_for("awssec_inspector_critical_cve_30d", inp) == 0
 }
 
 test_awssec_17_pass_resolved if {
@@ -349,7 +349,7 @@ test_awssec_17_pass_resolved if {
 		"age_days": 60,
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/findings", "value": [ok_finding]}])
-	_violations_for("awssec_17", inp) == 0
+	_violations_for("awssec_inspector_critical_cve_30d", inp) == 0
 }
 
 # =========================================================================
@@ -364,7 +364,7 @@ test_awssec_18_alarm if {
 		"age_days": 120,
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/findings", "value": [bad_finding]}])
-	_violations_for("awssec_18", inp) == 1
+	_violations_for("awssec_inspector_high_cve_90d", inp) == 1
 }
 
 test_awssec_18_pass_within_sla if {
@@ -376,7 +376,7 @@ test_awssec_18_pass_within_sla if {
 		"age_days": 60,
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/findings", "value": [ok_finding]}])
-	_violations_for("awssec_18", inp) == 0
+	_violations_for("awssec_inspector_high_cve_90d", inp) == 0
 }
 
 # =========================================================================
@@ -384,11 +384,11 @@ test_awssec_18_pass_within_sla if {
 # =========================================================================
 test_awssec_19_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/security_hub_integration_enabled", "value": false}])
-	_violations_for("awssec_19", inp) == 1
+	_violations_for("awssec_inspector_securityhub", inp) == 1
 }
 
 test_awssec_19_pass if {
-	_violations_for("awssec_19", _good_input) == 0
+	_violations_for("awssec_inspector_securityhub", _good_input) == 0
 }
 
 # =========================================================================
@@ -402,11 +402,11 @@ test_awssec_20_alarm if {
 		"filter_criteria": [{"field": "severity", "values": ["CRITICAL", "HIGH"]}],
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/filters", "value": [bad_filter]}])
-	_violations_for("awssec_20", inp) == 1
+	_violations_for("awssec_inspector_no_suppress_crit", inp) == 1
 }
 
 test_awssec_20_pass_no_filters if {
-	_violations_for("awssec_20", _good_input) == 0
+	_violations_for("awssec_inspector_no_suppress_crit", _good_input) == 0
 }
 
 test_awssec_20_pass_no_critical_in_filter if {
@@ -417,7 +417,7 @@ test_awssec_20_pass_no_critical_in_filter if {
 		"filter_criteria": [{"field": "severity", "values": ["LOW", "MEDIUM"]}],
 	}
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/inspector/filters", "value": [ok_filter]}])
-	_violations_for("awssec_20", inp) == 0
+	_violations_for("awssec_inspector_no_suppress_crit", inp) == 0
 }
 
 # =========================================================================
@@ -425,21 +425,21 @@ test_awssec_20_pass_no_critical_in_filter if {
 # =========================================================================
 test_error_missing_guardduty if {
 	inp := {"region": "us-east-1", "account_id": "123456789012", "securityhub": _good_securityhub, "inspector": _good_inspector}
-	_errors_for("awssec_00_guardduty", inp) == 1
+	_errors_for("awssec_guardduty_error", inp) == 1
 }
 
 test_error_missing_securityhub if {
 	inp := {"region": "us-east-1", "account_id": "123456789012", "guardduty": {"detectors": [_good_detector]}, "inspector": _good_inspector}
-	_errors_for("awssec_00_securityhub", inp) == 1
+	_errors_for("awssec_securityhub_error", inp) == 1
 }
 
 test_error_missing_inspector if {
 	inp := {"region": "us-east-1", "account_id": "123456789012", "guardduty": {"detectors": [_good_detector]}, "securityhub": _good_securityhub}
-	_errors_for("awssec_00_inspector", inp) == 1
+	_errors_for("awssec_inspector_error", inp) == 1
 }
 
 test_error_not_raised_when_all_present if {
-	_errors_for("awssec_00_guardduty", _good_input) == 0
-	_errors_for("awssec_00_securityhub", _good_input) == 0
-	_errors_for("awssec_00_inspector", _good_input) == 0
+	_errors_for("awssec_guardduty_error", _good_input) == 0
+	_errors_for("awssec_securityhub_error", _good_input) == 0
+	_errors_for("awssec_inspector_error", _good_input) == 0
 }

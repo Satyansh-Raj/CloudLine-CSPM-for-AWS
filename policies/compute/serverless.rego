@@ -15,13 +15,13 @@ deprecated_runtimes := {
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_01 — Lambda: X-Ray active tracing must be enabled
+# Rule serverless_lambda_xray — Lambda: X-Ray active tracing must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fn in input.lambda_functions
 	fn.tracing_config.mode != "Active"
 	result := {
-		"check_id": "serverless_01",
+		"check_id": "serverless_lambda_xray",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -31,23 +31,19 @@ violations contains result if {
 		"resource": fn.function_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.2"],
-		},
 		"remediation_id": "REM_serverless_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_02 — Lambda: environment variables must be encrypted with KMS
+# Rule serverless_lambda_kms_env — Lambda: environment variables must be encrypted with KMS
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fn in input.lambda_functions
 	count(fn.environment.variables) > 0
 	not fn.kms_key_arn
 	result := {
-		"check_id": "serverless_02",
+		"check_id": "serverless_lambda_kms_env",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -57,23 +53,18 @@ violations contains result if {
 		"resource": fn.function_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"cis_aws": ["3.11"],
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-		},
 		"remediation_id": "REM_serverless_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_03 — Lambda: must not use a deprecated runtime
+# Rule serverless_lambda_runtime — Lambda: must not use a deprecated runtime
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fn in input.lambda_functions
 	fn.runtime in deprecated_runtimes
 	result := {
-		"check_id": "serverless_03",
+		"check_id": "serverless_lambda_runtime",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -83,16 +74,12 @@ violations contains result if {
 		"resource": fn.function_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SI-2"],
-			"pci_dss": ["6.3.3"],
-		},
 		"remediation_id": "REM_serverless_03",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_04 — Lambda: resource policy must not allow public invocation
+# Rule serverless_lambda_no_public_invoke — Lambda: resource policy must not allow public invocation
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fn in input.lambda_functions
@@ -100,7 +87,7 @@ violations contains result if {
 	stmt.Effect == "Allow"
 	stmt.Principal == "*"
 	result := {
-		"check_id": "serverless_04",
+		"check_id": "serverless_lambda_no_public_invoke",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -110,23 +97,19 @@ violations contains result if {
 		"resource": fn.function_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-			"pci_dss": ["7.2.1"],
-		},
 		"remediation_id": "REM_serverless_04",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_05 — Lambda: execution role must not have AdministratorAccess
+# Rule serverless_lambda_no_admin_role — Lambda: execution role must not have AdministratorAccess
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fn in input.lambda_functions
 	some policy in fn.role_policies
 	policy.policy_name == "AdministratorAccess"
 	result := {
-		"check_id": "serverless_05",
+		"check_id": "serverless_lambda_no_admin_role",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -136,24 +119,19 @@ violations contains result if {
 		"resource": fn.function_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"cis_aws": ["1.16"],
-			"nist_800_53": ["AC-6(5)"],
-			"pci_dss": ["7.2.1"],
-		},
 		"remediation_id": "REM_serverless_05",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_06 — ECS: containers must not run in privileged mode
+# Rule serverless_ecs_no_privileged — ECS: containers must not run in privileged mode
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some td in input.ecs.task_definitions
 	some container in td.container_definitions
 	container.privileged == true
 	result := {
-		"check_id": "serverless_06",
+		"check_id": "serverless_ecs_no_privileged",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -163,23 +141,19 @@ violations contains result if {
 		"resource": td.task_definition_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["AC-6(5)"],
-			"pci_dss": ["7.2.1"],
-		},
 		"remediation_id": "REM_serverless_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_07 — ECS: root filesystem must be read-only
+# Rule serverless_ecs_readonly_root — ECS: root filesystem must be read-only
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some td in input.ecs.task_definitions
 	some container in td.container_definitions
 	container.readonly_root_filesystem == false
 	result := {
-		"check_id": "serverless_07",
+		"check_id": "serverless_ecs_readonly_root",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -189,23 +163,19 @@ violations contains result if {
 		"resource": td.task_definition_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["CM-7"],
-			"pci_dss": ["6.3.3"],
-		},
 		"remediation_id": "REM_serverless_07",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_08 — ECS: containers must use awslogs (CloudWatch Logs) driver
+# Rule serverless_ecs_cloudwatch_logs — ECS: containers must use awslogs (CloudWatch Logs) driver
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some td in input.ecs.task_definitions
 	some container in td.container_definitions
 	container.log_configuration.log_driver != "awslogs"
 	result := {
-		"check_id": "serverless_08",
+		"check_id": "serverless_ecs_cloudwatch_logs",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -215,22 +185,18 @@ violations contains result if {
 		"resource": td.task_definition_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["AU-9"],
-			"pci_dss": ["10.2"],
-		},
 		"remediation_id": "REM_serverless_08",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_09 — ECS: task definition must not use host network mode
+# Rule serverless_ecs_no_host_network — ECS: task definition must not use host network mode
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some td in input.ecs.task_definitions
 	td.network_mode == "host"
 	result := {
-		"check_id": "serverless_09",
+		"check_id": "serverless_ecs_no_host_network",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -240,23 +206,19 @@ violations contains result if {
 		"resource": td.task_definition_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_serverless_09",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_10 — ECS: Container Insights must be enabled on clusters
+# Rule serverless_ecs_container_insights — ECS: Container Insights must be enabled on clusters
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some cluster in input.ecs.clusters
 	cluster.settings[_].name == "containerInsights"
 	cluster.settings[_].value != "enabled"
 	result := {
-		"check_id": "serverless_10",
+		"check_id": "serverless_ecs_container_insights",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -266,22 +228,19 @@ violations contains result if {
 		"resource": cluster.cluster_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["AU-12"],
-		},
 		"remediation_id": "REM_serverless_10",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_11 — EKS: cluster API endpoint must not be public
+# Rule serverless_eks_private_endpoint — EKS: cluster API endpoint must not be public
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some cluster in input.eks.clusters
 	cluster.resources_vpc_config.endpoint_public_access == true
 	cluster.resources_vpc_config.public_access_cidrs[_] == "0.0.0.0/0"
 	result := {
-		"check_id": "serverless_11",
+		"check_id": "serverless_eks_private_endpoint",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -291,24 +250,19 @@ violations contains result if {
 		"resource": cluster.arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"cis_aws": ["5.4"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_serverless_11",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_12 — EKS: secrets encryption must be enabled
+# Rule serverless_eks_secrets_encryption — EKS: secrets encryption must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some cluster in input.eks.clusters
 	encryption_configs := [c | some c in cluster.encryption_config; "secrets" in c.resources]
 	count(encryption_configs) == 0
 	result := {
-		"check_id": "serverless_12",
+		"check_id": "serverless_eks_secrets_encryption",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -318,24 +272,19 @@ violations contains result if {
 		"resource": cluster.arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"cis_aws": ["5.3"],
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-		},
 		"remediation_id": "REM_serverless_12",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_13 — EKS: audit logs must be enabled
+# Rule serverless_eks_audit_logs — EKS: audit logs must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some cluster in input.eks.clusters
 	audit_logs := [l | some l in cluster.logging.cluster_logging[_].types; l == "audit"]
 	count(audit_logs) == 0
 	result := {
-		"check_id": "serverless_13",
+		"check_id": "serverless_eks_audit_logs",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -345,24 +294,19 @@ violations contains result if {
 		"resource": cluster.arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"cis_aws": ["5.1"],
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.2"],
-		},
 		"remediation_id": "REM_serverless_13",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_14 — EKS: node groups must use private subnets
+# Rule serverless_eks_private_subnets — EKS: node groups must use private subnets
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some ng in input.eks.node_groups
 	some subnet in ng.subnets
 	subnet.map_public_ip_on_launch == true
 	result := {
-		"check_id": "serverless_14",
+		"check_id": "serverless_eks_private_subnets",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -372,22 +316,18 @@ violations contains result if {
 		"resource": ng.node_group_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_serverless_14",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_15 — EKS: Kubernetes version must not be end-of-life
+# Rule serverless_eks_version_current — EKS: Kubernetes version must not be end-of-life
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some cluster in input.eks.clusters
 	cluster.version in input.eks.eol_versions
 	result := {
-		"check_id": "serverless_15",
+		"check_id": "serverless_eks_version_current",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -397,22 +337,18 @@ violations contains result if {
 		"resource": cluster.arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SI-2"],
-			"pci_dss": ["6.3.3"],
-		},
 		"remediation_id": "REM_serverless_15",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_16 — ECR: image scanning must be enabled on repositories
+# Rule serverless_ecr_image_scanning — ECR: image scanning must be enabled on repositories
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some repo in input.ecr.repositories
 	repo.image_scanning_configuration.scan_on_push == false
 	result := {
-		"check_id": "serverless_16",
+		"check_id": "serverless_ecr_image_scanning",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -422,22 +358,18 @@ violations contains result if {
 		"resource": repo.repository_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SI-3"],
-			"pci_dss": ["6.3.3"],
-		},
 		"remediation_id": "REM_serverless_16",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_17 — ECR: repositories must not be publicly accessible
+# Rule serverless_ecr_private — ECR: repositories must not be publicly accessible
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some repo in input.ecr.repositories
 	repo.repository_visibility == "public"
 	result := {
-		"check_id": "serverless_17",
+		"check_id": "serverless_ecr_private",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -447,22 +379,18 @@ violations contains result if {
 		"resource": repo.repository_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-			"pci_dss": ["3.3.1"],
-		},
 		"remediation_id": "REM_serverless_17",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_18 — ECR: image tag immutability must be enabled
+# Rule serverless_ecr_tag_immutability — ECR: image tag immutability must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some repo in input.ecr.repositories
 	repo.image_tag_mutability != "IMMUTABLE"
 	result := {
-		"check_id": "serverless_18",
+		"check_id": "serverless_ecr_tag_immutability",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -472,22 +400,18 @@ violations contains result if {
 		"resource": repo.repository_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SI-7"],
-			"pci_dss": ["6.3.2"],
-		},
 		"remediation_id": "REM_serverless_18",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_19 — ECR: lifecycle policy must be configured
+# Rule serverless_ecr_lifecycle_policy — ECR: lifecycle policy must be configured
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some repo in input.ecr.repositories
 	not repo.lifecycle_policy
 	result := {
-		"check_id": "serverless_19",
+		"check_id": "serverless_ecr_lifecycle_policy",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -497,22 +421,19 @@ violations contains result if {
 		"resource": repo.repository_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SI-12"],
-		},
 		"remediation_id": "REM_serverless_19",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule serverless_20 — ECR: repositories must be encrypted with KMS
+# Rule serverless_ecr_kms_encryption — ECR: repositories must be encrypted with KMS
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some repo in input.ecr.repositories
 	repo.encryption_configuration.encryption_type != "KMS"
 	repo.tags.data_classification == "sensitive"
 	result := {
-		"check_id": "serverless_20",
+		"check_id": "serverless_ecr_kms_encryption",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -522,10 +443,6 @@ violations contains result if {
 		"resource": repo.repository_arn,
 		"domain": "compute",
 		"service": "serverless",
-		"compliance": {
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-		},
 		"remediation_id": "REM_serverless_20",
 	}
 }
@@ -536,7 +453,7 @@ violations contains result if {
 error contains result if {
 	not input.lambda_functions
 	result := {
-		"check_id": "serverless_00_lambda",
+		"check_id": "serverless_lambda_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "Lambda data missing from input — collector may have failed",
@@ -549,7 +466,7 @@ error contains result if {
 error contains result if {
 	not input.ecs
 	result := {
-		"check_id": "serverless_00_ecs",
+		"check_id": "serverless_ecs_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "ECS data missing from input — collector may have failed",
@@ -562,7 +479,7 @@ error contains result if {
 error contains result if {
 	not input.eks
 	result := {
-		"check_id": "serverless_00_eks",
+		"check_id": "serverless_eks_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "EKS data missing from input — collector may have failed",
@@ -575,7 +492,7 @@ error contains result if {
 error contains result if {
 	not input.ecr
 	result := {
-		"check_id": "serverless_00_ecr",
+		"check_id": "serverless_ecr_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "ECR data missing from input — collector may have failed",

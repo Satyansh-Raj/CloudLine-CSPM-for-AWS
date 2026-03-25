@@ -58,6 +58,7 @@ class ResultParser:
                 "hipaa", []
             ),
             soc2=compliance_raw.get("soc2", []),
+            owasp=compliance_raw.get("owasp", []),
         )
 
         return Violation(

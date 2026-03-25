@@ -23,4 +23,25 @@ export interface Violation {
   last_evaluated?: string;
   first_detected?: string;
   resolved_at?: string;
+  previous_status?: string;
+  ticket_id?: string;
+  ticket_url?: string;
+  account_id?: string;
+  region?: string;
+}
+
+export interface JiraTicketResponse {
+  ticket_id: string;
+  ticket_url: string;
+  ticket_key: string;
+}
+
+export interface CreateTicketParams {
+  account_id: string;
+  region: string;
+  check_id: string;
+  resource_id: string;
+  summary?: string;
+  priority?: string;
+  labels?: string[];
 }

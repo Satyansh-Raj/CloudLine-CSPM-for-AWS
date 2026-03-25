@@ -19,7 +19,7 @@ from app.pipeline.ws_manager import (
 
 def _make_alert(
     drift_type=DriftType.NEW_VIOLATION,
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     resource_arn="arn:aws:ec2:us-east-1:123:sg/sg-1",
     previous_status="ok",
     current_status="alarm",

@@ -47,11 +47,11 @@ test_ec2_01_alarm if {
 	inst := object.union(_good_inst, {"metadata_options": {"http_tokens": "optional"}})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_01"
+	v.check_id == "ec2_imdsv2"
 }
 
 test_ec2_01_compliant if {
-	_violations_for("ec2_01", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_imdsv2", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 # =========================================================================
@@ -61,11 +61,11 @@ test_ec2_02_alarm if {
 	inst := object.union(_good_inst, {"public_ip_address": "54.1.2.3"})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_02"
+	v.check_id == "ec2_no_public_ip"
 }
 
 test_ec2_02_compliant_no_ip if {
-	_violations_for("ec2_02", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_no_public_ip", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 test_ec2_02_compliant_dev_env if {
@@ -73,7 +73,7 @@ test_ec2_02_compliant_dev_env if {
 		"public_ip_address": "54.1.2.3",
 		"tags": {"environment": "development"},
 	})
-	_violations_for("ec2_02", {"ec2": {"instances": [inst]}}) == 0
+	_violations_for("ec2_no_public_ip", {"ec2": {"instances": [inst]}}) == 0
 }
 
 # =========================================================================
@@ -86,11 +86,11 @@ test_ec2_03_alarm if {
 		"default_vpc_id": "vpc-default",
 	}}
 	some v in r
-	v.check_id == "ec2_03"
+	v.check_id == "ec2_no_default_vpc"
 }
 
 test_ec2_03_compliant if {
-	_violations_for("ec2_03", {"ec2": {
+	_violations_for("ec2_no_default_vpc", {"ec2": {
 		"instances": [_good_inst],
 		"default_vpc_id": "vpc-default",
 	}}) == 0
@@ -103,11 +103,11 @@ test_ec2_04_alarm if {
 	inst := object.union(_good_inst, {"monitoring": {"state": "disabled"}})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_04"
+	v.check_id == "ec2_detailed_monitoring"
 }
 
 test_ec2_04_compliant if {
-	_violations_for("ec2_04", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_detailed_monitoring", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 test_ec2_04_stopped_ok if {
@@ -116,7 +116,7 @@ test_ec2_04_stopped_ok if {
 		"state": {"name": "stopped"},
 		"days_since_stopped": 5,
 	})
-	_violations_for("ec2_04", {"ec2": {"instances": [inst]}}) == 0
+	_violations_for("ec2_detailed_monitoring", {"ec2": {"instances": [inst]}}) == 0
 }
 
 # =========================================================================
@@ -130,7 +130,7 @@ test_ec2_05_alarm if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_05"
+	v.check_id == "ec2_no_open_ssh"
 }
 
 test_ec2_05_compliant if {
@@ -139,7 +139,7 @@ test_ec2_05_compliant if {
 		"to_port": 22,
 		"ip_ranges": [{"cidr_ip": "10.0.0.0/8"}],
 	}]})
-	_violations_for("ec2_05", {"ec2": {"security_groups": [sg]}}) == 0
+	_violations_for("ec2_no_open_ssh", {"ec2": {"security_groups": [sg]}}) == 0
 }
 
 test_ec2_05_alarm_port_range if {
@@ -150,7 +150,7 @@ test_ec2_05_alarm_port_range if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_05"
+	v.check_id == "ec2_no_open_ssh"
 }
 
 # =========================================================================
@@ -164,7 +164,7 @@ test_ec2_06_alarm if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_06"
+	v.check_id == "ec2_no_open_rdp"
 }
 
 test_ec2_06_compliant if {
@@ -173,7 +173,7 @@ test_ec2_06_compliant if {
 		"to_port": 3389,
 		"ip_ranges": [{"cidr_ip": "10.0.0.0/8"}],
 	}]})
-	_violations_for("ec2_06", {"ec2": {"security_groups": [sg]}}) == 0
+	_violations_for("ec2_no_open_rdp", {"ec2": {"security_groups": [sg]}}) == 0
 }
 
 # =========================================================================
@@ -186,11 +186,11 @@ test_ec2_07_alarm if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_07"
+	v.check_id == "ec2_no_all_inbound"
 }
 
 test_ec2_07_compliant if {
-	_violations_for("ec2_07", {"ec2": {"security_groups": [_good_sg]}}) == 0
+	_violations_for("ec2_no_all_inbound", {"ec2": {"security_groups": [_good_sg]}}) == 0
 }
 
 # =========================================================================
@@ -203,11 +203,11 @@ test_ec2_08_alarm if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_08"
+	v.check_id == "ec2_root_ebs_encrypted"
 }
 
 test_ec2_08_compliant if {
-	_violations_for("ec2_08", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_root_ebs_encrypted", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 # =========================================================================
@@ -217,11 +217,11 @@ test_ec2_09_alarm if {
 	inst := object.union(_good_inst, {"iam_instance_profile": {"attached_policies": [{"policy_name": "AdministratorAccess"}]}})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_09"
+	v.check_id == "ec2_no_admin_role"
 }
 
 test_ec2_09_compliant if {
-	_violations_for("ec2_09", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_no_admin_role", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 # =========================================================================
@@ -233,11 +233,11 @@ test_ec2_10_alarm if {
 		"create_volume_permissions": [{"group": "all"}],
 	}]}}
 	some v in r
-	v.check_id == "ec2_10"
+	v.check_id == "ec2_snapshot_private"
 }
 
 test_ec2_10_compliant if {
-	_violations_for("ec2_10", {"ec2": {"snapshots": [{
+	_violations_for("ec2_snapshot_private", {"ec2": {"snapshots": [{
 		"snapshot_id": "snap-abc",
 		"create_volume_permissions": [],
 	}]}}) == 0
@@ -250,11 +250,11 @@ test_ec2_11_alarm if {
 	inst := object.union(_good_inst, {"disable_api_termination": false})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_11"
+	v.check_id == "ec2_termination_protection"
 }
 
 test_ec2_11_compliant if {
-	_violations_for("ec2_11", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_termination_protection", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 test_ec2_11_dev_no_alarm if {
@@ -262,7 +262,7 @@ test_ec2_11_dev_no_alarm if {
 		"disable_api_termination": false,
 		"tags": {"environment": "development"},
 	})
-	_violations_for("ec2_11", {"ec2": {"instances": [inst]}}) == 0
+	_violations_for("ec2_termination_protection", {"ec2": {"instances": [inst]}}) == 0
 }
 
 # =========================================================================
@@ -275,7 +275,7 @@ test_ec2_12_alarm if {
 	})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_12"
+	v.check_id == "ec2_stopped_cleanup"
 }
 
 test_ec2_12_compliant if {
@@ -283,11 +283,11 @@ test_ec2_12_compliant if {
 		"state": {"name": "stopped"},
 		"days_since_stopped": 30,
 	})
-	_violations_for("ec2_12", {"ec2": {"instances": [inst]}}) == 0
+	_violations_for("ec2_stopped_cleanup", {"ec2": {"instances": [inst]}}) == 0
 }
 
 test_ec2_12_running_ok if {
-	_violations_for("ec2_12", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_stopped_cleanup", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 # =========================================================================
@@ -301,11 +301,11 @@ test_ec2_13_alarm if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_13"
+	v.check_id == "ec2_no_ipv6_all_ports"
 }
 
 test_ec2_13_compliant if {
-	_violations_for("ec2_13", {"ec2": {"security_groups": [_good_sg]}}) == 0
+	_violations_for("ec2_no_ipv6_all_ports", {"ec2": {"security_groups": [_good_sg]}}) == 0
 }
 
 # =========================================================================
@@ -315,11 +315,11 @@ test_ec2_14_alarm if {
 	inst := object.remove(_good_inst, ["iam_instance_profile"])
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_14"
+	v.check_id == "ec2_instance_profile"
 }
 
 test_ec2_14_compliant if {
-	_violations_for("ec2_14", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_instance_profile", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 # =========================================================================
@@ -338,7 +338,7 @@ test_ec2_15_alarm if {
 	}
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_15"
+	v.check_id == "ec2_no_open_443_internal"
 }
 
 test_ec2_15_compliant_public_sg if {
@@ -347,7 +347,7 @@ test_ec2_15_compliant_public_sg if {
 		"to_port": 443,
 		"ip_ranges": [{"cidr_ip": "0.0.0.0/0"}],
 	}]})
-	_violations_for("ec2_15", {"ec2": {"security_groups": [sg]}}) == 0
+	_violations_for("ec2_no_open_443_internal", {"ec2": {"security_groups": [sg]}}) == 0
 }
 
 # =========================================================================
@@ -360,11 +360,11 @@ test_ec2_16_alarm if {
 	}]})
 	r := ec2.violations with input as {"ec2": {"security_groups": [sg]}}
 	some v in r
-	v.check_id == "ec2_16"
+	v.check_id == "ec2_no_unrestricted_outbound"
 }
 
 test_ec2_16_compliant_restricted if {
-	_violations_for("ec2_16", {"ec2": {"security_groups": [_good_sg]}}) == 0
+	_violations_for("ec2_no_unrestricted_outbound", {"ec2": {"security_groups": [_good_sg]}}) == 0
 }
 
 test_ec2_16_dev_ok if {
@@ -375,7 +375,7 @@ test_ec2_16_dev_ok if {
 			"ip_ranges": [{"cidr_ip": "0.0.0.0/0"}],
 		}],
 	})
-	_violations_for("ec2_16", {"ec2": {"security_groups": [sg]}}) == 0
+	_violations_for("ec2_no_unrestricted_outbound", {"ec2": {"security_groups": [sg]}}) == 0
 }
 
 # =========================================================================
@@ -385,11 +385,11 @@ test_ec2_17_alarm if {
 	inst := object.union(_good_inst, {"key_name": "my-keypair"})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_17"
+	v.check_id == "ec2_no_key_pairs_prod"
 }
 
 test_ec2_17_compliant_no_key if {
-	_violations_for("ec2_17", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_no_key_pairs_prod", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 test_ec2_17_dev_ok if {
@@ -397,7 +397,7 @@ test_ec2_17_dev_ok if {
 		"key_name": "my-keypair",
 		"tags": {"environment": "development"},
 	})
-	_violations_for("ec2_17", {"ec2": {"instances": [inst]}}) == 0
+	_violations_for("ec2_no_key_pairs_prod", {"ec2": {"instances": [inst]}}) == 0
 }
 
 # =========================================================================
@@ -407,11 +407,11 @@ test_ec2_18_alarm if {
 	inst := object.union(_good_inst, {"instance_type": "t1.micro"})
 	r := ec2.violations with input as {"ec2": {"instances": [inst]}}
 	some v in r
-	v.check_id == "ec2_18"
+	v.check_id == "ec2_no_deprecated_types"
 }
 
 test_ec2_18_compliant if {
-	_violations_for("ec2_18", {"ec2": {"instances": [_good_inst]}}) == 0
+	_violations_for("ec2_no_deprecated_types", {"ec2": {"instances": [_good_inst]}}) == 0
 }
 
 # =========================================================================
@@ -425,11 +425,11 @@ test_ec2_19_alarm if {
 		"network_interface_id": null,
 	}]}}
 	some v in r
-	v.check_id == "ec2_19"
+	v.check_id == "ec2_no_unused_eips"
 }
 
 test_ec2_19_compliant if {
-	_violations_for("ec2_19", {"ec2": {"elastic_ips": [{
+	_violations_for("ec2_no_unused_eips", {"ec2": {"elastic_ips": [{
 		"public_ip": "54.1.2.3",
 		"allocation_id": "eipalloc-abc",
 		"instance_id": "i-abc",
@@ -450,11 +450,11 @@ test_ec2_20_alarm if {
 		}]},
 	}
 	some v in r
-	v.check_id == "ec2_20"
+	v.check_id == "ec2_ami_private"
 }
 
 test_ec2_20_compliant_private if {
-	_violations_for("ec2_20", {
+	_violations_for("ec2_ami_private", {
 		"account_id": "123456789012",
 		"ec2": {"amis": [{
 			"image_id": "ami-abc123",
@@ -465,7 +465,7 @@ test_ec2_20_compliant_private if {
 }
 
 test_ec2_20_compliant_other_owner if {
-	_violations_for("ec2_20", {
+	_violations_for("ec2_ami_private", {
 		"account_id": "123456789012",
 		"ec2": {"amis": [{
 			"image_id": "ami-abc123",
@@ -481,7 +481,7 @@ test_ec2_20_compliant_other_owner if {
 test_ec2_00_error if {
 	r := ec2.error with input as {"account_id": "123456789012"}
 	some v in r
-	v.check_id == "ec2_00"
+	v.check_id == "ec2_error"
 }
 
 test_ec2_00_no_error if {

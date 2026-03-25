@@ -118,7 +118,7 @@ class DriftAlert(BaseModel):
     Example:
         >>> alert = DriftAlert(
         ...     drift_type=DriftType.NEW_VIOLATION,
-        ...     check_id="ec2_05",
+        ...     check_id="ec2_no_open_ssh",
         ...     resource_arn="arn:aws:ec2:...",
         ...     previous_status="ok",
         ...     current_status="alarm",
@@ -170,8 +170,8 @@ class ViolationState(BaseModel):
     Example:
         >>> state = ViolationState(
         ...     pk="123456789012#us-east-1",
-        ...     sk="ec2_05#arn:aws:ec2:...",
-        ...     check_id="ec2_05",
+        ...     sk="ec2_no_open_ssh#arn:aws:ec2:...",
+        ...     check_id="ec2_no_open_ssh",
         ...     status="alarm",
         ...     severity="critical",
         ... )
@@ -194,3 +194,5 @@ class ViolationState(BaseModel):
     resolved_at: str | None = None
     regression_count: int = 0
     ttl: int | None = None
+    ticket_id: str | None = None
+    ticket_url: str | None = None

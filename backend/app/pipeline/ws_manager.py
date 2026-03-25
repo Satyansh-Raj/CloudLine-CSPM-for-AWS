@@ -36,7 +36,7 @@ def format_drift_event(alert: DriftAlert) -> dict:
         ... )
         >>> alert = DriftAlert(
         ...     drift_type=DriftType.NEW_VIOLATION,
-        ...     check_id="ec2_05",
+        ...     check_id="ec2_no_open_ssh",
         ... )
         >>> msg = format_drift_event(alert)
         >>> msg["type"]

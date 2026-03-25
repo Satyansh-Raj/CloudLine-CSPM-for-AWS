@@ -427,8 +427,27 @@ SCAN_INTERVAL_MINUTES=60
 CORRELATION_WINDOW_MINUTES=5
 DEFAULT_ROLLBACK_WINDOW_MINUTES=60
 CORS_ORIGINS=http://localhost:5173
+
+# Jira Integration (optional)
+JIRA_URL=
+JIRA_EMAIL=
+JIRA_API_TOKEN=
+JIRA_PROJECT_KEY=
 EOF
   success ".env generated with scanner credentials"
+fi
+
+# Ensure Jira vars exist (may be missing from older .env)
+if ! grep -q "^JIRA_URL=" "$ENV_FILE" 2>/dev/null; then
+  cat >> "$ENV_FILE" <<'EOF'
+
+# Jira Integration (optional)
+JIRA_URL=
+JIRA_EMAIL=
+JIRA_API_TOKEN=
+JIRA_PROJECT_KEY=
+EOF
+  info "Added Jira configuration placeholders to .env"
 fi
 
 # ═══════════════════════════════════════════════════
@@ -469,9 +488,80 @@ else
 fi
 
 # ═══════════════════════════════════════════════════
-# PHASE 5 — Terraform Deploy
+# PHASE 5 — Jira Integration (Optional)
 # ═══════════════════════════════════════════════════
-banner "Phase 5 — Terraform Infrastructure"
+banner "Phase 5 — Jira Integration (Optional)"
+
+echo -e "${CYAN}Integrate with Jira Cloud to create tickets${NC}"
+echo -e "${CYAN}directly from CloudLine violations.${NC}"
+echo ""
+echo -e "  You will need:"
+echo -e "    1. Jira Cloud URL  (e.g. https://team.atlassian.net)"
+echo -e "    2. Jira account email"
+echo -e "    3. Jira API token  (generate at ${BOLD}https://id.atlassian.com/manage-profile/security/api-tokens${NC})"
+echo -e "    4. Project key     (e.g. SEC, CLOUD)"
+echo ""
+
+read -rp "$(echo -e \
+  "${BOLD}Configure Jira integration? (y/N):${NC} ")" jira_confirm
+
+if [[ "$jira_confirm" =~ ^[Yy]$ ]]; then
+  # ── Jira URL ──
+  while true; do
+    read -rp "$(echo -e \
+      "${BOLD}Jira URL:${NC} ")" JIRA_URL
+    if [[ "$JIRA_URL" =~ ^https://.+\.atlassian\.net/?$ ]]; then
+      JIRA_URL="${JIRA_URL%/}"   # strip trailing slash
+      break
+    fi
+    warn "URL must be https://<workspace>.atlassian.net"
+  done
+
+  # ── Jira Email ──
+  while true; do
+    read -rp "$(echo -e \
+      "${BOLD}Jira email:${NC} ")" JIRA_EMAIL
+    if [[ "$JIRA_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+      break
+    fi
+    warn "Invalid email format"
+  done
+
+  # ── Jira API Token (hidden input) ──
+  while true; do
+    read -rsp "$(echo -e \
+      "${BOLD}Jira API token:${NC} ")" JIRA_API_TOKEN
+    echo ""
+    if [[ -n "$JIRA_API_TOKEN" ]]; then
+      break
+    fi
+    warn "API token cannot be empty"
+  done
+
+  # ── Project Key ──
+  read -rp "$(echo -e \
+    "${BOLD}Jira project key [SEC]:${NC} ")" JIRA_PROJECT_KEY
+  JIRA_PROJECT_KEY="${JIRA_PROJECT_KEY:-SEC}"
+
+  # Write to .env
+  sed -i "s|^JIRA_URL=.*|JIRA_URL=$JIRA_URL|" "$ENV_FILE"
+  sed -i "s|^JIRA_EMAIL=.*|JIRA_EMAIL=$JIRA_EMAIL|" "$ENV_FILE"
+  sed -i "s|^JIRA_API_TOKEN=.*|JIRA_API_TOKEN=$JIRA_API_TOKEN|" \
+    "$ENV_FILE"
+  sed -i "s|^JIRA_PROJECT_KEY=.*|JIRA_PROJECT_KEY=$JIRA_PROJECT_KEY|" \
+    "$ENV_FILE"
+
+  JIRA_CONFIGURED=true
+  success "Jira configured → $JIRA_URL (project: $JIRA_PROJECT_KEY)"
+else
+  JIRA_CONFIGURED=false
+  warn "Jira skipped — configure later in .env"
+fi
+
+# ═══════════════════════════════════════════════════
+# PHASE 6 — Terraform Deploy
+# ═══════════════════════════════════════════════════
+banner "Phase 6 — Terraform Infrastructure"
 
 # Write terraform.tfvars
 cat > "$TF_DIR/terraform.tfvars" <<EOF
@@ -562,9 +652,9 @@ rm -f tfplan
 cd "$ROOT_DIR"
 
 # ═══════════════════════════════════════════════════
-# PHASE 6 — Build & Launch Application
+# PHASE 7 — Build & Launch Application
 # ═══════════════════════════════════════════════════
-banner "Phase 6 — Building & Launching"
+banner "Phase 7 — Building & Launching"
 
 # Build frontend first (backend container serves dist/)
 info "Installing frontend dependencies..."
@@ -619,5 +709,13 @@ if [[ ${#ALERT_EMAILS[@]} -gt 0 ]]; then
   done
   echo ""
   echo -e "  ${YELLOW}Remember: confirm the AWS subscription email!${NC}"
+  echo ""
+fi
+
+if [[ "${JIRA_CONFIGURED:-false}" == "true" ]]; then
+  echo -e "  ${BOLD}Jira integration:${NC}"
+  echo "    URL:     $JIRA_URL"
+  echo "    Email:   $JIRA_EMAIL"
+  echo "    Project: $JIRA_PROJECT_KEY"
   echo ""
 fi

@@ -100,6 +100,23 @@ class KMSCollector(BaseCollector):
                             )
                         except Exception:
                             pass
+                        tags = {}
+                        try:
+                            tr = (
+                                kms.list_resource_tags(
+                                    KeyId=key_id
+                                )
+                            )
+                            tags = {
+                                t["TagKey"]: (
+                                    t["TagValue"]
+                                )
+                                for t in tr.get(
+                                    "Tags", []
+                                )
+                            }
+                        except Exception:
+                            pass
                         keys.append(
                             {
                                 "key_id": key_id,
@@ -111,6 +128,7 @@ class KMSCollector(BaseCollector):
                                     "Enabled",
                                 ),
                                 "key_rotation_enabled": rotation,
+                                "tags": tags,
                             }
                         )
                     except Exception:

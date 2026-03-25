@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { buildIamGraph } from "./iamGraphBuilder";
+import { buildIamGraph, getInitialCollapsedIds } from "./iamGraphBuilder";
 import type { IamGraphResponse } from "@/types";
 
 function makeResponse(
@@ -15,9 +15,7 @@ function makeResponse(
 
 function makeUser(
   name: string,
-  overrides: Partial<
-    IamGraphResponse["users"][0]
-  > = {},
+  overrides: Partial<IamGraphResponse["users"][0]> = {},
 ) {
   return {
     name,
@@ -40,27 +38,15 @@ describe("buildIamGraph", () => {
     const resp = makeResponse({
       users: [makeUser("alice")],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const acct = nodes.find(
-      (n) => n.id === "account",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const acct = nodes.find((n) => n.id === "account");
     expect(acct).toBeDefined();
     expect(acct?.type).toBe("accountNode");
   });
 
   it("empty response → only account node", () => {
     const resp = makeResponse();
-    const { nodes, edges } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
+    const { nodes, edges } = buildIamGraph(resp, new Set(), noop, noopSelect);
     expect(nodes).toHaveLength(1);
     expect(nodes[0].id).toBe("account");
     expect(edges).toHaveLength(0);
@@ -68,20 +54,10 @@ describe("buildIamGraph", () => {
 
   it("account node count equals user count", () => {
     const resp = makeResponse({
-      users: [
-        makeUser("alice"),
-        makeUser("bob"),
-      ],
+      users: [makeUser("alice"), makeUser("bob")],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const acct = nodes.find(
-      (n) => n.id === "account",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const acct = nodes.find((n) => n.id === "account");
     const d = acct!.data as {
       count: number;
       label: string;
@@ -92,20 +68,10 @@ describe("buildIamGraph", () => {
 
   it("creates userNode for each user", () => {
     const resp = makeResponse({
-      users: [
-        makeUser("alice"),
-        makeUser("bob"),
-      ],
+      users: [makeUser("alice"), makeUser("bob")],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const userNodes = nodes.filter(
-      (n) => n.type === "userNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const userNodes = nodes.filter((n) => n.type === "userNode");
     expect(userNodes).toHaveLength(2);
   });
 
@@ -113,26 +79,16 @@ describe("buildIamGraph", () => {
     const resp = makeResponse({
       users: [
         makeUser("alice", {
-          inline_policies: [
-            { name: "s3-read", type: "inline" },
-          ],
+          inline_policies: [{ name: "s3-read", type: "inline" }],
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const polNodes = nodes.filter(
-      (n) => n.type === "policyNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const polNodes = nodes.filter((n) => n.type === "policyNode");
     expect(polNodes).toHaveLength(1);
-    expect(
-      (polNodes[0].data as { policyName: string })
-        .policyName,
-    ).toBe("s3-read");
+    expect((polNodes[0].data as { policyName: string }).policyName).toBe(
+      "s3-read",
+    );
   });
 
   it("creates policyNode for managed policies", () => {
@@ -149,20 +105,12 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const polNodes = nodes.filter(
-      (n) => n.type === "policyNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const polNodes = nodes.filter((n) => n.type === "policyNode");
     expect(polNodes).toHaveLength(1);
-    expect(
-      (polNodes[0].data as { policyType: string })
-        .policyType,
-    ).toBe("managed");
+    expect((polNodes[0].data as { policyType: string }).policyType).toBe(
+      "managed",
+    );
   });
 
   it("creates policyNode for group policies", () => {
@@ -184,20 +132,10 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const polNodes = nodes.filter(
-      (n) => n.type === "policyNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const polNodes = nodes.filter((n) => n.type === "policyNode");
     expect(polNodes).toHaveLength(1);
-    expect(
-      (polNodes[0].data as { groupName?: string })
-        .groupName,
-    ).toBe("Devs");
+    expect((polNodes[0].data as { groupName?: string }).groupName).toBe("Devs");
   });
 
   it("creates serviceNode for permissions", () => {
@@ -211,15 +149,8 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const svcNodes = nodes.filter(
-      (n) => n.type === "serviceNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const svcNodes = nodes.filter((n) => n.type === "serviceNode");
     expect(svcNodes).toHaveLength(2);
   });
 
@@ -229,7 +160,7 @@ describe("buildIamGraph", () => {
         makeUser("alice", {
           violations: [
             {
-              check_id: "iam_08",
+              check_id: "iam_pwd_max_age",
               status: "alarm",
               severity: "medium" as const,
               reason: "Unused key",
@@ -239,15 +170,8 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const chkNodes = nodes.filter(
-      (n) => n.type === "checkNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const chkNodes = nodes.filter((n) => n.type === "checkNode");
     expect(chkNodes).toHaveLength(1);
   });
 
@@ -255,13 +179,11 @@ describe("buildIamGraph", () => {
     const resp = makeResponse({
       users: [
         makeUser("alice", {
-          inline_policies: [
-            { name: "p1", type: "inline" },
-          ],
+          inline_policies: [{ name: "p1", type: "inline" }],
           effective_permissions: { s3: ["*"] },
           violations: [
             {
-              check_id: "iam_01",
+              check_id: "iam_root_mfa",
               status: "alarm",
               severity: "high" as const,
               reason: "test",
@@ -273,7 +195,7 @@ describe("buildIamGraph", () => {
       ],
       account_violations: [
         {
-          check_id: "iam_02",
+          check_id: "iam_pwd_min_length",
           status: "alarm",
           severity: "critical" as const,
           reason: "root",
@@ -282,12 +204,7 @@ describe("buildIamGraph", () => {
         },
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
     const ids = nodes.map((n) => n.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -306,7 +223,7 @@ describe("buildIamGraph", () => {
           effective_permissions: { iam: ["*"] },
           violations: [
             {
-              check_id: "iam_09",
+              check_id: "iam_user_mfa",
               status: "alarm",
               severity: "high" as const,
               reason: "test",
@@ -316,15 +233,8 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes, edges } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const nodeIds = new Set(
-      nodes.map((n) => n.id),
-    );
+    const { nodes, edges } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const nodeIds = new Set(nodes.map((n) => n.id));
     for (const e of edges) {
       expect(nodeIds.has(e.source)).toBe(true);
       expect(nodeIds.has(e.target)).toBe(true);
@@ -335,19 +245,12 @@ describe("buildIamGraph", () => {
     const resp = makeResponse({
       users: [
         makeUser("alice", {
-          inline_policies: [
-            { name: "p1", type: "inline" },
-          ],
+          inline_policies: [{ name: "p1", type: "inline" }],
           effective_permissions: { s3: ["*"] },
         }),
       ],
     });
-    const expanded = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
+    const expanded = buildIamGraph(resp, new Set(), noop, noopSelect);
     const collapsed = buildIamGraph(
       resp,
       new Set(["user-alice"]),
@@ -355,14 +258,10 @@ describe("buildIamGraph", () => {
       noopSelect,
     );
     const exChildren = expanded.nodes.filter(
-      (n) =>
-        n.type === "policyNode" ||
-        n.type === "serviceNode",
+      (n) => n.type === "policyNode" || n.type === "serviceNode",
     );
     const colChildren = collapsed.nodes.filter(
-      (n) =>
-        n.type === "policyNode" ||
-        n.type === "serviceNode",
+      (n) => n.type === "policyNode" || n.type === "serviceNode",
     );
     expect(exChildren.length).toBeGreaterThan(0);
     expect(colChildren).toHaveLength(0);
@@ -374,14 +273,14 @@ describe("buildIamGraph", () => {
         makeUser("alice", {
           violations: [
             {
-              check_id: "iam_01",
+              check_id: "iam_root_mfa",
               status: "alarm",
               severity: "medium" as const,
               reason: "a",
               risk_score: 40,
             },
             {
-              check_id: "iam_02",
+              check_id: "iam_pwd_min_length",
               status: "alarm",
               severity: "critical" as const,
               reason: "b",
@@ -391,15 +290,8 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const userNode = nodes.find(
-      (n) => n.type === "userNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const userNode = nodes.find((n) => n.type === "userNode");
     const d = userNode!.data as {
       worstSeverity: string;
     };
@@ -410,7 +302,7 @@ describe("buildIamGraph", () => {
     const resp = makeResponse({
       account_violations: [
         {
-          check_id: "iam_01",
+          check_id: "iam_root_mfa",
           status: "alarm",
           severity: "critical" as const,
           reason: "Root MFA",
@@ -419,27 +311,15 @@ describe("buildIamGraph", () => {
         },
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    expect(
-      nodes.some((n) => n.id === "acct-checks"),
-    ).toBe(true);
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    expect(nodes.some((n) => n.id === "acct-checks")).toBe(true);
   });
 
   it("uses smoothstep edges", () => {
     const resp = makeResponse({
       users: [makeUser("alice")],
     });
-    const { edges } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
+    const { edges } = buildIamGraph(resp, new Set(), noop, noopSelect);
     for (const e of edges) {
       expect(e.type).toBe("smoothstep");
     }
@@ -451,14 +331,14 @@ describe("buildIamGraph", () => {
         makeUser("alice", {
           violations: [
             {
-              check_id: "iam_09",
+              check_id: "iam_user_mfa",
               status: "alarm",
               severity: "high" as const,
               reason: "test",
               risk_score: 72,
             },
             {
-              check_id: "iam_10",
+              check_id: "iam_root_access_keys",
               status: "ok",
               severity: "low" as const,
               reason: "fine",
@@ -468,20 +348,11 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { edges } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const chkEdges = edges.filter((e) =>
-      e.target.startsWith("chk-"),
-    );
-    const alarmEdge = chkEdges.find((e) =>
-      e.target.includes("iam_09"),
-    );
+    const { edges } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const chkEdges = edges.filter((e) => e.target.startsWith("chk-"));
+    const alarmEdge = chkEdges.find((e) => e.target.includes("iam_user_mfa"));
     const okEdge = chkEdges.find((e) =>
-      e.target.includes("iam_10"),
+      e.target.includes("iam_root_access_keys"),
     );
     expect(alarmEdge?.animated).toBe(true);
     expect(okEdge?.animated).toBe(false);
@@ -491,9 +362,7 @@ describe("buildIamGraph", () => {
     const resp = makeResponse({
       users: [
         makeUser("alice", {
-          inline_policies: [
-            { name: "p1", type: "inline" },
-          ],
+          inline_policies: [{ name: "p1", type: "inline" }],
           attached_policies: [
             {
               name: "p2",
@@ -505,14 +374,12 @@ describe("buildIamGraph", () => {
             {
               name: "G1",
               arn: "arn:g",
-              policies: [
-                { name: "gp", type: "inline" },
-              ],
+              policies: [{ name: "gp", type: "inline" }],
             },
           ],
           violations: [
             {
-              check_id: "iam_05",
+              check_id: "iam_pwd_numbers",
               status: "alarm",
               severity: "high" as const,
               reason: "x",
@@ -522,15 +389,8 @@ describe("buildIamGraph", () => {
         }),
       ],
     });
-    const { nodes } = buildIamGraph(
-      resp,
-      new Set(),
-      noop,
-      noopSelect,
-    );
-    const user = nodes.find(
-      (n) => n.type === "userNode",
-    );
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    const user = nodes.find((n) => n.type === "userNode");
     const d = user!.data as {
       policyCount: number;
       groupCount: number;
@@ -541,5 +401,82 @@ describe("buildIamGraph", () => {
     expect(d.groupCount).toBe(1);
     expect(d.violationCount).toBe(1);
     expect(d.mfaEnabled).toBe(true);
+  });
+
+  it("collapsed account returns only account node", () => {
+    const resp = makeResponse({
+      users: [
+        makeUser("alice", {
+          inline_policies: [{ name: "p1", type: "inline" }],
+          effective_permissions: { s3: ["*"] },
+          violations: [
+            {
+              check_id: "iam_user_mfa",
+              status: "alarm",
+              severity: "high" as const,
+              reason: "test",
+              risk_score: 72,
+            },
+          ],
+        }),
+        makeUser("bob"),
+      ],
+      account_violations: [
+        {
+          check_id: "iam_root_mfa",
+          status: "alarm",
+          severity: "critical" as const,
+          reason: "Root MFA",
+          risk_score: 95,
+          resource: "arn:aws:iam::123:root",
+        },
+      ],
+    });
+    const { nodes, edges } = buildIamGraph(
+      resp,
+      new Set(["account"]),
+      noop,
+      noopSelect,
+    );
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].id).toBe("account");
+    expect(edges).toHaveLength(0);
+  });
+});
+
+describe("getInitialCollapsedIds", () => {
+  it("includes account and all user IDs", () => {
+    const resp = makeResponse({
+      users: [makeUser("alice"), makeUser("bob")],
+    });
+    const ids = getInitialCollapsedIds(resp);
+    expect(ids.has("account")).toBe(true);
+    expect(ids.has("user-alice")).toBe(true);
+    expect(ids.has("user-bob")).toBe(true);
+  });
+
+  it("includes acct-checks when violations exist", () => {
+    const resp = makeResponse({
+      account_violations: [
+        {
+          check_id: "iam_root_mfa",
+          status: "alarm",
+          severity: "critical" as const,
+          reason: "Root MFA",
+          risk_score: 95,
+          resource: "arn:aws:iam::123:root",
+        },
+      ],
+    });
+    const ids = getInitialCollapsedIds(resp);
+    expect(ids.has("acct-checks")).toBe(true);
+  });
+
+  it("omits acct-checks when no account violations", () => {
+    const resp = makeResponse({
+      users: [makeUser("alice")],
+    });
+    const ids = getInitialCollapsedIds(resp);
+    expect(ids.has("acct-checks")).toBe(false);
   });
 });

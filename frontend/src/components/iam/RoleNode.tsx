@@ -24,7 +24,7 @@ export default memo(function RoleNodeComponent({
 
   const ringCls =
     worstSeverity && alarmCount > 0
-      ? SEVERITY_RING[worstSeverity] ?? "border-gray-300"
+      ? (SEVERITY_RING[worstSeverity] ?? "border-gray-300")
       : "border-gray-200 dark:border-white/10";
 
   return (
@@ -137,12 +137,12 @@ export default memo(function RoleNodeComponent({
 
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         className="!bg-indigo-400 !border-indigo-600"
       />
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         className="!bg-gray-400 !border-gray-500"
       />
     </div>

@@ -135,7 +135,7 @@ describe("useWebSocket", () => {
       ws.onmessage?.({
         data: JSON.stringify({
           type: "violation_new",
-          check_id: "s3_01",
+          check_id: "s3_block_public_acls",
         }),
       } as MessageEvent);
     });

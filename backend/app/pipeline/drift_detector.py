@@ -29,7 +29,7 @@ class DriftDetector:
         >>> result = detector.detect(
         ...     previous=old_state,
         ...     current_status="alarm",
-        ...     check_id="ec2_05",
+        ...     check_id="ec2_no_open_ssh",
         ...     resource_arn="arn:aws:ec2:...",
         ...     severity="critical",
         ...     trigger_event="AuthorizeSecurityGroupIngress",
@@ -76,7 +76,7 @@ class DriftDetector:
             >>> alert = detector.detect(
             ...     previous=None,
             ...     current_status="alarm",
-            ...     check_id="s3_01",
+            ...     check_id="s3_block_public_acls",
             ...     resource_arn="arn:aws:s3:::bucket",
             ... )
             >>> alert.drift_type

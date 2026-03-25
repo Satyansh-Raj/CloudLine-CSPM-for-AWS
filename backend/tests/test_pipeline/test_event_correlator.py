@@ -23,7 +23,7 @@ TABLE = "event-correlation"
 
 def _make_alert(
     drift_type=DriftType.NEW_VIOLATION,
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     resource_arn="arn:aws:ec2:us-east-1:123:sg/sg-1",
     trigger_event="AuthorizeSecurityGroupIngress",
     severity=AlertSeverity.CRITICAL,
@@ -124,7 +124,7 @@ class TestCorrelateNewGroup:
         assert len(item["events"]) == 1
         assert (
             item["events"][0]["check_id"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
 
     @mock_aws
@@ -253,10 +253,10 @@ class TestCorrelateDistinctGroups:
             session=session, table_name=TABLE
         )
         alert1 = _make_alert(
-            check_id="ec2_05"
+            check_id="ec2_no_open_ssh"
         )
         alert2 = _make_alert(
-            check_id="s3_01"
+            check_id="s3_block_public_acls"
         )
 
         r1 = correlator.correlate(alert1)
@@ -327,13 +327,13 @@ class TestGroupKey:
         alert = _make_alert(
             account_id="111111111111",
             region="eu-west-1",
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
         )
         key = correlator._group_key(alert)
         assert key == (
             "111111111111"
             "#eu-west-1"
-            "#s3_01"
+            "#s3_block_public_acls"
         )
 
 
@@ -350,7 +350,7 @@ class TestEventSummary:
 
         assert (
             summary["check_id"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
         assert summary["resource_arn"].endswith(
             "sg/sg-1"
@@ -502,7 +502,7 @@ class TestErrorHandling:
         session = MagicMock()
         table = MagicMock()
         existing = {
-            "pk": "123#us-east-1#ec2_05",
+            "pk": "123#us-east-1#ec2_no_open_ssh",
             "sk": "2026-02-28T12:00:00",
             "alert_sent": True,
             "events": [],
@@ -534,7 +534,7 @@ class TestErrorHandling:
         session = MagicMock()
         table = MagicMock()
         existing = {
-            "pk": "123#us-east-1#ec2_05",
+            "pk": "123#us-east-1#ec2_no_open_ssh",
             "sk": "2026-02-28T12:00:00",
             "alert_sent": False,
             "events": [],
@@ -580,7 +580,7 @@ class TestMarkAlerted:
         # Manually insert a window with
         # alert_sent=False
         window = {
-            "pk": f"{ACCOUNT}#us-east-1#ec2_05",
+            "pk": f"{ACCOUNT}#us-east-1#ec2_no_open_ssh",
             "sk": "2026-02-28T12:00:00",
             "events": [],
             "event_count": 1,

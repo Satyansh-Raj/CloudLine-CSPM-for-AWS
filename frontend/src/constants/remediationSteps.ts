@@ -91,8 +91,8 @@ type RemediationFactory = (p: ParsedArn) => RemediationMethod;
 
 const FACTORIES: Record<string, RemediationFactory> = {
 
-  // iam_01 — Root account MFA
-  iam_01: ({ accountId }) => ({
+  // iam_root_mfa — Root account MFA
+  iam_root_mfa: ({ accountId }) => ({
     console: [
       "Sign in to the AWS Management Console as the root user.",
       "Click the account name (top-right) → Security credentials.",
@@ -137,8 +137,8 @@ resource "aws_organizations_policy_attachment" "require_mfa" {
 }`,
   }),
 
-  // iam_02 — Weak IAM password policy
-  iam_02: ({ accountId }) => ({
+  // iam_pwd_min_length — Weak IAM password policy
+  iam_pwd_min_length: ({ accountId }) => ({
     console: [
       "Open the IAM console → Account settings.",
       "Click Change password policy.",
@@ -176,8 +176,8 @@ resource "aws_iam_account_password_policy" "strict" {
 }`,
   }),
 
-  // iam_09 — IAM user MFA not enabled
-  iam_09: ({ resourceId, accountId }) => ({
+  // iam_user_mfa — IAM user MFA not enabled
+  iam_user_mfa: ({ resourceId, accountId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Click Security credentials tab.",
@@ -217,8 +217,8 @@ resource "aws_iam_virtual_mfa_device" "user_mfa" {
 # Activation requires live OTP codes — complete via CLI after plan/apply.`,
   }),
 
-  // s3_01 — S3 public access not blocked
-  s3_01: ({ resourceId }) => ({
+  // s3_block_public_acls — S3 public access not blocked
+  s3_block_public_acls: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Block public access (bucket settings) → Edit.",
@@ -245,8 +245,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 }`,
   }),
 
-  // cloudtrail_01 — CloudTrail logging disabled
-  cloudtrail_01: ({ region, accountId, resourceId }) => {
+  // cloudtrail_enabled — CloudTrail logging disabled
+  cloudtrail_enabled: ({ region, accountId, resourceId }) => {
     const trailName = resourceId === "no-trails" ? "cloudline-trail" : resourceId;
     return {
       console: [
@@ -317,8 +317,8 @@ resource "aws_cloudtrail" "main" {
     };
   },
 
-  // cloudtrail_02 — No multi-region CloudTrail trail
-  cloudtrail_02: ({ region, accountId }) => ({
+  // cloudtrail_multi_region — No multi-region CloudTrail trail
+  cloudtrail_multi_region: ({ region, accountId }) => ({
     console: [
       "Open CloudTrail console → Trails.",
       "Edit existing trail or create new one.",
@@ -351,8 +351,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_03 — CloudTrail log file validation disabled
-  cloudtrail_03: ({ resourceId, region }) => ({
+  // cloudtrail_log_validation — CloudTrail log file validation disabled
+  cloudtrail_log_validation: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "General details → Edit.",
@@ -374,8 +374,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_04 — CloudTrail S3 log bucket publicly accessible
-  cloudtrail_04: ({ resourceId }) => ({
+  // cloudtrail_s3_private — CloudTrail S3 log bucket publicly accessible
+  cloudtrail_s3_private: ({ resourceId }) => ({
     console: [
       `Open S3 console → select CloudTrail log bucket "${resourceId}".`,
       "Permissions → Block public access → Edit.",
@@ -399,8 +399,8 @@ resource "aws_s3_bucket_public_access_block" "cloudtrail_logs" {
 }`,
   }),
 
-  // cloudtrail_05 — CloudTrail not integrated with CloudWatch Logs
-  cloudtrail_05: ({ resourceId, region, accountId }) => ({
+  // cloudtrail_cloudwatch_logs — CloudTrail not integrated with CloudWatch Logs
+  cloudtrail_cloudwatch_logs: ({ resourceId, region, accountId }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "CloudWatch Logs → Edit.",
@@ -437,8 +437,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_06 — CloudTrail logs not encrypted with KMS
-  cloudtrail_06: ({ resourceId, region }) => ({
+  // cloudtrail_kms_encryption — CloudTrail logs not encrypted with KMS
+  cloudtrail_kms_encryption: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "General details → Edit.",
@@ -471,8 +471,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_07 — CloudTrail has no SNS notification
-  cloudtrail_07: ({ resourceId, region }) => ({
+  // cloudtrail_sns_notification — CloudTrail has no SNS notification
+  cloudtrail_sns_notification: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "General details → Edit.",
@@ -503,8 +503,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_08 — CloudTrail not logging management events
-  cloudtrail_08: ({ resourceId, region }) => ({
+  // cloudtrail_mgmt_events — CloudTrail not logging management events
+  cloudtrail_mgmt_events: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "Event selectors → Edit.",
@@ -532,8 +532,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_09 — CloudTrail logging write events only
-  cloudtrail_09: ({ resourceId, region }) => ({
+  // cloudtrail_read_write_events — CloudTrail logging write events only
+  cloudtrail_read_write_events: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "Event selectors → Edit.",
@@ -560,8 +560,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_10 — CloudTrail not logging S3 data events
-  cloudtrail_10: ({ resourceId, region }) => ({
+  // cloudtrail_s3_data_events — CloudTrail not logging S3 data events
+  cloudtrail_s3_data_events: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "Event selectors → Edit.",
@@ -598,8 +598,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_11 — CloudTrail not logging Lambda data events
-  cloudtrail_11: ({ resourceId, region }) => ({
+  // cloudtrail_lambda_data_events — CloudTrail not logging Lambda data events
+  cloudtrail_lambda_data_events: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "Event selectors → Edit.",
@@ -634,8 +634,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_12 — CloudTrail Insights not enabled
-  cloudtrail_12: ({ resourceId, region }) => ({
+  // cloudtrail_insights — CloudTrail Insights not enabled
+  cloudtrail_insights: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "Insights → Edit.",
@@ -665,8 +665,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_13 — Multi-region trail excludes global service events
-  cloudtrail_13: ({ resourceId, region }) => ({
+  // cloudtrail_global_events — Multi-region trail excludes global service events
+  cloudtrail_global_events: ({ resourceId, region }) => ({
     console: [
       `Open CloudTrail console → Trails → select "${resourceId}".`,
       "General details → Edit.",
@@ -688,8 +688,8 @@ resource "aws_cloudtrail" "fix" {
 }`,
   }),
 
-  // cloudtrail_14 — CloudTrail log retention < 365 days
-  cloudtrail_14: ({ resourceId, region }) => ({
+  // cloudtrail_retention_365 — CloudTrail log retention < 365 days
+  cloudtrail_retention_365: ({ resourceId, region }) => ({
     console: [
       "Open CloudWatch console → Log groups.",
       `Select the CloudTrail log group for "${resourceId}".`,
@@ -711,8 +711,8 @@ resource "aws_cloudwatch_log_group" "cloudtrail" {
 }`,
   }),
 
-  // cloudtrail_15 — CloudTrail S3 bucket MFA delete disabled
-  cloudtrail_15: ({ resourceId }) => ({
+  // cloudtrail_s3_mfa_delete — CloudTrail S3 bucket MFA delete disabled
+  cloudtrail_s3_mfa_delete: ({ resourceId }) => ({
     console: [
       `CloudTrail S3 bucket "${resourceId}" does not have MFA Delete.`,
       "MFA Delete must be enabled by the root account via CLI.",
@@ -736,8 +736,8 @@ resource "aws_s3_bucket_versioning" "cloudtrail" {
 }`,
   }),
 
-  // vpc_01 — VPC flow logs disabled
-  vpc_01: ({ resourceId }) => ({
+  // vpc_flow_logs — VPC flow logs disabled
+  vpc_flow_logs: ({ resourceId }) => ({
     console: [
       `Open VPC console → Your VPCs → select "${resourceId}".`,
       "Actions → Create flow log.",
@@ -832,8 +832,8 @@ resource "aws_flow_log" "fix" {
 }`,
   }),
 
-  // ec2_05 — Open SSH / RDP in Security Group
-  ec2_05: ({ resourceId }) => ({
+  // ec2_no_open_ssh — Open SSH / RDP in Security Group
+  ec2_no_open_ssh: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Inbound rules → Edit inbound rules.",
@@ -893,8 +893,8 @@ resource "aws_security_group" "fix" {
 }`,
   }),
 
-  // ec2_01 — EC2 IMDSv2 not enforced
-  ec2_01: ({ resourceId, region }) => ({
+  // ec2_imdsv2 — EC2 IMDSv2 not enforced
+  ec2_imdsv2: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Actions → Instance settings → Modify instance metadata options.",
@@ -931,8 +931,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_02 — Production EC2 has public IP
-  ec2_02: ({ resourceId, region }) => ({
+  // ec2_no_public_ip — Production EC2 has public IP
+  ec2_no_public_ip: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "This instance has a public IP. To remove it:",
@@ -978,8 +978,8 @@ resource "aws_subnet" "private" {
 }`,
   }),
 
-  // ec2_03 — EC2 running in default VPC
-  ec2_03: ({ resourceId, region }) => ({
+  // ec2_no_default_vpc — EC2 running in default VPC
+  ec2_no_default_vpc: ({ resourceId, region }) => ({
     console: [
       `Instance "${resourceId}" is in the default VPC.`,
       "Create a custom VPC with proper network segmentation.",
@@ -1028,8 +1028,8 @@ resource "aws_instance" "migrated" {
 }`,
   }),
 
-  // ec2_04 — EC2 detailed monitoring disabled
-  ec2_04: ({ resourceId, region }) => ({
+  // ec2_detailed_monitoring — EC2 detailed monitoring disabled
+  ec2_detailed_monitoring: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Actions → Monitor and troubleshoot → Manage detailed monitoring.",
@@ -1055,8 +1055,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_06 — Security group allows RDP from 0.0.0.0/0
-  ec2_06: ({ resourceId }) => ({
+  // ec2_no_open_rdp — Security group allows RDP from 0.0.0.0/0
+  ec2_no_open_rdp: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Inbound rules → Edit inbound rules.",
@@ -1100,8 +1100,8 @@ resource "aws_security_group_rule" "rdp" {
 }`,
   }),
 
-  // ec2_07 — Security group allows all inbound traffic
-  ec2_07: ({ resourceId }) => ({
+  // ec2_no_all_inbound — Security group allows all inbound traffic
+  ec2_no_all_inbound: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Inbound rules → Edit inbound rules.",
@@ -1146,8 +1146,8 @@ resource "aws_security_group" "fix" {
 }`,
   }),
 
-  // ec2_08 — EC2 root EBS volume not encrypted
-  ec2_08: ({ resourceId, region }) => ({
+  // ec2_root_ebs_encrypted — EC2 root EBS volume not encrypted
+  ec2_root_ebs_encrypted: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Storage tab → note the root volume ID.",
@@ -1200,8 +1200,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_09 — EC2 instance has admin IAM role
-  ec2_09: ({ resourceId, region }) => ({
+  // ec2_no_admin_role — EC2 instance has admin IAM role
+  ec2_no_admin_role: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Actions → Security → Modify IAM role.",
@@ -1260,8 +1260,8 @@ resource "aws_iam_instance_profile" "scoped" {
 }`,
   }),
 
-  // ec2_10 — EBS snapshot publicly accessible
-  ec2_10: ({ resourceId, region }) => ({
+  // ec2_snapshot_private — EBS snapshot publicly accessible
+  ec2_snapshot_private: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Snapshots → select "${resourceId}".`,
       "Actions → Modify permissions.",
@@ -1291,8 +1291,8 @@ resource "aws_ebs_snapshot_block_public_access" "fix" {
 }`,
   }),
 
-  // ec2_11 — Production EC2 termination protection off
-  ec2_11: ({ resourceId, region }) => ({
+  // ec2_termination_protection — Production EC2 termination protection off
+  ec2_termination_protection: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Actions → Instance settings → Change termination protection.",
@@ -1318,8 +1318,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_12 — EC2 instance stopped > 90 days
-  ec2_12: ({ resourceId, region }) => ({
+  // ec2_stopped_cleanup — EC2 instance stopped > 90 days
+  ec2_stopped_cleanup: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Instance has been stopped for > 90 days.",
@@ -1357,8 +1357,8 @@ resource "aws_ami_from_instance" "backup" {
 }`,
   }),
 
-  // ec2_13 — Security group allows all IPv6 inbound
-  ec2_13: ({ resourceId }) => ({
+  // ec2_no_ipv6_all_ports — Security group allows all IPv6 inbound
+  ec2_no_ipv6_all_ports: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Inbound rules → Edit inbound rules.",
@@ -1393,8 +1393,8 @@ resource "aws_security_group_rule" "https_ipv6" {
 }`,
   }),
 
-  // ec2_14 — EC2 instance has no IAM instance profile
-  ec2_14: ({ resourceId, region }) => ({
+  // ec2_instance_profile — EC2 instance has no IAM instance profile
+  ec2_instance_profile: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Actions → Security → Modify IAM role.",
@@ -1453,8 +1453,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_15 — Internal SG allows HTTPS from public
-  ec2_15: ({ resourceId }) => ({
+  // ec2_no_open_443_internal — Internal SG allows HTTPS from public
+  ec2_no_open_443_internal: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "This SG is tagged 'internal' but allows HTTPS from 0.0.0.0/0.",
@@ -1491,8 +1491,8 @@ resource "aws_security_group_rule" "internal_https" {
 }`,
   }),
 
-  // ec2_16 — Production SG allows all outbound
-  ec2_16: ({ resourceId }) => ({
+  // ec2_no_unrestricted_outbound — Production SG allows all outbound
+  ec2_no_unrestricted_outbound: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Outbound rules → Edit outbound rules.",
@@ -1544,8 +1544,8 @@ resource "aws_security_group" "fix" {
 }`,
   }),
 
-  // ec2_17 — Production EC2 uses key pair instead of SSM
-  ec2_17: ({ resourceId, region }) => ({
+  // ec2_no_key_pairs_prod — Production EC2 uses key pair instead of SSM
+  ec2_no_key_pairs_prod: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Install SSM Agent on the instance (pre-installed on Amazon Linux 2+).",
@@ -1586,8 +1586,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_18 — EC2 using deprecated instance type
-  ec2_18: ({ resourceId, region }) => ({
+  // ec2_no_deprecated_types — EC2 using deprecated instance type
+  ec2_no_deprecated_types: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Instances → select "${resourceId}".`,
       "Actions → Instance settings → Change instance type.",
@@ -1623,8 +1623,8 @@ resource "aws_instance" "fix" {
 }`,
   }),
 
-  // ec2_19 — Unused Elastic IP not released
-  ec2_19: ({ resourceId, region }) => ({
+  // ec2_no_unused_eips — Unused Elastic IP not released
+  ec2_no_unused_eips: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Elastic IPs → select "${resourceId}".`,
       "If not in use: Actions → Release Elastic IP address.",
@@ -1650,8 +1650,8 @@ aws ec2 release-address \\
 # Run terraform apply to release it.`,
   }),
 
-  // ec2_20 — Account-owned AMI publicly shared
-  ec2_20: ({ resourceId, region }) => ({
+  // ec2_ami_private — Account-owned AMI publicly shared
+  ec2_ami_private: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → AMIs → select "${resourceId}".`,
       "Actions → Edit AMI permissions.",
@@ -1694,8 +1694,8 @@ resource "aws_ec2_image_block_public_access" "fix" {
 }`,
   }),
 
-  // db_01 — Insecure RDS configuration
-  db_01: ({ resourceId, region }) => ({
+  // db_rds_no_public_access — Insecure RDS configuration
+  db_rds_no_public_access: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → Connectivity: Public accessibility = No.",
@@ -1748,8 +1748,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_02 — RDS storage not encrypted
-  db_02: ({ resourceId, region }) => ({
+  // db_rds_encryption — RDS storage not encrypted
+  db_rds_encryption: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Encryption can only be enabled at creation or via snapshot restore.",
@@ -1793,8 +1793,8 @@ resource "aws_kms_key" "rds" {
 }`,
   }),
 
-  // db_03 — RDS backup retention < 7 days
-  db_03: ({ resourceId, region }) => ({
+  // db_rds_backup_retention — RDS backup retention < 7 days
+  db_rds_backup_retention: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → Backup retention period → set to 7 or more days.",
@@ -1816,8 +1816,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_04 — Production RDS not Multi-AZ
-  db_04: ({ resourceId, region }) => ({
+  // db_rds_multi_az — Production RDS not Multi-AZ
+  db_rds_multi_az: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → enable Multi-AZ deployment.",
@@ -1839,8 +1839,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_05 — Production RDS deletion protection off
-  db_05: ({ resourceId, region }) => ({
+  // db_rds_deletion_protection — Production RDS deletion protection off
+  db_rds_deletion_protection: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → enable Deletion protection.",
@@ -1862,8 +1862,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_06 — RDS IAM database authentication not enabled
-  db_06: ({ resourceId, region }) => ({
+  // db_rds_iam_auth — RDS IAM database authentication not enabled
+  db_rds_iam_auth: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → enable IAM database authentication.",
@@ -1885,8 +1885,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_07 — RDS snapshot publicly accessible
-  db_07: ({ resourceId, region }) => ({
+  // db_rds_snapshot_private — RDS snapshot publicly accessible
+  db_rds_snapshot_private: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Snapshots → select "${resourceId}".`,
       "Actions → Share snapshot.",
@@ -1913,8 +1913,8 @@ aws rds describe-db-snapshot-attributes \\
 # that reference "all".`,
   }),
 
-  // db_08 — RDS CloudWatch log exports not enabled
-  db_08: ({ resourceId, region }) => ({
+  // db_rds_log_exports — RDS CloudWatch log exports not enabled
+  db_rds_log_exports: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → Log exports → enable all relevant log types.",
@@ -1942,8 +1942,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_09 — RDS auto minor version upgrade disabled
-  db_09: ({ resourceId, region }) => ({
+  // db_rds_auto_minor_upgrade — RDS auto minor version upgrade disabled
+  db_rds_auto_minor_upgrade: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → enable Auto minor version upgrade.",
@@ -1965,8 +1965,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_10 — RDS using default database port
-  db_10: ({ resourceId, region }) => ({
+  // db_rds_no_default_port — RDS using default database port
+  db_rds_no_default_port: ({ resourceId, region }) => ({
     console: [
       `RDS instance "${resourceId}" uses a default port (3306/5432/etc).`,
       "Changing ports requires creating a new instance or restoring from snapshot.",
@@ -1995,8 +1995,8 @@ resource "aws_db_instance" "fix" {
 }`,
   }),
 
-  // db_11 — DynamoDB encryption not using KMS
-  db_11: ({ resourceId, region }) => ({
+  // db_dynamodb_kms_encryption — DynamoDB encryption not using KMS
+  db_dynamodb_kms_encryption: ({ resourceId, region }) => ({
     console: [
       `Open DynamoDB console → Tables → select "${resourceId}".`,
       "Additional settings → Encryption → Manage encryption.",
@@ -2026,8 +2026,8 @@ resource "aws_kms_key" "dynamo" {
 }`,
   }),
 
-  // db_12 — DynamoDB PITR not enabled
-  db_12: ({ resourceId, region }) => ({
+  // db_dynamodb_pitr — DynamoDB PITR not enabled
+  db_dynamodb_pitr: ({ resourceId, region }) => ({
     console: [
       `Open DynamoDB console → Tables → select "${resourceId}".`,
       "Backups tab → Point-in-time recovery → Edit.",
@@ -2048,8 +2048,8 @@ resource "aws_dynamodb_table" "fix" {
 }`,
   }),
 
-  // db_13 — Production DynamoDB deletion protection off
-  db_13: ({ resourceId, region }) => ({
+  // db_dynamodb_deletion_protection — Production DynamoDB deletion protection off
+  db_dynamodb_deletion_protection: ({ resourceId, region }) => ({
     console: [
       `Open DynamoDB console → Tables → select "${resourceId}".`,
       "Additional settings → enable Deletion protection.",
@@ -2070,8 +2070,8 @@ resource "aws_dynamodb_table" "fix" {
 }`,
   }),
 
-  // db_14 — DynamoDB resource policy allows public access
-  db_14: ({ resourceId, region }) => ({
+  // db_dynamodb_no_public_policy — DynamoDB resource policy allows public access
+  db_dynamodb_no_public_policy: ({ resourceId, region }) => ({
     console: [
       `Open DynamoDB console → Tables → select "${resourceId}".`,
       "Access control → Resource policy → Edit.",
@@ -2104,8 +2104,8 @@ resource "aws_dynamodb_resource_policy" "fix" {
 }`,
   }),
 
-  // db_15 — Production DynamoDB auto-scaling not configured
-  db_15: ({ resourceId, region }) => ({
+  // db_dynamodb_auto_scaling — Production DynamoDB auto-scaling not configured
+  db_dynamodb_auto_scaling: ({ resourceId, region }) => ({
     console: [
       `Open DynamoDB console → Tables → select "${resourceId}".`,
       "Additional settings → Read/write capacity.",
@@ -2127,8 +2127,8 @@ resource "aws_dynamodb_table" "fix" {
 }`,
   }),
 
-  // db_16 — Aurora cluster publicly accessible
-  db_16: ({ resourceId, region }) => ({
+  // db_aurora_no_public_access — Aurora cluster publicly accessible
+  db_aurora_no_public_access: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select Aurora cluster "${resourceId}".`,
       "Select each instance → Modify.",
@@ -2159,8 +2159,8 @@ resource "aws_rds_cluster_instance" "fix" {
 }`,
   }),
 
-  // db_17 — Aurora storage not encrypted
-  db_17: ({ resourceId, region }) => ({
+  // db_aurora_encryption — Aurora storage not encrypted
+  db_aurora_encryption: ({ resourceId, region }) => ({
     console: [
       "Aurora encryption is set at cluster creation.",
       `Take a snapshot of cluster "${resourceId}".`,
@@ -2197,8 +2197,8 @@ resource "aws_rds_cluster" "fix" {
 }`,
   }),
 
-  // db_18 — Production Aurora deletion protection off
-  db_18: ({ resourceId, region }) => ({
+  // db_aurora_deletion_protection — Production Aurora deletion protection off
+  db_aurora_deletion_protection: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → enable Deletion protection.",
@@ -2220,8 +2220,8 @@ resource "aws_rds_cluster" "fix" {
 }`,
   }),
 
-  // db_19 — Aurora backtrack not enabled for critical clusters
-  db_19: ({ resourceId, region }) => ({
+  // db_aurora_backtrack — Aurora backtrack not enabled for critical clusters
+  db_aurora_backtrack: ({ resourceId, region }) => ({
     console: [
       "Backtrack can only be enabled at cluster creation (MySQL-compatible only).",
       `Create a new Aurora cluster with backtrack enabled to replace "${resourceId}".`,
@@ -2247,8 +2247,8 @@ resource "aws_rds_cluster" "fix" {
 }`,
   }),
 
-  // db_20 — Aurora IAM authentication not enabled
-  db_20: ({ resourceId, region }) => ({
+  // db_aurora_iam_auth — Aurora IAM authentication not enabled
+  db_aurora_iam_auth: ({ resourceId, region }) => ({
     console: [
       `Open RDS console → Databases → select "${resourceId}".`,
       "Modify → enable IAM database authentication.",
@@ -2270,8 +2270,8 @@ resource "aws_rds_cluster" "fix" {
 }`,
   }),
 
-  // iam_14 — Unused IAM credentials active
-  iam_14: ({ resourceId }) => ({
+  // iam_inactive_user — Unused IAM credentials active
+  iam_inactive_user: ({ resourceId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Security credentials tab → Access keys.",
@@ -2322,8 +2322,8 @@ resource "aws_iam_role" "app_role" {
 }`,
   }),
 
-  // s3_05 — Encryption in transit disabled (S3)
-  s3_05: ({ resourceId }) => ({
+  // s3_encryption — Encryption in transit disabled (S3)
+  s3_encryption: ({ resourceId }) => ({
     console: [
       `Open S3 console → bucket "${resourceId}" → Permissions.`,
       "Bucket policy → Edit.",
@@ -2373,8 +2373,8 @@ resource "aws_s3_bucket_policy" "https_only" {
 }`,
   }),
 
-  // s3_02 — S3 IgnorePublicAcls not enabled
-  s3_02: ({ resourceId }) => ({
+  // s3_ignore_public_acls — S3 IgnorePublicAcls not enabled
+  s3_ignore_public_acls: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Block public access → Edit.",
@@ -2398,8 +2398,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 }`,
   }),
 
-  // s3_03 — S3 BlockPublicPolicy not enabled
-  s3_03: ({ resourceId }) => ({
+  // s3_block_public_policy — S3 BlockPublicPolicy not enabled
+  s3_block_public_policy: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Block public access → Edit.",
@@ -2423,8 +2423,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 }`,
   }),
 
-  // s3_04 — S3 RestrictPublicBuckets not enabled
-  s3_04: ({ resourceId }) => ({
+  // s3_restrict_public_buckets — S3 RestrictPublicBuckets not enabled
+  s3_restrict_public_buckets: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Block public access → Edit.",
@@ -2448,8 +2448,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 }`,
   }),
 
-  // s3_06 — Sensitive S3 bucket versioning disabled
-  s3_06: ({ resourceId }) => ({
+  // s3_versioning — Sensitive S3 bucket versioning disabled
+  s3_versioning: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Properties tab → Bucket Versioning → Edit.",
@@ -2473,8 +2473,8 @@ resource "aws_s3_bucket_versioning" "fix" {
 }`,
   }),
 
-  // s3_07 — Sensitive S3 bucket MFA delete disabled
-  s3_07: ({ resourceId }) => ({
+  // s3_mfa_delete — Sensitive S3 bucket MFA delete disabled
+  s3_mfa_delete: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "MFA Delete can only be enabled via CLI by the root account.",
@@ -2506,8 +2506,8 @@ resource "aws_s3_bucket_versioning" "fix" {
 }`,
   }),
 
-  // s3_08 — Production S3 bucket access logging disabled
-  s3_08: ({ resourceId }) => ({
+  // s3_access_logging — Production S3 bucket access logging disabled
+  s3_access_logging: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Properties tab → Server access logging → Edit.",
@@ -2549,8 +2549,8 @@ resource "aws_s3_bucket_logging" "fix" {
 }`,
   }),
 
-  // s3_09 — S3 bucket policy allows unencrypted HTTP
-  s3_09: ({ resourceId }) => ({
+  // s3_deny_http — S3 bucket policy allows unencrypted HTTP
+  s3_deny_http: ({ resourceId }) => ({
     console: [
       `Open S3 console → bucket "${resourceId}" → Permissions.`,
       "Bucket policy → Edit.",
@@ -2601,8 +2601,8 @@ resource "aws_s3_bucket_policy" "https_only" {
 }`,
   }),
 
-  // s3_10 — S3 ACL grants public read access
-  s3_10: ({ resourceId }) => ({
+  // s3_no_public_read_acl — S3 ACL grants public read access
+  s3_no_public_read_acl: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Access control list (ACL) → Edit.",
@@ -2639,8 +2639,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 }`,
   }),
 
-  // s3_11 — S3 ACL grants public write access
-  s3_11: ({ resourceId }) => ({
+  // s3_no_public_write_acl — S3 ACL grants public write access
+  s3_no_public_write_acl: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Access control list (ACL) → Edit.",
@@ -2679,8 +2679,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 }`,
   }),
 
-  // s3_12 — Production S3 bucket has no lifecycle policy
-  s3_12: ({ resourceId }) => ({
+  // s3_lifecycle_policy — Production S3 bucket has no lifecycle policy
+  s3_lifecycle_policy: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Management tab → Create lifecycle rule.",
@@ -2735,8 +2735,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "fix" {
 }`,
   }),
 
-  // s3_13 — Compliance S3 bucket Object Lock disabled
-  s3_13: ({ resourceId }) => ({
+  // s3_object_lock — Compliance S3 bucket Object Lock disabled
+  s3_object_lock: ({ resourceId }) => ({
     console: [
       "Object Lock must be enabled at bucket creation time.",
       "Create a new bucket with Object Lock enabled.",
@@ -2795,8 +2795,8 @@ resource "aws_s3_bucket_object_lock_configuration" "fix" {
 }`,
   }),
 
-  // s3_14 — S3 CORS configuration allows all origins
-  s3_14: ({ resourceId }) => ({
+  // s3_cors_wildcard — S3 CORS configuration allows all origins
+  s3_cors_wildcard: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Permissions tab → Cross-origin resource sharing (CORS) → Edit.",
@@ -2832,8 +2832,8 @@ resource "aws_s3_bucket_cors_configuration" "fix" {
 }`,
   }),
 
-  // s3_15 — Sensitive S3 bucket not using KMS encryption
-  s3_15: ({ resourceId }) => ({
+  // s3_kms_encryption — Sensitive S3 bucket not using KMS encryption
+  s3_kms_encryption: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Properties tab → Default encryption → Edit.",
@@ -2888,8 +2888,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "fix" {
 }`,
   }),
 
-  // s3_16 — S3 policy allows Principal:* without conditions
-  s3_16: ({ resourceId }) => ({
+  // s3_no_public_principal — S3 policy allows Principal:* without conditions
+  s3_no_public_principal: ({ resourceId }) => ({
     console: [
       `Open S3 console → bucket "${resourceId}" → Permissions.`,
       "Bucket policy → Edit.",
@@ -2945,8 +2945,8 @@ resource "aws_s3_bucket_policy" "fix" {
 }`,
   }),
 
-  // s3_17 — High-criticality S3 bucket has no replication
-  s3_17: ({ resourceId, region }) => ({
+  // s3_replication — High-criticality S3 bucket has no replication
+  s3_replication: ({ resourceId, region }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Management tab → Replication rules → Create rule.",
@@ -3023,8 +3023,8 @@ resource "aws_s3_bucket_replication_configuration" "fix" {
 }`,
   }),
 
-  // s3_18 — Security-monitored S3 bucket no event notifications
-  s3_18: ({ resourceId, region }) => ({
+  // s3_event_notifications — Security-monitored S3 bucket no event notifications
+  s3_event_notifications: ({ resourceId, region }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Properties tab → Event notifications → Create event notification.",
@@ -3076,8 +3076,8 @@ resource "aws_s3_bucket_notification" "fix" {
 }`,
   }),
 
-  // s3_19 — S3 cross-account access missing org ID condition
-  s3_19: ({ resourceId }) => ({
+  // s3_cross_account_org_id — S3 cross-account access missing org ID condition
+  s3_cross_account_org_id: ({ resourceId }) => ({
     console: [
       `Open S3 console → bucket "${resourceId}" → Permissions.`,
       "Bucket policy → Edit.",
@@ -3125,8 +3125,8 @@ resource "aws_s3_bucket_policy" "fix" {
 }`,
   }),
 
-  // s3_20 — Large S3 bucket no Intelligent-Tiering
-  s3_20: ({ resourceId }) => ({
+  // s3_intelligent_tiering — Large S3 bucket no Intelligent-Tiering
+  s3_intelligent_tiering: ({ resourceId }) => ({
     console: [
       `Open S3 console → select bucket "${resourceId}".`,
       "Management tab → Create lifecycle rule.",
@@ -3189,8 +3189,8 @@ resource "aws_s3_bucket_intelligent_tiering_configuration" "fix" {
 }`,
   }),
 
-  // config_01 — AWS Config not recording
-  config_01: ({ accountId, region }) => ({
+  // config_recorder_enabled — AWS Config not recording
+  config_recorder_enabled: ({ accountId, region }) => ({
     console: [
       "Open AWS Config console → Get started.",
       "Select 'Record all resources supported in this region'.",
@@ -3263,8 +3263,8 @@ resource "aws_config_configuration_recorder_status" "main" {
 }`,
   }),
 
-  // config_02 — AWS Config recorder not active
-  config_02: ({ region }) => ({
+  // config_recorder_active — AWS Config recorder not active
+  config_recorder_active: ({ region }) => ({
     console: [
       "Open AWS Config console → Settings.",
       "Start the configuration recorder.",
@@ -3286,8 +3286,8 @@ resource "aws_config_configuration_recorder_status" "fix" {
 }`,
   }),
 
-  // config_03 — AWS Config delivery channel not configured
-  config_03: ({ region, accountId }) => ({
+  // config_delivery_channel — AWS Config delivery channel not configured
+  config_delivery_channel: ({ region, accountId }) => ({
     console: [
       "Open AWS Config console → Settings.",
       "Set up a delivery channel with an S3 bucket.",
@@ -3314,8 +3314,8 @@ resource "aws_config_delivery_channel" "fix" {
 }`,
   }),
 
-  // config_04 — Config S3 delivery bucket publicly accessible
-  config_04: ({ resourceId }) => ({
+  // config_s3_private — Config S3 delivery bucket publicly accessible
+  config_s3_private: ({ resourceId }) => ({
     console: [
       `Open S3 console → select Config bucket "${resourceId}".`,
       "Permissions → Block public access → Edit.",
@@ -3339,8 +3339,8 @@ resource "aws_s3_bucket_public_access_block" "config" {
 }`,
   }),
 
-  // config_05 — No AWS Config rules deployed
-  config_05: ({ region }) => ({
+  // config_rules_deployed — No AWS Config rules deployed
+  config_rules_deployed: ({ region }) => ({
     console: [
       "Open AWS Config console → Rules → Add rule.",
       "Select AWS managed rules (e.g. s3-bucket-public-read-prohibited).",
@@ -3376,8 +3376,8 @@ resource "aws_config_config_rule" "encrypted_volumes" {
 }`,
   }),
 
-  // config_06 — Config no SNS compliance notification
-  config_06: ({ region }) => ({
+  // config_sns_notification — Config no SNS compliance notification
+  config_sns_notification: ({ region }) => ({
     console: [
       "Open AWS Config console → Settings.",
       "SNS topic → select or create a topic for compliance notifications.",
@@ -3407,8 +3407,8 @@ resource "aws_config_delivery_channel" "fix" {
 }`,
   }),
 
-  // config_07 — Config recorder excludes global IAM resources
-  config_07: ({ region }) => ({
+  // config_global_iam_resources — Config recorder excludes global IAM resources
+  config_global_iam_resources: ({ region }) => ({
     console: [
       "Open AWS Config console → Settings → Edit.",
       "Check 'Include global resources (e.g., IAM)'.",
@@ -3436,8 +3436,8 @@ resource "aws_config_configuration_recorder" "fix" {
 }`,
   }),
 
-  // config_08 — Config multi-account aggregator not configured
-  config_08: ({ region, accountId }) => ({
+  // config_multi_account_aggregator — Config multi-account aggregator not configured
+  config_multi_account_aggregator: ({ region, accountId }) => ({
     console: [
       "Open AWS Config console → Aggregators → Create aggregator.",
       "Select 'Add individual account IDs' or 'Add my organization'.",
@@ -3462,8 +3462,8 @@ resource "aws_config_configuration_aggregator" "fix" {
 }`,
   }),
 
-  // config_09 — No Config conformance packs deployed
-  config_09: ({ region }) => ({
+  // config_conformance_packs — No Config conformance packs deployed
+  config_conformance_packs: ({ region }) => ({
     console: [
       "Open AWS Config console → Conformance packs → Deploy.",
       "Select a sample template (e.g. AWS Control Tower Detective Guardrails).",
@@ -3483,8 +3483,8 @@ resource "aws_config_conformance_pack" "fix" {
 }`,
   }),
 
-  // config_10 — Non-compliant Config rules have no remediation
-  config_10: ({ resourceId, region }) => ({
+  // config_remediation_actions — Non-compliant Config rules have no remediation
+  config_remediation_actions: ({ resourceId, region }) => ({
     console: [
       `Open AWS Config console → Rules → select "${resourceId}".`,
       "Actions → Manage remediation.",
@@ -3512,8 +3512,8 @@ resource "aws_config_remediation_configuration" "fix" {
 }`,
   }),
 
-  // config_11 — Config snapshot delivery not set to daily
-  config_11: ({ region }) => ({
+  // config_daily_snapshots — Config snapshot delivery not set to daily
+  config_daily_snapshots: ({ region }) => ({
     console: [
       "Open AWS Config console → Settings → Edit.",
       "Snapshot delivery frequency → TwentyFour_Hours.",
@@ -3536,8 +3536,8 @@ resource "aws_config_delivery_channel" "fix" {
 }`,
   }),
 
-  // config_12 — AWS Config rules in ERROR state
-  config_12: ({ resourceId, region }) => ({
+  // config_no_error_rules — AWS Config rules in ERROR state
+  config_no_error_rules: ({ resourceId, region }) => ({
     console: [
       `Open AWS Config console → Rules → select "${resourceId}".`,
       "Check the error message in rule status.",
@@ -3562,8 +3562,8 @@ aws configservice start-config-rules-evaluation \\
 # then run terraform apply to re-deploy the rule.`,
   }),
 
-  // awssec_01 — GuardDuty not enabled
-  awssec_01: ({ region, accountId }) => ({
+  // awssec_guardduty_enabled — GuardDuty not enabled
+  awssec_guardduty_enabled: ({ region, accountId }) => ({
     console: [
       "Open GuardDuty console → Get Started → Enable GuardDuty.",
       "Settings → Findings export → configure S3 export.",
@@ -3609,8 +3609,8 @@ resource "aws_guardduty_detector" "main" {
 }`,
   }),
 
-  // awssec_02 — No GuardDuty detector found
-  awssec_02: ({ region }) => ({
+  // awssec_guardduty_detector — No GuardDuty detector found
+  awssec_guardduty_detector: ({ region }) => ({
     console: [
       "Open GuardDuty console → Get Started → Enable GuardDuty.",
     ],
@@ -3628,8 +3628,8 @@ resource "aws_guardduty_detector" "fix" {
 }`,
   }),
 
-  // awssec_03 — GuardDuty S3 protection disabled
-  awssec_03: ({ resourceId, region }) => ({
+  // awssec_guardduty_s3_protection — GuardDuty S3 protection disabled
+  awssec_guardduty_s3_protection: ({ resourceId, region }) => ({
     console: [
       `Open GuardDuty console → Settings → S3 Protection → Enable.`,
     ],
@@ -3649,8 +3649,8 @@ resource "aws_guardduty_detector" "fix" {
 }`,
   }),
 
-  // awssec_04 — GuardDuty malware protection disabled
-  awssec_04: ({ resourceId, region }) => ({
+  // awssec_guardduty_malware_ec2 — GuardDuty malware protection disabled
+  awssec_guardduty_malware_ec2: ({ resourceId, region }) => ({
     console: [
       "Open GuardDuty console → Settings → Malware Protection → Enable.",
     ],
@@ -3680,8 +3680,8 @@ resource "aws_guardduty_detector" "fix" {
 }`,
   }),
 
-  // awssec_05 — GuardDuty filter suppresses HIGH/CRITICAL findings
-  awssec_05: ({ resourceId, region }) => ({
+  // awssec_guardduty_no_suppress_crit — GuardDuty filter suppresses HIGH/CRITICAL findings
+  awssec_guardduty_no_suppress_crit: ({ resourceId, region }) => ({
     console: [
       `Open GuardDuty console → Filters → select "${resourceId}".`,
       "Review suppression filter criteria.",
@@ -3702,8 +3702,8 @@ aws guardduty delete-filter \\
 # suppresses HIGH/CRITICAL severity findings.`,
   }),
 
-  // awssec_06 — GuardDuty finding frequency set to 24 hours
-  awssec_06: ({ resourceId, region }) => ({
+  // awssec_guardduty_publish_frequency — GuardDuty finding frequency set to 24 hours
+  awssec_guardduty_publish_frequency: ({ resourceId, region }) => ({
     console: [
       "Open GuardDuty console → Settings.",
       "Finding publishing frequency → FIFTEEN_MINUTES.",
@@ -3723,8 +3723,8 @@ resource "aws_guardduty_detector" "fix" {
 }`,
   }),
 
-  // awssec_07 — GuardDuty no SNS notification for HIGH findings
-  awssec_07: ({ region }) => ({
+  // awssec_guardduty_sns_high — GuardDuty no SNS notification for HIGH findings
+  awssec_guardduty_sns_high: ({ region }) => ({
     console: [
       "Open EventBridge console → Rules → Create rule.",
       "Event pattern: GuardDuty Finding with severity >= 7.",
@@ -3772,8 +3772,8 @@ resource "aws_cloudwatch_event_target" "sns" {
 }`,
   }),
 
-  // awssec_08 — AWS Security Hub not enabled
-  awssec_08: ({ region }) => ({
+  // awssec_securityhub_enabled — AWS Security Hub not enabled
+  awssec_securityhub_enabled: ({ region }) => ({
     console: [
       "Open Security Hub console → Go to Security Hub → Enable.",
       "Enable default security standards.",
@@ -3788,8 +3788,8 @@ aws securityhub enable-security-hub \\
 resource "aws_securityhub_account" "fix" {}`,
   }),
 
-  // awssec_09 — Security Hub CIS AWS Foundations not enabled
-  awssec_09: ({ region }) => ({
+  // awssec_securityhub_cis_standard — Security Hub CIS AWS Foundations not enabled
+  awssec_securityhub_cis_standard: ({ region }) => ({
     console: [
       "Open Security Hub console → Security standards.",
       "Enable 'CIS AWS Foundations Benchmark'.",
@@ -3807,8 +3807,8 @@ resource "aws_securityhub_standards_subscription" "cis" {
 }`,
   }),
 
-  // awssec_10 — Security Hub FSBP standard not enabled
-  awssec_10: ({ region }) => ({
+  // awssec_securityhub_fsbp_standard — Security Hub FSBP standard not enabled
+  awssec_securityhub_fsbp_standard: ({ region }) => ({
     console: [
       "Open Security Hub console → Security standards.",
       "Enable 'AWS Foundational Security Best Practices'.",
@@ -3826,8 +3826,8 @@ resource "aws_securityhub_standards_subscription" "fsbp" {
 }`,
   }),
 
-  // awssec_11 — Security Hub CRITICAL finding suppressed without note
-  awssec_11: ({ resourceId, region }) => ({
+  // awssec_securityhub_no_suppress_crit — Security Hub CRITICAL finding suppressed without note
+  awssec_securityhub_no_suppress_crit: ({ resourceId, region }) => ({
     console: [
       "Open Security Hub console → Findings.",
       `Find suppressed CRITICAL finding "${resourceId}".`,
@@ -3848,8 +3848,8 @@ aws securityhub batch-update-findings \\
 # that hides CRITICAL findings without notes.`,
   }),
 
-  // awssec_12 — Security Hub no delegated admin configured
-  awssec_12: ({ region, accountId }) => ({
+  // awssec_securityhub_delegated_admin — Security Hub no delegated admin configured
+  awssec_securityhub_delegated_admin: ({ region, accountId }) => ({
     console: [
       "Open Security Hub console → Settings → General.",
       "Designate a delegated administrator account.",
@@ -3867,8 +3867,8 @@ resource "aws_securityhub_organization_admin_account" "fix" {
 }`,
   }),
 
-  // awssec_13 — Security Hub no SNS for CRITICAL findings
-  awssec_13: ({ region }) => ({
+  // awssec_securityhub_sns_critical — Security Hub no SNS for CRITICAL findings
+  awssec_securityhub_sns_critical: ({ region }) => ({
     console: [
       "Open EventBridge console → Rules → Create rule.",
       "Event pattern: Security Hub Finding with CRITICAL severity.",
@@ -3912,8 +3912,8 @@ resource "aws_cloudwatch_event_target" "sns" {
 }`,
   }),
 
-  // awssec_14 — AWS Inspector EC2 scanning disabled
-  awssec_14: ({ region }) => ({
+  // awssec_inspector_ec2_scanning — AWS Inspector EC2 scanning disabled
+  awssec_inspector_ec2_scanning: ({ region }) => ({
     console: [
       "Open Inspector console → Settings → Account management.",
       "Enable EC2 scanning.",
@@ -3931,8 +3931,8 @@ resource "aws_inspector2_enabler" "ec2" {
 }`,
   }),
 
-  // awssec_15 — AWS Inspector ECR container scanning disabled
-  awssec_15: ({ region }) => ({
+  // awssec_inspector_ecr_scanning — AWS Inspector ECR container scanning disabled
+  awssec_inspector_ecr_scanning: ({ region }) => ({
     console: [
       "Open Inspector console → Settings → Account management.",
       "Enable ECR scanning.",
@@ -3950,8 +3950,8 @@ resource "aws_inspector2_enabler" "ecr" {
 }`,
   }),
 
-  // awssec_16 — AWS Inspector Lambda scanning disabled
-  awssec_16: ({ region }) => ({
+  // awssec_inspector_lambda_scanning — AWS Inspector Lambda scanning disabled
+  awssec_inspector_lambda_scanning: ({ region }) => ({
     console: [
       "Open Inspector console → Settings → Account management.",
       "Enable Lambda scanning.",
@@ -3969,8 +3969,8 @@ resource "aws_inspector2_enabler" "lambda" {
 }`,
   }),
 
-  // awssec_17 — Inspector CRITICAL CVE open > 30 days
-  awssec_17: ({ resourceId, region }) => ({
+  // awssec_inspector_critical_cve_30d — Inspector CRITICAL CVE open > 30 days
+  awssec_inspector_critical_cve_30d: ({ resourceId, region }) => ({
     console: [
       `Open Inspector console → Findings → filter CRITICAL severity.`,
       `Find "${resourceId}" and apply the recommended patch.`,
@@ -4007,8 +4007,8 @@ resource "aws_ssm_patch_baseline" "fix" {
 }`,
   }),
 
-  // awssec_18 — Inspector HIGH CVE open > 90 days
-  awssec_18: ({ resourceId, region }) => ({
+  // awssec_inspector_high_cve_90d — Inspector HIGH CVE open > 90 days
+  awssec_inspector_high_cve_90d: ({ resourceId, region }) => ({
     console: [
       "Open Inspector console → Findings → filter HIGH severity.",
       `Find "${resourceId}" and apply the recommended patch.`,
@@ -4029,8 +4029,8 @@ aws inspector2 list-findings \\
 # Use SSM Patch Manager or update container images.`,
   }),
 
-  // awssec_19 — Inspector not integrated with Security Hub
-  awssec_19: ({ region }) => ({
+  // awssec_inspector_securityhub — Inspector not integrated with Security Hub
+  awssec_inspector_securityhub: ({ region }) => ({
     console: [
       "Open Security Hub console → Integrations.",
       "Find Amazon Inspector → Accept findings.",
@@ -4047,8 +4047,8 @@ resource "aws_securityhub_product_subscription" "inspector" {
 }`,
   }),
 
-  // awssec_20 — Inspector suppression filter hides CRITICAL findings
-  awssec_20: ({ resourceId, region }) => ({
+  // awssec_inspector_no_suppress_crit — Inspector suppression filter hides CRITICAL findings
+  awssec_inspector_no_suppress_crit: ({ resourceId, region }) => ({
     console: [
       "Open Inspector console → Suppression rules.",
       `Select filter "${resourceId}" → review criteria.`,
@@ -4066,8 +4066,8 @@ aws inspector2 delete-filter \\
 # suppresses CRITICAL findings.`,
   }),
 
-  // serverless_01 — Insecure Lambda configuration
-  serverless_01: ({ resourceId, region, accountId }) => ({
+  // serverless_lambda_xray — Insecure Lambda configuration
+  serverless_lambda_xray: ({ resourceId, region, accountId }) => ({
     console: [
       `Open Lambda console → function "${resourceId}".`,
       "Configuration → Permissions: verify execution role has least-privilege.",
@@ -4132,8 +4132,8 @@ resource "aws_lambda_function" "fix" {
 }`,
   }),
 
-  // serverless_02 — Lambda env vars not KMS encrypted
-  serverless_02: ({ resourceId, region }) => ({
+  // serverless_lambda_kms_env — Lambda env vars not KMS encrypted
+  serverless_lambda_kms_env: ({ resourceId, region }) => ({
     console: [
       `Open Lambda console → function "${resourceId}".`,
       "Configuration → Environment variables → Edit.",
@@ -4171,8 +4171,8 @@ resource "aws_kms_key" "lambda" {
 }`,
   }),
 
-  // serverless_03 — Lambda using deprecated runtime
-  serverless_03: ({ resourceId, region }) => ({
+  // serverless_lambda_runtime — Lambda using deprecated runtime
+  serverless_lambda_runtime: ({ resourceId, region }) => ({
     console: [
       `Open Lambda console → function "${resourceId}".`,
       "Code tab → Runtime settings → Edit.",
@@ -4201,8 +4201,8 @@ resource "aws_lambda_function" "fix" {
 }`,
   }),
 
-  // serverless_04 — Lambda resource policy allows public invocation
-  serverless_04: ({ resourceId, region }) => ({
+  // serverless_lambda_no_public_invoke — Lambda resource policy allows public invocation
+  serverless_lambda_no_public_invoke: ({ resourceId, region }) => ({
     console: [
       `Open Lambda console → function "${resourceId}".`,
       "Configuration → Permissions → Resource-based policy.",
@@ -4242,8 +4242,8 @@ resource "aws_lambda_permission" "fix" {
 }`,
   }),
 
-  // serverless_05 — Lambda execution role has AdministratorAccess
-  serverless_05: ({ resourceId, region }) => ({
+  // serverless_lambda_no_admin_role — Lambda execution role has AdministratorAccess
+  serverless_lambda_no_admin_role: ({ resourceId, region }) => ({
     console: [
       `Open Lambda console → function "${resourceId}".`,
       "Configuration → Permissions → Execution role.",
@@ -4289,8 +4289,8 @@ resource "aws_iam_role_policy_attachment" "basic" {
 }`,
   }),
 
-  // serverless_06 — ECS container running in privileged mode
-  serverless_06: ({ resourceId, region }) => ({
+  // serverless_ecs_no_privileged — ECS container running in privileged mode
+  serverless_ecs_no_privileged: ({ resourceId, region }) => ({
     console: [
       `Open ECS console → Task Definitions → select "${resourceId}".`,
       "Create new revision.",
@@ -4321,8 +4321,8 @@ resource "aws_ecs_task_definition" "fix" {
 }`,
   }),
 
-  // serverless_07 — ECS container root FS not read-only
-  serverless_07: ({ resourceId, region }) => ({
+  // serverless_ecs_readonly_root — ECS container root FS not read-only
+  serverless_ecs_readonly_root: ({ resourceId, region }) => ({
     console: [
       `Open ECS console → Task Definitions → select "${resourceId}".`,
       "Create new revision.",
@@ -4354,8 +4354,8 @@ resource "aws_ecs_task_definition" "fix" {
 }`,
   }),
 
-  // serverless_08 — ECS container not using CloudWatch Logs
-  serverless_08: ({ resourceId, region }) => ({
+  // serverless_ecs_cloudwatch_logs — ECS container not using CloudWatch Logs
+  serverless_ecs_cloudwatch_logs: ({ resourceId, region }) => ({
     console: [
       `Open ECS console → Task Definitions → select "${resourceId}".`,
       "Create new revision.",
@@ -4398,8 +4398,8 @@ resource "aws_cloudwatch_log_group" "ecs" {
 # }`,
   }),
 
-  // serverless_09 — ECS task using host network mode
-  serverless_09: ({ resourceId, region }) => ({
+  // serverless_ecs_no_host_network — ECS task using host network mode
+  serverless_ecs_no_host_network: ({ resourceId, region }) => ({
     console: [
       `Open ECS console → Task Definitions → select "${resourceId}".`,
       "Create new revision.",
@@ -4419,8 +4419,8 @@ resource "aws_ecs_task_definition" "fix" {
 }`,
   }),
 
-  // serverless_10 — ECS cluster Container Insights disabled
-  serverless_10: ({ resourceId, region }) => ({
+  // serverless_ecs_container_insights — ECS cluster Container Insights disabled
+  serverless_ecs_container_insights: ({ resourceId, region }) => ({
     console: [
       `Open ECS console → Clusters → select "${resourceId}".`,
       "Update cluster → enable Container Insights.",
@@ -4450,8 +4450,8 @@ resource "aws_ecs_cluster" "fix" {
 }`,
   }),
 
-  // serverless_11 — EKS API endpoint publicly accessible
-  serverless_11: ({ resourceId, region }) => ({
+  // serverless_eks_private_endpoint — EKS API endpoint publicly accessible
+  serverless_eks_private_endpoint: ({ resourceId, region }) => ({
     console: [
       `Open EKS console → Clusters → select "${resourceId}".`,
       "Networking tab → Manage networking.",
@@ -4484,8 +4484,8 @@ resource "aws_eks_cluster" "fix" {
 }`,
   }),
 
-  // serverless_12 — EKS secrets encryption not enabled
-  serverless_12: ({ resourceId, region }) => ({
+  // serverless_eks_secrets_encryption — EKS secrets encryption not enabled
+  serverless_eks_secrets_encryption: ({ resourceId, region }) => ({
     console: [
       `Open EKS console → Clusters → select "${resourceId}".`,
       "Configuration tab → Secrets encryption → Associate.",
@@ -4517,8 +4517,8 @@ resource "aws_kms_key" "eks" {
 }`,
   }),
 
-  // serverless_13 — EKS audit logs not enabled
-  serverless_13: ({ resourceId, region }) => ({
+  // serverless_eks_audit_logs — EKS audit logs not enabled
+  serverless_eks_audit_logs: ({ resourceId, region }) => ({
     console: [
       `Open EKS console → Clusters → select "${resourceId}".`,
       "Observability tab → Manage logging.",
@@ -4548,8 +4548,8 @@ resource "aws_eks_cluster" "fix" {
 }`,
   }),
 
-  // serverless_14 — EKS node group not in private subnet
-  serverless_14: ({ resourceId, region }) => ({
+  // serverless_eks_private_subnets — EKS node group not in private subnet
+  serverless_eks_private_subnets: ({ resourceId, region }) => ({
     console: [
       `Open EKS console → Clusters → Node groups → "${resourceId}".`,
       "Node groups cannot be moved — delete and recreate.",
@@ -4579,8 +4579,8 @@ resource "aws_eks_node_group" "fix" {
 }`,
   }),
 
-  // serverless_15 — EKS using end-of-life Kubernetes version
-  serverless_15: ({ resourceId, region }) => ({
+  // serverless_eks_version_current — EKS using end-of-life Kubernetes version
+  serverless_eks_version_current: ({ resourceId, region }) => ({
     console: [
       `Open EKS console → Clusters → select "${resourceId}".`,
       "Click Update cluster version.",
@@ -4615,8 +4615,8 @@ resource "aws_eks_cluster" "fix" {
 }`,
   }),
 
-  // serverless_16 — ECR image scanning disabled
-  serverless_16: ({ resourceId, region }) => ({
+  // serverless_ecr_image_scanning — ECR image scanning disabled
+  serverless_ecr_image_scanning: ({ resourceId, region }) => ({
     console: [
       `Open ECR console → Repositories → select "${resourceId}".`,
       "Edit → enable 'Scan on push'.",
@@ -4645,8 +4645,8 @@ resource "aws_ecr_repository" "fix" {
 }`,
   }),
 
-  // serverless_17 — ECR repository publicly accessible
-  serverless_17: ({ resourceId, region }) => ({
+  // serverless_ecr_private — ECR repository publicly accessible
+  serverless_ecr_private: ({ resourceId, region }) => ({
     console: [
       `Open ECR console → Repositories → select "${resourceId}".`,
       "Permissions → Edit policy JSON.",
@@ -4693,8 +4693,8 @@ resource "aws_ecr_repository_policy" "fix" {
 }`,
   }),
 
-  // serverless_18 — ECR image tag immutability disabled
-  serverless_18: ({ resourceId, region }) => ({
+  // serverless_ecr_tag_immutability — ECR image tag immutability disabled
+  serverless_ecr_tag_immutability: ({ resourceId, region }) => ({
     console: [
       `Open ECR console → Repositories → select "${resourceId}".`,
       "Edit → enable 'Tag immutability'.",
@@ -4721,8 +4721,8 @@ resource "aws_ecr_repository" "fix" {
 }`,
   }),
 
-  // serverless_19 — ECR no lifecycle policy configured
-  serverless_19: ({ resourceId, region }) => ({
+  // serverless_ecr_lifecycle_policy — ECR no lifecycle policy configured
+  serverless_ecr_lifecycle_policy: ({ resourceId, region }) => ({
     console: [
       `Open ECR console → Repositories → select "${resourceId}".`,
       "Lifecycle Policy → Create rule.",
@@ -4795,8 +4795,8 @@ resource "aws_ecr_lifecycle_policy" "fix" {
 }`,
   }),
 
-  // serverless_20 — ECR repository not encrypted with KMS
-  serverless_20: ({ resourceId, region }) => ({
+  // serverless_ecr_kms_encryption — ECR repository not encrypted with KMS
+  serverless_ecr_kms_encryption: ({ resourceId, region }) => ({
     console: [
       "ECR encryption is set at repository creation and cannot be changed.",
       `Create a new repository to replace "${resourceId}" with KMS encryption.`,
@@ -4831,8 +4831,8 @@ resource "aws_kms_key" "ecr" {
 }`,
   }),
 
-  // vpc_05 — Overly permissive Network ACL
-  vpc_05: ({ resourceId }) => ({
+  // vpc_nacl_no_all_inbound — Overly permissive Network ACL
+  vpc_nacl_no_all_inbound: ({ resourceId }) => ({
     console: [
       `Open VPC console → Network ACLs → select "${resourceId}".`,
       "Inbound rules → Edit: remove ALLOW rules for all ports from 0.0.0.0/0.",
@@ -4916,8 +4916,8 @@ resource "aws_network_acl" "fix" {
 }`,
   }),
 
-  // vpc_02 — Default VPC has resources attached
-  vpc_02: ({ resourceId, region }) => ({
+  // vpc_default_no_resources — Default VPC has resources attached
+  vpc_default_no_resources: ({ resourceId, region }) => ({
     console: [
       `Default VPC "${resourceId}" has resources deployed.`,
       "Create a custom VPC with proper subnets and security.",
@@ -4962,8 +4962,8 @@ resource "aws_subnet" "private" {
 # }`,
   }),
 
-  // vpc_03 — Default security group allows inbound
-  vpc_03: ({ resourceId }) => ({
+  // vpc_default_sg_no_inbound — Default security group allows inbound
+  vpc_default_sg_no_inbound: ({ resourceId }) => ({
     console: [
       `Open VPC console → Security Groups → select default SG "${resourceId}".`,
       "Inbound rules → Edit → remove all inbound rules.",
@@ -4996,8 +4996,8 @@ resource "aws_default_security_group" "fix" {
 }`,
   }),
 
-  // vpc_04 — Default security group allows outbound
-  vpc_04: ({ resourceId }) => ({
+  // vpc_default_sg_no_outbound — Default security group allows outbound
+  vpc_default_sg_no_outbound: ({ resourceId }) => ({
     console: [
       `Open VPC console → Security Groups → select default SG "${resourceId}".`,
       "Outbound rules → Edit → remove all outbound rules.",
@@ -5030,8 +5030,8 @@ resource "aws_default_security_group" "fix" {
 }`,
   }),
 
-  // vpc_06 — VPC DNS resolution disabled
-  vpc_06: ({ resourceId, region }) => ({
+  // vpc_dns_resolution — VPC DNS resolution disabled
+  vpc_dns_resolution: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Your VPCs → select "${resourceId}".`,
       "Actions → Edit VPC settings.",
@@ -5057,8 +5057,8 @@ resource "aws_vpc" "fix" {
 }`,
   }),
 
-  // vpc_07 — VPC DNS hostnames disabled
-  vpc_07: ({ resourceId, region }) => ({
+  // vpc_dns_hostnames — VPC DNS hostnames disabled
+  vpc_dns_hostnames: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Your VPCs → select "${resourceId}".`,
       "Actions → Edit VPC settings.",
@@ -5084,8 +5084,8 @@ resource "aws_vpc" "fix" {
 }`,
   }),
 
-  // vpc_08 — Private subnet auto-assigns public IPs
-  vpc_08: ({ resourceId, region }) => ({
+  // vpc_private_no_public_ip — Private subnet auto-assigns public IPs
+  vpc_private_no_public_ip: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Subnets → select "${resourceId}".`,
       "Actions → Edit subnet settings.",
@@ -5112,8 +5112,8 @@ resource "aws_subnet" "fix" {
 }`,
   }),
 
-  // vpc_09 — Private route table routes to internet gateway
-  vpc_09: ({ resourceId, region }) => ({
+  // vpc_private_no_igw_route — Private route table routes to internet gateway
+  vpc_private_no_igw_route: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Route Tables → select "${resourceId}".`,
       "Routes tab → Edit routes.",
@@ -5156,8 +5156,8 @@ resource "aws_route_table" "private" {
 }`,
   }),
 
-  // vpc_10 — Production VPC spans only 1 AZ
-  vpc_10: ({ resourceId, region }) => ({
+  // vpc_multi_az — Production VPC spans only 1 AZ
+  vpc_multi_az: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Subnets → filter by VPC "${resourceId}".`,
       "Create subnets in at least 2 availability zones.",
@@ -5197,8 +5197,8 @@ resource "aws_subnet" "az_b" {
 }`,
   }),
 
-  // vpc_11 — Security group allows all ports from internet
-  vpc_11: ({ resourceId }) => ({
+  // vpc_sg_no_all_ports — Security group allows all ports from internet
+  vpc_sg_no_all_ports: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Inbound rules → Edit inbound rules.",
@@ -5235,8 +5235,8 @@ resource "aws_security_group" "fix" {
 }`,
   }),
 
-  // vpc_12 — VPC peering uses unrestricted CIDR
-  vpc_12: ({ resourceId, region }) => ({
+  // vpc_peering_internal_cidr — VPC peering uses unrestricted CIDR
+  vpc_peering_internal_cidr: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Peering Connections → select "${resourceId}".`,
       "Check route tables for 0.0.0.0/0 routes via this peering connection.",
@@ -5267,8 +5267,8 @@ resource "aws_route" "peering" {
 }`,
   }),
 
-  // vpc_13 — Production VPC has no S3 VPC endpoint
-  vpc_13: ({ resourceId, region }) => ({
+  // vpc_endpoints_s3_dynamodb — Production VPC has no S3 VPC endpoint
+  vpc_endpoints_s3_dynamodb: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Endpoints → Create endpoint.`,
       "Service: com.amazonaws.<region>.s3 (Gateway type).",
@@ -5306,8 +5306,8 @@ resource "aws_vpc_endpoint" "s3" {
 }`,
   }),
 
-  // vpc_14 — VPC CIDR block too broad (/8)
-  vpc_14: ({ resourceId, region }) => ({
+  // vpc_cidr_not_slash8 — VPC CIDR block too broad (/8)
+  vpc_cidr_not_slash8: ({ resourceId, region }) => ({
     console: [
       `VPC "${resourceId}" uses an overly broad CIDR (e.g. /8).`,
       "Create a new VPC with a more specific CIDR (e.g. /16 or /20).",
@@ -5340,8 +5340,8 @@ resource "aws_vpc" "right_sized" {
 }`,
   }),
 
-  // vpc_15 — NACL allows admin ports from internet
-  vpc_15: ({ resourceId }) => ({
+  // vpc_nacl_no_admin_ports — NACL allows admin ports from internet
+  vpc_nacl_no_admin_ports: ({ resourceId }) => ({
     console: [
       `Open VPC console → Network ACLs → select "${resourceId}".`,
       "Inbound rules → Edit.",
@@ -5382,8 +5382,8 @@ resource "aws_network_acl_rule" "ssh_internal" {
 }`,
   }),
 
-  // vpc_16 — Transit GW default route propagation on
-  vpc_16: ({ resourceId, region }) => ({
+  // vpc_tgw_restrict_propagation — Transit GW default route propagation on
+  vpc_tgw_restrict_propagation: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Transit Gateways → select "${resourceId}".`,
       "Transit gateway route tables → select default.",
@@ -5415,8 +5415,8 @@ resource "aws_ec2_transit_gateway" "fix" {
 }`,
   }),
 
-  // vpc_17 — Production VPC has no NAT Gateway
-  vpc_17: ({ resourceId, region }) => ({
+  // vpc_private_nat_gateway — Production VPC has no NAT Gateway
+  vpc_private_nat_gateway: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → NAT Gateways → Create NAT Gateway.`,
       `Select a public subnet in VPC "${resourceId}".`,
@@ -5465,8 +5465,8 @@ resource "aws_route" "private_nat" {
 }`,
   }),
 
-  // vpc_18 — Security group allows database ports from internet
-  vpc_18: ({ resourceId }) => ({
+  // vpc_sg_no_db_ports_open — Security group allows database ports from internet
+  vpc_sg_no_db_ports_open: ({ resourceId }) => ({
     console: [
       `Open EC2 console → Security Groups → select "${resourceId}".`,
       "Inbound rules → Edit.",
@@ -5506,8 +5506,8 @@ resource "aws_security_group_rule" "db_from_app" {
 }`,
   }),
 
-  // vpc_19 — Restricted VPC has internet gateway
-  vpc_19: ({ resourceId, region }) => ({
+  // vpc_no_igw_sensitive — Restricted VPC has internet gateway
+  vpc_no_igw_sensitive: ({ resourceId, region }) => ({
     console: [
       `VPC "${resourceId}" is tagged data_classification=restricted but has an IGW.`,
       "Open VPC console → Internet Gateways.",
@@ -5552,8 +5552,8 @@ resource "aws_vpc_endpoint" "dynamodb" {
 }`,
   }),
 
-  // vpc_20 — VPC flow logs capture ACCEPT traffic only
-  vpc_20: ({ resourceId, region }) => ({
+  // vpc_flow_logs_reject — VPC flow logs capture ACCEPT traffic only
+  vpc_flow_logs_reject: ({ resourceId, region }) => ({
     console: [
       `Open VPC console → Your VPCs → select "${resourceId}".`,
       "Flow logs tab → select the flow log capturing ACCEPT only.",
@@ -5599,8 +5599,8 @@ resource "aws_flow_log" "all_traffic" {
 }`,
   }),
 
-  // secretsmanager_01 — Secrets not in Secrets Manager
-  secretsmanager_01: ({ resourceId, region }) => ({
+  // secretsmanager_auto_rotation — Secrets not in Secrets Manager
+  secretsmanager_auto_rotation: ({ resourceId, region }) => ({
     console: [
       "Open Secrets Manager console → Store a new secret.",
       "Select 'Other type of secret' → enter key-value pairs.",
@@ -5647,8 +5647,8 @@ variable "secret_value" {
 }`,
   }),
 
-  // secretsmanager_02 — Secret rotation interval exceeds 90 days
-  secretsmanager_02: ({ resourceId, region }) => ({
+  // secretsmanager_rotation_interval — Secret rotation interval exceeds 90 days
+  secretsmanager_rotation_interval: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Rotation configuration → Edit rotation.",
@@ -5671,8 +5671,8 @@ resource "aws_secretsmanager_secret_rotation" "fix" {
 }`,
   }),
 
-  // secretsmanager_03 — Secret resource policy allows public access
-  secretsmanager_03: ({ resourceId, region }) => ({
+  // secretsmanager_no_public_access — Secret resource policy allows public access
+  secretsmanager_no_public_access: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Resource permissions → Edit.",
@@ -5715,8 +5715,8 @@ resource "aws_secretsmanager_secret_policy" "fix" {
 }`,
   }),
 
-  // secretsmanager_04 — Secret not encrypted with customer KMS key
-  secretsmanager_04: ({ resourceId, region }) => ({
+  // secretsmanager_kms_encryption — Secret not encrypted with customer KMS key
+  secretsmanager_kms_encryption: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Actions → Edit encryption key.",
@@ -5738,8 +5738,8 @@ resource "aws_secretsmanager_secret" "fix" {
 }`,
   }),
 
-  // secretsmanager_05 — Secret unused for more than 90 days
-  secretsmanager_05: ({ resourceId, region }) => ({
+  // secretsmanager_unused_cleanup — Secret unused for more than 90 days
+  secretsmanager_unused_cleanup: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Check 'Last retrieved date'.",
@@ -5766,8 +5766,8 @@ aws secretsmanager describe-secret \\
 # Terraform will schedule deletion with recovery window.`,
   }),
 
-  // secretsmanager_06 — Secret has cross-account access without condition
-  secretsmanager_06: ({ resourceId, region }) => ({
+  // secretsmanager_cross_account_org — Secret has cross-account access without condition
+  secretsmanager_cross_account_org: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Resource permissions → Edit.",
@@ -5811,8 +5811,8 @@ resource "aws_secretsmanager_secret_policy" "fix" {
 }`,
   }),
 
-  // secretsmanager_07 — Secret scheduled for deletion without approval
-  secretsmanager_07: ({ resourceId, region }) => ({
+  // secretsmanager_deletion_approval — Secret scheduled for deletion without approval
+  secretsmanager_deletion_approval: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "If deletion was unintended: Actions → Cancel deletion.",
@@ -5840,8 +5840,8 @@ resource "aws_secretsmanager_secret" "fix" {
 }`,
   }),
 
-  // secretsmanager_08 — Secret missing owner/purpose tags
-  secretsmanager_08: ({ resourceId, region }) => ({
+  // secretsmanager_owner_purpose_tags — Secret missing owner/purpose tags
+  secretsmanager_owner_purpose_tags: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Tags → Edit.",
@@ -5866,8 +5866,8 @@ resource "aws_secretsmanager_secret" "fix" {
 }`,
   }),
 
-  // secretsmanager_09 — Secret name reveals its type
-  secretsmanager_09: ({ resourceId, region }) => ({
+  // secretsmanager_name_not_revealing — Secret name reveals its type
+  secretsmanager_name_not_revealing: ({ resourceId, region }) => ({
     console: [
       "Secret names should not reveal their type (e.g. 'prod-db-password').",
       "Create a new secret with a generic name (e.g. 'prod/db/credentials').",
@@ -5898,8 +5898,8 @@ resource "aws_secretsmanager_secret" "renamed" {
 }`,
   }),
 
-  // secretsmanager_10 — Secret rotation function is orphaned
-  secretsmanager_10: ({ resourceId, region }) => ({
+  // secretsmanager_rotation_validated — Secret rotation function is orphaned
+  secretsmanager_rotation_validated: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Rotation configuration → Edit.",
@@ -5929,8 +5929,8 @@ resource "aws_secretsmanager_secret_rotation" "fix" {
 }`,
   }),
 
-  // secretsmanager_11 — Secret has no description
-  secretsmanager_11: ({ resourceId, region }) => ({
+  // secretsmanager_description_required — Secret has no description
+  secretsmanager_description_required: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Actions → Edit description.",
@@ -5952,8 +5952,8 @@ resource "aws_secretsmanager_secret" "fix" {
 }`,
   }),
 
-  // secretsmanager_12 — Critical secret has no multi-region replication
-  secretsmanager_12: ({ resourceId, region }) => ({
+  // secretsmanager_multi_region — Critical secret has no multi-region replication
+  secretsmanager_multi_region: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Actions → Replicate secret to other regions.",
@@ -5974,8 +5974,8 @@ resource "aws_secretsmanager_secret" "fix" {
 }`,
   }),
 
-  // secretsmanager_13 — Secret policy has wildcard principal
-  secretsmanager_13: ({ resourceId, region }) => ({
+  // secretsmanager_no_wildcard_principal — Secret policy has wildcard principal
+  secretsmanager_no_wildcard_principal: ({ resourceId, region }) => ({
     console: [
       `Open Secrets Manager → select "${resourceId}".`,
       "Resource permissions → Edit.",
@@ -6013,8 +6013,8 @@ resource "aws_secretsmanager_secret_policy" "fix" {
 }`,
   }),
 
-  // storage_01 — EBS encryption disabled
-  storage_01: ({ resourceId, region }) => ({
+  // storage_ebs_encryption — EBS encryption disabled
+  storage_ebs_encryption: ({ resourceId, region }) => ({
     console: [
       "Enable EBS encryption by default: EC2 → Settings → EBS encryption → Enable.",
       `To encrypt existing volume "${resourceId}":`,
@@ -6079,8 +6079,8 @@ resource "aws_ebs_volume" "encrypted" {
 }`,
   }),
 
-  // storage_02 — EBS default encryption not enabled
-  storage_02: ({ region }) => ({
+  // storage_ebs_default_encryption — EBS default encryption not enabled
+  storage_ebs_default_encryption: ({ region }) => ({
     console: [
       "Open EC2 console → EBS → Settings.",
       "Click 'Always encrypt new EBS volumes'.",
@@ -6112,8 +6112,8 @@ resource "aws_ebs_encryption_by_default" "fix" {
 # }`,
   }),
 
-  // storage_03 — EBS snapshot publicly shared
-  storage_03: ({ resourceId, region }) => ({
+  // storage_ebs_snapshot_private — EBS snapshot publicly shared
+  storage_ebs_snapshot_private: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Snapshots → select "${resourceId}".`,
       "Actions → Modify permissions.",
@@ -6148,8 +6148,8 @@ resource "aws_ebs_snapshot_block_public_access" "fix" {
 }`,
   }),
 
-  // storage_04 — EBS snapshot not encrypted
-  storage_04: ({ resourceId, region }) => ({
+  // storage_ebs_snapshot_encrypted — EBS snapshot not encrypted
+  storage_ebs_snapshot_encrypted: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Snapshots → select "${resourceId}".`,
       "Actions → Copy snapshot.",
@@ -6191,8 +6191,8 @@ resource "aws_ebs_encryption_by_default" "fix" {
 }`,
   }),
 
-  // storage_05 — Unattached EBS volume older than 30 days
-  storage_05: ({ resourceId, region }) => ({
+  // storage_ebs_unattached_review — Unattached EBS volume older than 30 days
+  storage_ebs_unattached_review: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Volumes → select "${resourceId}".`,
       "Verify it is in 'available' state (unattached).",
@@ -6231,8 +6231,8 @@ resource "aws_ebs_snapshot" "backup" {
 }`,
   }),
 
-  // storage_06 — EBS snapshot shared with unapproved account
-  storage_06: ({ resourceId, region }) => ({
+  // storage_ebs_snapshot_approved_accts — EBS snapshot shared with unapproved account
+  storage_ebs_snapshot_approved_accts: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Snapshots → select "${resourceId}".`,
       "Actions → Modify permissions.",
@@ -6275,8 +6275,8 @@ resource "aws_snapshot_create_volume_permission" "approved" {
 }`,
   }),
 
-  // storage_07 — EBS snapshot lifecycle manager not configured
-  storage_07: ({ region }) => ({
+  // storage_ebs_snapshot_lifecycle — EBS snapshot lifecycle manager not configured
+  storage_ebs_snapshot_lifecycle: ({ region }) => ({
     console: [
       "Open EC2 console → Lifecycle Manager → Create lifecycle policy.",
       "Policy type: EBS snapshot policy.",
@@ -6326,8 +6326,8 @@ resource "aws_dlm_lifecycle_policy" "snapshots" {
 }`,
   }),
 
-  // storage_08 — Production EBS using deprecated magnetic type
-  storage_08: ({ resourceId, region }) => ({
+  // storage_ebs_no_magnetic — Production EBS using deprecated magnetic type
+  storage_ebs_no_magnetic: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Volumes → select "${resourceId}".`,
       "Actions → Modify volume.",
@@ -6358,8 +6358,8 @@ resource "aws_ebs_volume" "fix" {
 }`,
   }),
 
-  // storage_09 — Sensitive EBS not using customer KMS key
-  storage_09: ({ resourceId, region }) => ({
+  // storage_ebs_kms_encryption — Sensitive EBS not using customer KMS key
+  storage_ebs_kms_encryption: ({ resourceId, region }) => ({
     console: [
       `Volume "${resourceId}" uses AWS-managed key.`,
       "To switch to a customer KMS key, create a snapshot.",
@@ -6407,8 +6407,8 @@ resource "aws_ebs_volume" "fix" {
 }`,
   }),
 
-  // storage_10 — EFS encryption at rest not enabled
-  storage_10: ({ resourceId, region }) => ({
+  // storage_efs_encryption_rest — EFS encryption at rest not enabled
+  storage_efs_encryption_rest: ({ resourceId, region }) => ({
     console: [
       "EFS encryption at rest can only be set at creation time.",
       "Create a new EFS file system with encryption enabled.",
@@ -6448,8 +6448,8 @@ resource "aws_efs_mount_target" "fix" {
 }`,
   }),
 
-  // storage_11 — EFS encryption in transit not enforced
-  storage_11: ({ resourceId }) => ({
+  // storage_efs_encryption_transit — EFS encryption in transit not enforced
+  storage_efs_encryption_transit: ({ resourceId }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "File system policy → Edit.",
@@ -6498,8 +6498,8 @@ resource "aws_efs_file_system_policy" "fix" {
 }`,
   }),
 
-  // storage_12 — EFS backup not enabled
-  storage_12: ({ resourceId, region }) => ({
+  // storage_efs_backup — EFS backup not enabled
+  storage_efs_backup: ({ resourceId, region }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "General settings → Edit.",
@@ -6530,8 +6530,8 @@ resource "aws_efs_backup_policy" "fix" {
 }`,
   }),
 
-  // storage_13 — EFS publicly accessible via resource policy
-  storage_13: ({ resourceId }) => ({
+  // storage_efs_no_public_policy — EFS publicly accessible via resource policy
+  storage_efs_no_public_policy: ({ resourceId }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "File system policy → Edit.",
@@ -6601,8 +6601,8 @@ resource "aws_efs_file_system_policy" "fix" {
 }`,
   }),
 
-  // storage_14 — EFS access points not enforcing user identity
-  storage_14: ({ resourceId }) => ({
+  // storage_efs_access_point_enforcement — EFS access points not enforcing user identity
+  storage_efs_access_point_enforcement: ({ resourceId }) => ({
     console: [
       `Open EFS console → Access points → select "${resourceId}".`,
       "Access points cannot be modified — delete and recreate.",
@@ -6647,8 +6647,8 @@ resource "aws_efs_access_point" "fix" {
 }`,
   }),
 
-  // storage_15 — Sensitive EFS not using customer KMS key
-  storage_15: ({ resourceId, region }) => ({
+  // storage_efs_kms_encryption — Sensitive EFS not using customer KMS key
+  storage_efs_kms_encryption: ({ resourceId, region }) => ({
     console: [
       "EFS KMS key is set at creation and cannot be changed.",
       "Create a new EFS with a customer managed KMS key.",
@@ -6687,8 +6687,8 @@ resource "aws_efs_file_system" "fix" {
 }`,
   }),
 
-  // storage_16 — EFS mount targets not in private subnets
-  storage_16: ({ resourceId, region }) => ({
+  // storage_efs_private_subnets — EFS mount targets not in private subnets
+  storage_efs_private_subnets: ({ resourceId, region }) => ({
     console: [
       `Open EFS console → select the file system with mount target "${resourceId}".`,
       "Network tab → Manage.",
@@ -6727,8 +6727,8 @@ resource "aws_efs_mount_target" "private" {
 }`,
   }),
 
-  // storage_17 — EFS lifecycle management not configured
-  storage_17: ({ resourceId }) => ({
+  // storage_efs_lifecycle — EFS lifecycle management not configured
+  storage_efs_lifecycle: ({ resourceId }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "General settings → Edit.",
@@ -6758,8 +6758,8 @@ resource "aws_efs_file_system" "fix" {
 }`,
   }),
 
-  // storage_18 — EFS missing owner/classification tags
-  storage_18: ({ resourceId, region }) => ({
+  // storage_efs_tags — EFS missing owner/classification tags
+  storage_efs_tags: ({ resourceId, region }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "Tags tab → Manage tags.",
@@ -6793,8 +6793,8 @@ resource "aws_efs_file_system" "fix" {
 }`,
   }),
 
-  // storage_19 — Critical EFS has no replication configured
-  storage_19: ({ resourceId, region }) => ({
+  // storage_efs_replication — Critical EFS has no replication configured
+  storage_efs_replication: ({ resourceId, region }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "Replication tab → Create replication.",
@@ -6825,8 +6825,8 @@ resource "aws_efs_replication_configuration" "fix" {
 }`,
   }),
 
-  // storage_20 — EFS throughput mode not optimised for production
-  storage_20: ({ resourceId, region }) => ({
+  // storage_efs_throughput_mode — EFS throughput mode not optimised for production
+  storage_efs_throughput_mode: ({ resourceId, region }) => ({
     console: [
       `Open EFS console → select "${resourceId}".`,
       "General settings → Edit.",
@@ -6853,8 +6853,8 @@ resource "aws_efs_file_system" "fix" {
 }`,
   }),
 
-  // cloudwatch_01 — CloudWatch alarms not configured
-  cloudwatch_01: ({ region, accountId }) => ({
+  // cloudwatch_root_usage_alarm — CloudWatch alarms not configured
+  cloudwatch_root_usage_alarm: ({ region, accountId }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Select metric → CloudTrailMetrics namespace.",
@@ -6934,8 +6934,8 @@ resource "aws_cloudwatch_metric_alarm" "root_usage" {
 }`,
   }),
 
-  // cloudwatch_02 — No alarm for unauthorized API calls
-  cloudwatch_02: ({ region }) => ({
+  // cloudwatch_unauthorized_api_alarm — No alarm for unauthorized API calls
+  cloudwatch_unauthorized_api_alarm: ({ region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Select metric: CloudTrailMetrics → UnauthorizedAttemptCount.",
@@ -6970,8 +6970,8 @@ resource "aws_cloudwatch_metric_alarm" "unauthorized" {
 }`,
   }),
 
-  // cloudwatch_03 — No alarm for console login without MFA
-  cloudwatch_03: ({ region }) => ({
+  // cloudwatch_no_mfa_login_alarm — No alarm for console login without MFA
+  cloudwatch_no_mfa_login_alarm: ({ region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Metric: CloudTrailMetrics → ConsoleSignInWithoutMFA.",
@@ -7004,8 +7004,8 @@ resource "aws_cloudwatch_metric_alarm" "no_mfa_login" {
 }`,
   }),
 
-  // cloudwatch_04 — No alarm for IAM policy changes
-  cloudwatch_04: ({ region }) => ({
+  // cloudwatch_iam_policy_alarm — No alarm for IAM policy changes
+  cloudwatch_iam_policy_alarm: ({ region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Metric: CloudTrailMetrics → IAMPolicyChanges.",
@@ -7038,8 +7038,8 @@ resource "aws_cloudwatch_metric_alarm" "iam_changes" {
 }`,
   }),
 
-  // cloudwatch_05 — No alarm for CloudTrail changes
-  cloudwatch_05: ({ region }) => ({
+  // cloudwatch_cloudtrail_alarm — No alarm for CloudTrail changes
+  cloudwatch_cloudtrail_alarm: ({ region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Metric: CloudTrailMetrics → CloudTrailConfigChanges.",
@@ -7072,8 +7072,8 @@ resource "aws_cloudwatch_metric_alarm" "cloudtrail_changes" {
 }`,
   }),
 
-  // cloudwatch_06 — No alarm for S3 bucket policy changes
-  cloudwatch_06: ({ region }) => ({
+  // cloudwatch_s3_policy_alarm — No alarm for S3 bucket policy changes
+  cloudwatch_s3_policy_alarm: ({ region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Metric: CloudTrailMetrics → S3BucketPolicyChanges.",
@@ -7106,8 +7106,8 @@ resource "aws_cloudwatch_metric_alarm" "s3_policy_changes" {
 }`,
   }),
 
-  // cloudwatch_07 — No alarm for VPC changes
-  cloudwatch_07: ({ region }) => ({
+  // cloudwatch_vpc_changes_alarm — No alarm for VPC changes
+  cloudwatch_vpc_changes_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for VPC changes metric.",
     ],
@@ -7138,8 +7138,8 @@ resource "aws_cloudwatch_metric_alarm" "vpc_changes" {
 }`,
   }),
 
-  // cloudwatch_08 — No alarm for security group changes
-  cloudwatch_08: ({ region }) => ({
+  // cloudwatch_sg_changes_alarm — No alarm for security group changes
+  cloudwatch_sg_changes_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for SecurityGroupChanges metric.",
     ],
@@ -7170,8 +7170,8 @@ resource "aws_cloudwatch_metric_alarm" "sg_changes" {
 }`,
   }),
 
-  // cloudwatch_09 — No alarm for NACL changes
-  cloudwatch_09: ({ region }) => ({
+  // cloudwatch_nacl_changes_alarm — No alarm for NACL changes
+  cloudwatch_nacl_changes_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for NACLChanges metric.",
     ],
@@ -7202,8 +7202,8 @@ resource "aws_cloudwatch_metric_alarm" "nacl_changes" {
 }`,
   }),
 
-  // cloudwatch_10 — No alarm for internet gateway changes
-  cloudwatch_10: ({ region }) => ({
+  // cloudwatch_igw_changes_alarm — No alarm for internet gateway changes
+  cloudwatch_igw_changes_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for IGW changes metric.",
     ],
@@ -7234,8 +7234,8 @@ resource "aws_cloudwatch_metric_alarm" "igw_changes" {
 }`,
   }),
 
-  // cloudwatch_11 — CloudWatch log group has no retention policy
-  cloudwatch_11: ({ resourceId, region }) => ({
+  // cloudwatch_log_retention — CloudWatch log group has no retention policy
+  cloudwatch_log_retention: ({ resourceId, region }) => ({
     console: [
       `Open CloudWatch console → Log groups → select "${resourceId}".`,
       "Actions → Edit retention → select retention period.",
@@ -7255,8 +7255,8 @@ resource "aws_cloudwatch_log_group" "fix" {
 }`,
   }),
 
-  // cloudwatch_12 — CloudWatch log group not encrypted with KMS
-  cloudwatch_12: ({ resourceId, region }) => ({
+  // cloudwatch_log_kms_encryption — CloudWatch log group not encrypted with KMS
+  cloudwatch_log_kms_encryption: ({ resourceId, region }) => ({
     console: [
       `Open CloudWatch console → Log groups → select "${resourceId}".`,
       "Actions → Edit → select KMS key.",
@@ -7277,8 +7277,8 @@ resource "aws_cloudwatch_log_group" "fix" {
 }`,
   }),
 
-  // cloudwatch_13 — CloudWatch alarm has no SNS action
-  cloudwatch_13: ({ resourceId, region }) => ({
+  // cloudwatch_alarm_sns_action — CloudWatch alarm has no SNS action
+  cloudwatch_alarm_sns_action: ({ resourceId, region }) => ({
     console: [
       `Open CloudWatch console → Alarms → select "${resourceId}".`,
       "Edit → Notification → Add SNS topic action.",
@@ -7297,8 +7297,8 @@ resource "aws_cloudwatch_metric_alarm" "fix" {
 }`,
   }),
 
-  // cloudwatch_14 — CloudWatch alarm in INSUFFICIENT_DATA state
-  cloudwatch_14: ({ resourceId, region }) => ({
+  // cloudwatch_no_insufficient_data — CloudWatch alarm in INSUFFICIENT_DATA state
+  cloudwatch_no_insufficient_data: ({ resourceId, region }) => ({
     console: [
       `Open CloudWatch console → Alarms → select "${resourceId}".`,
       "Check metric configuration — ensure the metric exists.",
@@ -7324,8 +7324,8 @@ aws cloudwatch describe-alarms \\
 # an active metric.`,
   }),
 
-  // cloudwatch_15 — No alarm for failed console sign-in
-  cloudwatch_15: ({ region }) => ({
+  // cloudwatch_failed_login_alarm — No alarm for failed console sign-in
+  cloudwatch_failed_login_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for FailedConsoleSignIn metric.",
     ],
@@ -7356,8 +7356,8 @@ resource "aws_cloudwatch_metric_alarm" "failed_login" {
 }`,
   }),
 
-  // cloudwatch_16 — No alarm for CMK deletion/disable
-  cloudwatch_16: ({ region }) => ({
+  // cloudwatch_cmk_deletion_alarm — No alarm for CMK deletion/disable
+  cloudwatch_cmk_deletion_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for KMS key deletion/disable events.",
     ],
@@ -7388,8 +7388,8 @@ resource "aws_cloudwatch_metric_alarm" "cmk_deletion" {
 }`,
   }),
 
-  // cloudwatch_17 — No alarm for AWS Config changes
-  cloudwatch_17: ({ region }) => ({
+  // cloudwatch_config_changes_alarm — No alarm for AWS Config changes
+  cloudwatch_config_changes_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for Config configuration changes.",
     ],
@@ -7420,8 +7420,8 @@ resource "aws_cloudwatch_metric_alarm" "config_changes" {
 }`,
   }),
 
-  // cloudwatch_18 — No alarm for AWS Organizations changes
-  cloudwatch_18: ({ region }) => ({
+  // cloudwatch_org_changes_alarm — No alarm for AWS Organizations changes
+  cloudwatch_org_changes_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for Organizations changes.",
     ],
@@ -7452,8 +7452,8 @@ resource "aws_cloudwatch_metric_alarm" "org_changes" {
 }`,
   }),
 
-  // cloudwatch_19 — CloudWatch log group retention < 90 days
-  cloudwatch_19: ({ resourceId, region }) => ({
+  // cloudwatch_log_retention_90d — CloudWatch log group retention < 90 days
+  cloudwatch_log_retention_90d: ({ resourceId, region }) => ({
     console: [
       `Open CloudWatch console → Log groups → select "${resourceId}".`,
       "Actions → Edit retention → set to at least 90 days.",
@@ -7473,8 +7473,8 @@ resource "aws_cloudwatch_log_group" "fix" {
 }`,
   }),
 
-  // cloudwatch_20 — No alarm for route table changes
-  cloudwatch_20: ({ region }) => ({
+  // cloudwatch_route_table_alarm — No alarm for route table changes
+  cloudwatch_route_table_alarm: ({ region }) => ({
     console: [
       "Create CloudWatch alarm for route table changes metric.",
     ],
@@ -7505,8 +7505,8 @@ resource "aws_cloudwatch_metric_alarm" "route_table_changes" {
 }`,
   }),
 
-  // iam_15 — IAM Access Analyzer disabled
-  iam_15: ({ accountId }) => ({
+  // iam_access_analyzer — IAM Access Analyzer disabled
+  iam_access_analyzer: ({ accountId }) => ({
     console: [
       "Open IAM console → Access analyzer.",
       "Click Create analyzer → scope: Account.",
@@ -7536,8 +7536,8 @@ resource "aws_accessanalyzer_analyzer" "fix" {
 }`,
   }),
 
-  // iam_03 — Password policy: no uppercase required
-  iam_03: () => ({
+  // iam_pwd_uppercase — Password policy: no uppercase required
+  iam_pwd_uppercase: () => ({
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
@@ -7557,8 +7557,8 @@ resource "aws_iam_account_password_policy" "fix" {
 }`,
   }),
 
-  // iam_04 — Password policy: no lowercase required
-  iam_04: () => ({
+  // iam_pwd_lowercase — Password policy: no lowercase required
+  iam_pwd_lowercase: () => ({
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
@@ -7578,8 +7578,8 @@ resource "aws_iam_account_password_policy" "fix" {
 }`,
   }),
 
-  // iam_05 — Password policy: no numbers required
-  iam_05: () => ({
+  // iam_pwd_numbers — Password policy: no numbers required
+  iam_pwd_numbers: () => ({
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
@@ -7599,8 +7599,8 @@ resource "aws_iam_account_password_policy" "fix" {
 }`,
   }),
 
-  // iam_06 — Password policy: no symbols required
-  iam_06: () => ({
+  // iam_pwd_symbols — Password policy: no symbols required
+  iam_pwd_symbols: () => ({
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
@@ -7620,8 +7620,8 @@ resource "aws_iam_account_password_policy" "fix" {
 }`,
   }),
 
-  // iam_07 — Password policy: insufficient reuse prevention
-  iam_07: () => ({
+  // iam_pwd_reuse — Password policy: insufficient reuse prevention
+  iam_pwd_reuse: () => ({
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
@@ -7641,8 +7641,8 @@ resource "aws_iam_account_password_policy" "fix" {
 }`,
   }),
 
-  // iam_08 — Password policy: max age exceeds 90 days
-  iam_08: () => ({
+  // iam_pwd_max_age — Password policy: max age exceeds 90 days
+  iam_pwd_max_age: () => ({
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
@@ -7662,8 +7662,8 @@ resource "aws_iam_account_password_policy" "fix" {
 }`,
   }),
 
-  // iam_10 — Root account has active access keys
-  iam_10: ({ accountId }) => ({
+  // iam_root_access_keys — Root account has active access keys
+  iam_root_access_keys: ({ accountId }) => ({
     console: [
       "Sign in as the root user.",
       "Click account name (top-right) → Security credentials.",
@@ -7708,8 +7708,8 @@ resource "aws_organizations_policy" "deny_root_keys" {
 }`,
   }),
 
-  // iam_11 — IAM user has inline policies
-  iam_11: ({ resourceId }) => ({
+  // iam_no_inline_policies — IAM user has inline policies
+  iam_no_inline_policies: ({ resourceId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Permissions tab → expand each inline policy.",
@@ -7765,8 +7765,8 @@ resource "aws_iam_user_policy_attachment" "fix" {
 }`,
   }),
 
-  // iam_12 — IAM user has AdministratorAccess
-  iam_12: ({ resourceId }) => ({
+  // iam_no_admin_access — IAM user has AdministratorAccess
+  iam_no_admin_access: ({ resourceId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Permissions tab → find AdministratorAccess.",
@@ -7818,8 +7818,8 @@ resource "aws_iam_policy" "least_privilege" {
 }`,
   }),
 
-  // iam_13 — Access key not rotated within 90 days
-  iam_13: ({ resourceId }) => ({
+  // iam_key_rotation — Access key not rotated within 90 days
+  iam_key_rotation: ({ resourceId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Security credentials tab → Access keys.",
@@ -7864,8 +7864,8 @@ resource "aws_iam_access_key" "rotated" {
 # for EC2/Lambda workloads.`,
   }),
 
-  // iam_16 — IAM policy allows Action:* on Resource:*
-  iam_16: ({ resourceId }) => ({
+  // iam_no_wildcard_policy — IAM policy allows Action:* on Resource:*
+  iam_no_wildcard_policy: ({ resourceId }) => ({
     console: [
       `Open IAM console → Policies → select "${resourceId}".`,
       "Click Edit policy → JSON tab.",
@@ -7919,8 +7919,8 @@ resource "aws_iam_policy" "fix" {
 }`,
   }),
 
-  // iam_17 — Unused access key active > 90 days
-  iam_17: ({ resourceId }) => ({
+  // iam_unused_keys — Unused access key active > 90 days
+  iam_unused_keys: ({ resourceId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Security credentials tab → Access keys.",
@@ -7961,8 +7961,8 @@ resource "aws_iam_access_key" "deactivate" {
 # and eliminate long-lived access keys entirely.`,
   }),
 
-  // iam_18 — IAM role trust policy allows all principals
-  iam_18: ({ resourceId }) => ({
+  // iam_role_trust_wildcard — IAM role trust policy allows all principals
+  iam_role_trust_wildcard: ({ resourceId }) => ({
     console: [
       `Open IAM console → Roles → select "${resourceId}".`,
       "Trust relationships tab → Edit trust policy.",
@@ -8027,8 +8027,8 @@ resource "aws_iam_role" "fix" {
 }`,
   }),
 
-  // iam_19 — IAM user has both console and API access
-  iam_19: ({ resourceId }) => ({
+  // iam_dual_access — IAM user has both console and API access
+  iam_dual_access: ({ resourceId }) => ({
     console: [
       `Open IAM console → Users → select "${resourceId}".`,
       "Evaluate whether the user needs both access types.",
@@ -8077,8 +8077,8 @@ resource "aws_iam_user_login_profile" "console" {
 # Do NOT create aws_iam_user_login_profile.`,
   }),
 
-  // iam_20 — No IAM support role found
-  iam_20: ({ accountId }) => ({
+  // iam_support_role — No IAM support role found
+  iam_support_role: ({ accountId }) => ({
     console: [
       "Open IAM console → Roles → Create role.",
       "Trusted entity: AWS account (this account).",
@@ -8135,8 +8135,8 @@ resource "aws_iam_role_policy_attachment" "support" {
 }`,
   }),
 
-  // waf_01 — WAF not associated with CloudFront
-  waf_01: ({ resourceId, region }) => ({
+  // waf_cloudfront_association — WAF not associated with CloudFront
+  waf_cloudfront_association: ({ resourceId, region }) => ({
     console: [
       `Open CloudFront console → select distribution "${resourceId}".`,
       "General tab → Edit.",
@@ -8158,8 +8158,8 @@ resource "aws_wafv2_web_acl_association" "cloudfront" {
 }`,
   }),
 
-  // waf_02 — WAF not associated with ALB
-  waf_02: ({ resourceId, region }) => ({
+  // waf_alb_association — WAF not associated with ALB
+  waf_alb_association: ({ resourceId, region }) => ({
     console: [
       `Open WAF console → Web ACLs → select or create a WebACL.`,
       `Associated resources → Add → select ALB "${resourceId}".`,
@@ -8180,8 +8180,8 @@ resource "aws_wafv2_web_acl_association" "alb" {
 }`,
   }),
 
-  // waf_03 — AWS managed WAF rules not enabled
-  waf_03: ({ resourceId, region }) => ({
+  // waf_managed_rules — AWS managed WAF rules not enabled
+  waf_managed_rules: ({ resourceId, region }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules tab → Add rules → Add managed rule groups.",
@@ -8225,8 +8225,8 @@ resource "aws_wafv2_web_acl" "fix" {
 }`,
   }),
 
-  // waf_04 — WAF rate-based rules not configured
-  waf_04: ({ resourceId }) => ({
+  // waf_rate_based_rules — WAF rate-based rules not configured
+  waf_rate_based_rules: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → Add rules → Add my own rules.",
@@ -8258,8 +8258,8 @@ resource "aws_wafv2_web_acl" "fix" {
 }`,
   }),
 
-  // waf_05 — WAF SQL injection protection disabled
-  waf_05: ({ resourceId }) => ({
+  // waf_sqli_protection — WAF SQL injection protection disabled
+  waf_sqli_protection: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → Add managed rule groups.",
@@ -8289,8 +8289,8 @@ rule {
 }`,
   }),
 
-  // waf_06 — WAF XSS protection disabled
-  waf_06: ({ resourceId }) => ({
+  // waf_xss_protection — WAF XSS protection disabled
+  waf_xss_protection: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → Add managed rule groups.",
@@ -8318,8 +8318,8 @@ rule {
 }`,
   }),
 
-  // waf_07 — WAF logging not enabled
-  waf_07: ({ resourceId, region }) => ({
+  // waf_logging — WAF logging not enabled
+  waf_logging: ({ resourceId, region }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Logging and metrics → Enable logging.",
@@ -8356,8 +8356,8 @@ resource "aws_wafv2_web_acl_logging_configuration" "fix" {
 }`,
   }),
 
-  // waf_08 — WAF IP reputation rules not enabled
-  waf_08: ({ resourceId }) => ({
+  // waf_ip_reputation — WAF IP reputation rules not enabled
+  waf_ip_reputation: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → Add managed rule groups.",
@@ -8385,8 +8385,8 @@ rule {
 }`,
   }),
 
-  // waf_09 — WAF bot control not enabled
-  waf_09: ({ resourceId }) => ({
+  // waf_bot_control — WAF bot control not enabled
+  waf_bot_control: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → Add managed rule groups.",
@@ -8414,8 +8414,8 @@ rule {
 }`,
   }),
 
-  // waf_10 — WAF critical rules in COUNT-only mode
-  waf_10: ({ resourceId }) => ({
+  // waf_no_count_critical — WAF critical rules in COUNT-only mode
+  waf_no_count_critical: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → find SQLi rule in COUNT mode.",
@@ -8432,8 +8432,8 @@ rule {
 }`,
   }),
 
-  // waf_11 — AWS Shield Advanced not enabled
-  waf_11: ({ region }) => ({
+  // waf_shield_advanced — AWS Shield Advanced not enabled
+  waf_shield_advanced: ({ region }) => ({
     console: [
       "Open Shield console → Getting started.",
       "Subscribe to AWS Shield Advanced.",
@@ -8457,8 +8457,8 @@ resource "aws_shield_protection" "alb" {
 }`,
   }),
 
-  // waf_12 — WAF API default action not BLOCK
-  waf_12: ({ resourceId }) => ({
+  // waf_default_block_apis — WAF API default action not BLOCK
+  waf_default_block_apis: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Default web ACL action → Edit.",
@@ -8474,8 +8474,8 @@ resource "aws_wafv2_web_acl" "fix" {
 }`,
   }),
 
-  // waf_13 — WAF known bad inputs rules not enabled
-  waf_13: ({ resourceId }) => ({
+  // waf_known_bad_inputs — WAF known bad inputs rules not enabled
+  waf_known_bad_inputs: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Rules → Add managed rule groups.",
@@ -8503,8 +8503,8 @@ rule {
 }`,
   }),
 
-  // waf_14 — WAF log redaction hiding critical fields
-  waf_14: ({ resourceId }) => ({
+  // waf_log_redaction — WAF log redaction hiding critical fields
+  waf_log_redaction: ({ resourceId }) => ({
     console: [
       `Open WAF console → Web ACLs → select "${resourceId}".`,
       "Logging → Edit.",
@@ -8522,8 +8522,8 @@ resource "aws_wafv2_web_acl_logging_configuration" "fix" {
 }`,
   }),
 
-  // apigw_01 — API Gateway access logging not enabled
-  apigw_01: ({ resourceId, region }) => ({
+  // apigw_access_logging — API Gateway access logging not enabled
+  apigw_access_logging: ({ resourceId, region }) => ({
     console: [
       `Open API Gateway console → select API → Stages → "${resourceId}".`,
       "Logs/Tracing tab → Edit.",
@@ -8553,8 +8553,8 @@ resource "aws_cloudwatch_log_group" "apigw" {
 }`,
   }),
 
-  // apigw_02 — API Gateway execution logging not enabled
-  apigw_02: ({ resourceId, region: _region }) => ({
+  // apigw_execution_logging — API Gateway execution logging not enabled
+  apigw_execution_logging: ({ resourceId, region: _region }) => ({
     console: [
       `Open API Gateway console → select API → Stages → "${resourceId}".`,
       "Logs/Tracing tab → Edit.",
@@ -8575,8 +8575,8 @@ resource "aws_api_gateway_method_settings" "fix" {
 }`,
   }),
 
-  // apigw_03 — API Gateway TLS 1.2 not enforced
-  apigw_03: ({ resourceId }) => ({
+  // apigw_tls_12 — API Gateway TLS 1.2 not enforced
+  apigw_tls_12: ({ resourceId }) => ({
     console: [
       `Open API Gateway console → Custom domain names → "${resourceId}".`,
       "Edit → Security policy → TLS 1.2.",
@@ -8590,8 +8590,8 @@ resource "aws_api_gateway_domain_name" "fix" {
 }`,
   }),
 
-  // apigw_04 — API Gateway WAF WebACL not associated
-  apigw_04: ({ resourceId, region }) => ({
+  // apigw_waf_webacl — API Gateway WAF WebACL not associated
+  apigw_waf_webacl: ({ resourceId, region }) => ({
     console: [
       `Open WAF console → Web ACLs → select or create one.`,
       `Associated resources → Add → select API Gateway stage "${resourceId}".`,
@@ -8611,8 +8611,8 @@ resource "aws_wafv2_web_acl_association" "apigw" {
 }`,
   }),
 
-  // apigw_05 — API Gateway throttling not configured
-  apigw_05: ({ resourceId }) => ({
+  // apigw_throttling — API Gateway throttling not configured
+  apigw_throttling: ({ resourceId }) => ({
     console: [
       `Open API Gateway console → select API → Stages → "${resourceId}".`,
       "Stage Editor → Default Method Throttling.",
@@ -8633,8 +8633,8 @@ resource "aws_api_gateway_method_settings" "fix" {
 }`,
   }),
 
-  // apigw_06 — Private API not using VPC endpoint
-  apigw_06: ({ resourceId, region }) => ({
+  // apigw_vpc_endpoint — Private API not using VPC endpoint
+  apigw_vpc_endpoint: ({ resourceId, region }) => ({
     console: [
       `Open API Gateway console → select API "${resourceId}".`,
       "Settings → Endpoint type should be PRIVATE.",
@@ -8660,8 +8660,8 @@ resource "aws_vpc_endpoint" "apigw" {
 }`,
   }),
 
-  // apigw_07 — API Gateway CORS allows all origins
-  apigw_07: ({ resourceId }) => ({
+  // apigw_cors_wildcard — API Gateway CORS allows all origins
+  apigw_cors_wildcard: ({ resourceId }) => ({
     console: [
       `Open API Gateway console → select API "${resourceId}".`,
       "Resources → select method → Method Response.",
@@ -8675,8 +8675,8 @@ echo "Update CORS for ${resourceId} to restrict Access-Control-Allow-Origin"`,
 # "Access-Control-Allow-Origin" = "'https://your-domain.com'"`,
   }),
 
-  // apigw_08 — API Gateway keys not required for usage plans
-  apigw_08: ({ resourceId }) => ({
+  // apigw_api_keys_required — API Gateway keys not required for usage plans
+  apigw_api_keys_required: ({ resourceId }) => ({
     console: [
       `Open API Gateway console → Usage Plans → "${resourceId}".`,
       "Configure throttling rate and burst limits.",
@@ -8694,8 +8694,8 @@ resource "aws_api_gateway_usage_plan" "fix" {
 }`,
   }),
 
-  // apigw_09 — API Gateway request validation disabled
-  apigw_09: ({ resourceId }) => ({
+  // apigw_request_validation — API Gateway request validation disabled
+  apigw_request_validation: ({ resourceId }) => ({
     console: [
       `Open API Gateway console → select API "${resourceId}".`,
       "Resources → select method → Method Request.",
@@ -8713,8 +8713,8 @@ resource "aws_api_gateway_request_validator" "fix" {
 }`,
   }),
 
-  // apigw_10 — API Gateway backend certificate missing
-  apigw_10: ({ resourceId, region }) => ({
+  // apigw_client_certificate — API Gateway backend certificate missing
+  apigw_client_certificate: ({ resourceId, region }) => ({
     console: [
       `Open API Gateway console → select API → Stages → "${resourceId}".`,
       "Stage Editor → Client Certificate → Generate.",
@@ -8736,8 +8736,8 @@ resource "aws_api_gateway_stage" "fix" {
 }`,
   }),
 
-  // apigw_11 — Load balancer has no HTTPS listener
-  apigw_11: ({ resourceId, region }) => ({
+  // apigw_lb_https_listener — Load balancer has no HTTPS listener
+  apigw_lb_https_listener: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → select "${resourceId}".`,
       "Listeners tab → Add listener.",
@@ -8770,8 +8770,8 @@ resource "aws_lb_listener" "https" {
 }`,
   }),
 
-  // apigw_12 — Load balancer TLS policy below TLS 1.2
-  apigw_12: ({ resourceId, region }) => ({
+  // apigw_lb_tls_12 — Load balancer TLS policy below TLS 1.2
+  apigw_lb_tls_12: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → select LB → Listeners.`,
       `Select HTTPS listener "${resourceId}" → Edit.`,
@@ -8792,8 +8792,8 @@ resource "aws_lb_listener" "fix" {
 }`,
   }),
 
-  // apigw_13 — Load balancer access logging disabled
-  apigw_13: ({ resourceId, region }) => ({
+  // apigw_lb_access_logging — Load balancer access logging disabled
+  apigw_lb_access_logging: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → select "${resourceId}".`,
       "Attributes → Edit.",
@@ -8821,8 +8821,8 @@ resource "aws_lb" "fix" {
 }`,
   }),
 
-  // apigw_14 — Production LB deletion protection off
-  apigw_14: ({ resourceId, region }) => ({
+  // apigw_lb_deletion_protection — Production LB deletion protection off
+  apigw_lb_deletion_protection: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → select "${resourceId}".`,
       "Attributes → Edit → enable Deletion protection.",
@@ -8842,8 +8842,8 @@ resource "aws_lb" "fix" {
 }`,
   }),
 
-  // apigw_15 — LB HTTP not redirecting to HTTPS
-  apigw_15: ({ resourceId, region }) => ({
+  // apigw_lb_http_redirect_https — LB HTTP not redirecting to HTTPS
+  apigw_lb_http_redirect_https: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → Listeners.`,
       `Select HTTP listener "${resourceId}" → Edit.`,
@@ -8881,8 +8881,8 @@ resource "aws_lb_listener" "http_redirect" {
 }`,
   }),
 
-  // apigw_16 — Internal LB is internet-facing
-  apigw_16: ({ resourceId, region }) => ({
+  // apigw_lb_internal_not_public — Internal LB is internet-facing
+  apigw_lb_internal_not_public: ({ resourceId, region }) => ({
     console: [
       `Load balancer "${resourceId}" is tagged internal but is internet-facing.`,
       "Recreate as an internal load balancer.",
@@ -8907,8 +8907,8 @@ resource "aws_lb" "internal" {
 }`,
   }),
 
-  // apigw_17 — Production ALB not associated with WAF
-  apigw_17: ({ resourceId, region }) => ({
+  // apigw_lb_waf_webacl — Production ALB not associated with WAF
+  apigw_lb_waf_webacl: ({ resourceId, region }) => ({
     console: [
       `Open WAF console → Web ACLs → select or create one.`,
       `Associated resources → Add → select ALB "${resourceId}".`,
@@ -8928,8 +8928,8 @@ resource "aws_wafv2_web_acl_association" "alb" {
 }`,
   }),
 
-  // apigw_18 — Load balancer TLS certificate expired
-  apigw_18: ({ resourceId, region }) => ({
+  // apigw_lb_cert_not_expired — Load balancer TLS certificate expired
+  apigw_lb_cert_not_expired: ({ resourceId, region }) => ({
     console: [
       `Open ACM console → find the expired certificate for "${resourceId}".`,
       "Request or import a new certificate.",
@@ -8959,8 +8959,8 @@ resource "aws_lb_listener" "fix" {
 }`,
   }),
 
-  // apigw_19 — LB drop invalid headers disabled
-  apigw_19: ({ resourceId, region }) => ({
+  // apigw_lb_drop_invalid_headers — LB drop invalid headers disabled
+  apigw_lb_drop_invalid_headers: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → select "${resourceId}".`,
       "Attributes → Edit → enable 'Drop invalid header fields'.",
@@ -8980,8 +8980,8 @@ resource "aws_lb" "fix" {
 }`,
   }),
 
-  // apigw_20 — LB deployed across only 1 AZ
-  apigw_20: ({ resourceId, region }) => ({
+  // apigw_lb_multi_az — LB deployed across only 1 AZ
+  apigw_lb_multi_az: ({ resourceId, region }) => ({
     console: [
       `Open EC2 console → Load Balancers → select "${resourceId}".`,
       "Availability Zones → Edit.",
@@ -9002,8 +9002,8 @@ resource "aws_lb" "fix" {
 }`,
   }),
 
-  // cognito_01 — Cognito user pool MFA disabled
-  cognito_01: ({ resourceId, region }) => ({
+  // cognito_mfa_required — Cognito user pool MFA disabled
+  cognito_mfa_required: ({ resourceId, region }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Multi-factor authentication → Edit.",
@@ -9029,8 +9029,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_02 — Cognito password too short
-  cognito_02: ({ resourceId, region }) => ({
+  // cognito_pwd_min_length — Cognito password too short
+  cognito_pwd_min_length: ({ resourceId, region }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Password policy → Edit.",
@@ -9055,8 +9055,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_03 — Cognito: no uppercase required
-  cognito_03: ({ resourceId }) => ({
+  // cognito_pwd_uppercase — Cognito: no uppercase required
+  cognito_pwd_uppercase: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Password policy → Edit.",
@@ -9071,8 +9071,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_04 — Cognito: no lowercase required
-  cognito_04: ({ resourceId }) => ({
+  // cognito_pwd_lowercase — Cognito: no lowercase required
+  cognito_pwd_lowercase: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Password policy → Edit.",
@@ -9087,8 +9087,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_05 — Cognito: no numbers required
-  cognito_05: ({ resourceId }) => ({
+  // cognito_pwd_numbers — Cognito: no numbers required
+  cognito_pwd_numbers: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Password policy → Edit.",
@@ -9103,8 +9103,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_06 — Cognito: no symbols required
-  cognito_06: ({ resourceId }) => ({
+  // cognito_pwd_symbols — Cognito: no symbols required
+  cognito_pwd_symbols: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Password policy → Edit.",
@@ -9119,8 +9119,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_07 — Cognito advanced security not enforced
-  cognito_07: ({ resourceId, region }) => ({
+  // cognito_advanced_security — Cognito advanced security not enforced
+  cognito_advanced_security: ({ resourceId, region }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Advanced security → Edit.",
@@ -9140,8 +9140,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_08 — Cognito temp password validity > 7 days
-  cognito_08: ({ resourceId }) => ({
+  // cognito_temp_pwd_validity — Cognito temp password validity > 7 days
+  cognito_temp_pwd_validity: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Password policy → Edit.",
@@ -9158,8 +9158,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_09 — Cognito no auto-verified attributes
-  cognito_09: ({ resourceId }) => ({
+  // cognito_verification_required — Cognito no auto-verified attributes
+  cognito_verification_required: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-up experience → Attribute verification → Edit.",
@@ -9174,8 +9174,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_10 — Cognito no new device challenge
-  cognito_10: ({ resourceId }) => ({
+  // cognito_device_tracking — Cognito no new device challenge
+  cognito_device_tracking: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Sign-in experience → Device tracking → Edit.",
@@ -9193,8 +9193,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_11 — Cognito access token valid > 60 min
-  cognito_11: ({ resourceId }) => ({
+  // cognito_access_token_validity — Cognito access token valid > 60 min
+  cognito_access_token_validity: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "App integration → App clients → Edit.",
@@ -9212,8 +9212,8 @@ resource "aws_cognito_user_pool_client" "fix" {
 }`,
   }),
 
-  // cognito_12 — Cognito refresh token valid > 30 days
-  cognito_12: ({ resourceId }) => ({
+  // cognito_refresh_token_validity — Cognito refresh token valid > 30 days
+  cognito_refresh_token_validity: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "App integration → App clients → Edit.",
@@ -9231,8 +9231,8 @@ resource "aws_cognito_user_pool_client" "fix" {
 }`,
   }),
 
-  // cognito_13 — Cognito identity pool allows unauthenticated
-  cognito_13: ({ resourceId, region }) => ({
+  // cognito_no_unauth_identities — Cognito identity pool allows unauthenticated
+  cognito_no_unauth_identities: ({ resourceId, region }) => ({
     console: [
       `Open Cognito console → Identity pools → select "${resourceId}".`,
       "Edit identity pool.",
@@ -9255,8 +9255,8 @@ resource "aws_cognito_identity_pool" "fix" {
 }`,
   }),
 
-  // cognito_14 — Cognito app client uses plain password auth
-  cognito_14: ({ resourceId, region: _region }) => ({
+  // cognito_no_user_pwd_auth — Cognito app client uses plain password auth
+  cognito_no_user_pwd_auth: ({ resourceId, region: _region }) => ({
     console: [
       `Open Cognito console → User pools → App clients → "${resourceId}".`,
       "Edit → Authentication flows.",
@@ -9276,8 +9276,8 @@ resource "aws_cognito_user_pool_client" "fix" {
 }`,
   }),
 
-  // cognito_15 — Cognito server client missing secret
-  cognito_15: ({ resourceId }) => ({
+  // cognito_app_client_secret — Cognito server client missing secret
+  cognito_app_client_secret: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → App clients → "${resourceId}".`,
       "This is a server-side client but has no client secret.",
@@ -9291,8 +9291,8 @@ resource "aws_cognito_user_pool_client" "fix" {
 }`,
   }),
 
-  // cognito_16 — Cognito user pool deletion protection off
-  cognito_16: ({ resourceId, region }) => ({
+  // cognito_deletion_protection — Cognito user pool deletion protection off
+  cognito_deletion_protection: ({ resourceId, region }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "User pool settings → enable Deletion protection.",
@@ -9312,8 +9312,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // cognito_17 — Cognito using default email sender
-  cognito_17: ({ resourceId }) => ({
+  // cognito_ses_sender — Cognito using default email sender
+  cognito_ses_sender: ({ resourceId }) => ({
     console: [
       `Open Cognito console → User pools → select "${resourceId}".`,
       "Messaging → Email → Edit.",
@@ -9333,8 +9333,8 @@ resource "aws_cognito_user_pool" "fix" {
 }`,
   }),
 
-  // kms_01 — KMS key rotation not enabled
-  kms_01: ({ resourceId, region }) => ({
+  // kms_key_rotation — KMS key rotation not enabled
+  kms_key_rotation: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → Customer managed keys → select "${resourceId}".`,
       "Key rotation tab → Edit.",
@@ -9359,8 +9359,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_02 — KMS key policy allows Principal:*
-  kms_02: ({ resourceId, region }) => ({
+  // kms_no_public_principal — KMS key policy allows Principal:*
+  kms_no_public_principal: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "Key policy → Edit.",
@@ -9397,8 +9397,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_03 — KMS key pending deletion without approval tag
-  kms_03: ({ resourceId, region }) => ({
+  // kms_pending_deletion_approval — KMS key pending deletion without approval tag
+  kms_pending_deletion_approval: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "If deletion was unintended: Actions → Cancel key deletion.",
@@ -9431,8 +9431,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_04 — KMS key policy mixes admin and user roles
-  kms_04: ({ resourceId, region }) => ({
+  // kms_separate_admin_users — KMS key policy mixes admin and user roles
+  kms_separate_admin_users: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "Key policy → Edit.",
@@ -9468,8 +9468,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_05 — KMS key has no description
-  kms_05: ({ resourceId, region }) => ({
+  // kms_key_description — KMS key has no description
+  kms_key_description: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "General configuration → Edit description.",
@@ -9490,8 +9490,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_06 — KMS multi-region key used without justification
-  kms_06: ({ resourceId }) => ({
+  // kms_multi_region_required — KMS multi-region key used without justification
+  kms_multi_region_required: ({ resourceId }) => ({
     console: [
       `KMS key "${resourceId}" is multi-region without justification tag.`,
       "Add tag 'multi_region_justification' with reason.",
@@ -9510,8 +9510,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_07 — KMS key allows unknown cross-account access
-  kms_07: ({ resourceId, region }) => ({
+  // kms_no_unknown_cross_account — KMS key allows unknown cross-account access
+  kms_no_unknown_cross_account: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "Key policy → Edit.",
@@ -9542,8 +9542,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_08 — KMS key missing owner/purpose tags
-  kms_08: ({ resourceId, region }) => ({
+  // kms_owner_purpose_tags — KMS key missing owner/purpose tags
+  kms_owner_purpose_tags: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "Tags → Edit.",
@@ -9567,8 +9567,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_09 — Disabled KMS key not scheduled for deletion
-  kms_09: ({ resourceId, region }) => ({
+  // kms_disabled_keys_cleanup — Disabled KMS key not scheduled for deletion
+  kms_disabled_keys_cleanup: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select disabled key "${resourceId}".`,
       "If no longer needed: Actions → Schedule key deletion.",
@@ -9595,8 +9595,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_10 — KMS key policy grants root wildcard actions
-  kms_10: ({ resourceId, region }) => ({
+  // kms_no_root_wildcard — KMS key policy grants root wildcard actions
+  kms_no_root_wildcard: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "Key policy → Edit.",
@@ -9627,8 +9627,8 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_11 — KMS key alias uses reserved aws/ prefix
-  kms_11: ({ resourceId, region }) => ({
+  // kms_no_aws_alias_prefix — KMS key alias uses reserved aws/ prefix
+  kms_no_aws_alias_prefix: ({ resourceId, region }) => ({
     console: [
       `KMS alias "${resourceId}" uses reserved aws/ prefix.`,
       "Create a new alias without the aws/ prefix.",
@@ -9647,8 +9647,8 @@ resource "aws_kms_alias" "fix" {
 }`,
   }),
 
-  // kms_12 — KMS key for S3 rotation not enabled
-  kms_12: ({ resourceId, region }) => ({
+  // kms_s3_rotation — KMS key for S3 rotation not enabled
+  kms_s3_rotation: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select S3 encryption key "${resourceId}".`,
       "Key rotation → Edit → Enable.",
@@ -9668,8 +9668,8 @@ resource "aws_kms_key" "s3" {
 }`,
   }),
 
-  // kms_13 — No CloudWatch alarm for KMS key deletion
-  kms_13: ({ resourceId: _resourceId, region }) => ({
+  // kms_deletion_alarm — No CloudWatch alarm for KMS key deletion
+  kms_deletion_alarm: ({ resourceId: _resourceId, region }) => ({
     console: [
       "Open CloudWatch console → Alarms → Create alarm.",
       "Select CloudTrail metric for KMS key deletion events.",
@@ -9711,8 +9711,8 @@ resource "aws_cloudwatch_metric_alarm" "kms_deletion" {
 }`,
   }),
 
-  // kms_14 — KMS key material origin is EXTERNAL
-  kms_14: ({ resourceId }) => ({
+  // kms_external_material_approval — KMS key material origin is EXTERNAL
+  kms_external_material_approval: ({ resourceId }) => ({
     console: [
       `KMS key "${resourceId}" uses externally imported key material.`,
       "Ensure key material is securely managed and rotated manually.",
@@ -9737,8 +9737,8 @@ resource "aws_kms_key" "aws_managed" {
 }`,
   }),
 
-  // kms_15 — KMS key grant allows decrypt to unapproved service
-  kms_15: ({ resourceId, region }) => ({
+  // kms_decrypt_grant_approved — KMS key grant allows decrypt to unapproved service
+  kms_decrypt_grant_approved: ({ resourceId, region }) => ({
     console: [
       `Open KMS console → select key "${resourceId}".`,
       "Key grants → review active grants.",
@@ -9842,8 +9842,8 @@ resource "aws_backup_selection" "tagged" {
 }`,
   }),
 
-  // CROSS_01 — Capital One pattern (SSRF → IMDS → S3)
-  CROSS_01: ({ resourceId, region }) => ({
+  // cross_capital_one_pattern — Capital One pattern (SSRF → IMDS → S3)
+  cross_capital_one_pattern: ({ resourceId, region }) => ({
     console: [
       `Step 1 — IMDSv2: EC2 → Instances → "${resourceId}" → Actions → Modify metadata options → Require HTTP tokens.`,
       "Step 2 — S3: block public access on all buckets (S3 console → each bucket → Permissions).",

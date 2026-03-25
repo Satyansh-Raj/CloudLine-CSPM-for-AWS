@@ -59,6 +59,10 @@ class RDSCollector(BaseCollector):
         return instances
 
     def _build_instance(self, db: dict) -> dict:
+        tags = {
+            t["Key"]: t["Value"]
+            for t in db.get("TagList", [])
+        }
         return {
             "db_instance_id": db[
                 "DBInstanceIdentifier"
@@ -82,4 +86,5 @@ class RDSCollector(BaseCollector):
             "auto_minor_version_upgrade": db.get(
                 "AutoMinorVersionUpgrade", False
             ),
+            "tags": tags,
         }

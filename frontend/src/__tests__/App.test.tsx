@@ -10,11 +10,26 @@ vi.mock("@/pages", () => ({
   TrendsPage: () => <div>Trends</div>,
   ExecutiveSummaryPage: () => <div>Executive</div>,
   PoliciesPage: () => <div>Policies</div>,
+  InventoryPage: () => <div>Inventory</div>,
+  CategoryResourcesPage: () => <div>CategoryResources</div>,
+  ResourceDetailPage: () => <div>ResourceDetail</div>,
+  CompliancePage: () => <div>Compliance</div>,
 }));
 
 vi.mock("@/components/layout", () => ({
-  Layout: () => (
-    <div data-testid="layout">Layout</div>
+  Layout: () => <div data-testid="layout">Layout</div>,
+}));
+
+// Mock context providers to avoid real API calls
+vi.mock("@/context/AccountContext", () => ({
+  AccountProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+
+vi.mock("@/context/RegionContext", () => ({
+  RegionProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
   ),
 }));
 
@@ -23,9 +38,7 @@ describe("App", () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        document.body.querySelector("div"),
-      ).toBeTruthy();
+      expect(document.body.querySelector("div")).toBeTruthy();
     });
   });
 
@@ -33,9 +46,7 @@ describe("App", () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        document.body.querySelector("div"),
-      ).toBeTruthy();
+      expect(document.body.querySelector("div")).toBeTruthy();
     });
   });
 });

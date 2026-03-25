@@ -3,12 +3,19 @@
 from functools import lru_cache
 
 import boto3
+from fastapi import Depends
 
 from app.config import Settings, settings
 from app.engine.evaluator import PolicyEvaluator
 from app.engine.opa_client import (
     OPAClient,
     create_opa_client,
+)
+from app.jira.client import JiraClient
+from app.pipeline.account_store import AccountStore
+from app.pipeline.resource_store import ResourceStore
+from app.pipeline.session_factory import (
+    AWSSessionFactory,
 )
 from app.pipeline.state_manager import StateManager
 from app.pipeline.ws_manager import ConnectionManager
@@ -63,6 +70,60 @@ def get_state_manager() -> StateManager:
 
 
 @lru_cache
+def get_resource_store() -> ResourceStore:
+    """Singleton ResourceStore for inventory."""
+    session = get_boto3_session()
+    return ResourceStore(
+        session=session,
+        table_name=(
+            settings.dynamodb_inventory_table
+        ),
+        endpoint_url=settings.dynamodb_endpoint,
+    )
+
+
+@lru_cache
+def get_account_store() -> AccountStore:
+    """Singleton AccountStore for target accounts."""
+    session = get_boto3_session()
+    return AccountStore(
+        session=session,
+        table_name=settings.dynamodb_accounts_table,
+        endpoint_url=settings.dynamodb_endpoint,
+    )
+
+
+@lru_cache
+def get_session_factory() -> AWSSessionFactory:
+    """Singleton AWSSessionFactory for AssumeRole."""
+    session = get_boto3_session()
+    return AWSSessionFactory(base_session=session)
+
+
+@lru_cache
 def get_ws_manager() -> ConnectionManager:
     """Singleton ConnectionManager for WebSocket."""
     return ConnectionManager()
+
+
+def get_jira_client(
+    cfg: Settings = Depends(get_settings),
+) -> JiraClient | None:
+    """Return a JiraClient if Jira is configured.
+
+    Returns None when jira_url is empty, indicating
+    the Jira integration is not set up.
+
+    Args:
+        cfg: Application settings (injected).
+
+    Returns:
+        JiraClient instance or None.
+    """
+    if not cfg.jira_url:
+        return None
+    return JiraClient(
+        jira_url=cfg.jira_url,
+        jira_email=cfg.jira_email,
+        jira_api_token=cfg.jira_api_token,
+    )

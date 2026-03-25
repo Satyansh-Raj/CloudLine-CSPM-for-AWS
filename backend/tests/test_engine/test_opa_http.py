@@ -74,7 +74,7 @@ class TestOPAHTTPClient:
                 "result": {
                     "iam": {
                         "violations": [{
-                            "check_id": "iam_01",
+                            "check_id": "iam_root_mfa",
                             "status": "alarm",
                         }],
                         "compliant": [],

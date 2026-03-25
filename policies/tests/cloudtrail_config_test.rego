@@ -54,11 +54,11 @@ _good_ct_input := {
 # =========================================================================
 test_cloudtrail_01_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/is_logging", "value": false}])
-	_ct_violations_for("cloudtrail_01", inp) == 1
+	_ct_violations_for("cloudtrail_enabled", inp) == 1
 }
 
 test_cloudtrail_01_pass if {
-	_ct_violations_for("cloudtrail_01", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_enabled", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -66,11 +66,11 @@ test_cloudtrail_01_pass if {
 # =========================================================================
 test_cloudtrail_02_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/is_multi_region_trail", "value": false}])
-	_ct_violations_for("cloudtrail_02", inp) == 1
+	_ct_violations_for("cloudtrail_multi_region", inp) == 1
 }
 
 test_cloudtrail_02_pass if {
-	_ct_violations_for("cloudtrail_02", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_multi_region", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -78,11 +78,11 @@ test_cloudtrail_02_pass if {
 # =========================================================================
 test_cloudtrail_03_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/log_file_validation_enabled", "value": false}])
-	_ct_violations_for("cloudtrail_03", inp) == 1
+	_ct_violations_for("cloudtrail_log_validation", inp) == 1
 }
 
 test_cloudtrail_03_pass if {
-	_ct_violations_for("cloudtrail_03", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_log_validation", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -90,11 +90,11 @@ test_cloudtrail_03_pass if {
 # =========================================================================
 test_cloudtrail_04_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/s3_bucket_public_access", "value": true}])
-	_ct_violations_for("cloudtrail_04", inp) == 1
+	_ct_violations_for("cloudtrail_s3_private", inp) == 1
 }
 
 test_cloudtrail_04_pass if {
-	_ct_violations_for("cloudtrail_04", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_s3_private", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -103,11 +103,11 @@ test_cloudtrail_04_pass if {
 test_cloudtrail_05_alarm if {
 	bad_trail := object.remove(_good_trail, ["cloud_watch_logs_log_group_arn"])
 	inp := {"region": "us-east-1", "account_id": "123456789012", "cloudtrail": {"trails": [bad_trail]}}
-	_ct_violations_for("cloudtrail_05", inp) == 1
+	_ct_violations_for("cloudtrail_cloudwatch_logs", inp) == 1
 }
 
 test_cloudtrail_05_pass if {
-	_ct_violations_for("cloudtrail_05", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_cloudwatch_logs", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -116,11 +116,11 @@ test_cloudtrail_05_pass if {
 test_cloudtrail_06_alarm if {
 	bad_trail := object.remove(_good_trail, ["kms_key_id"])
 	inp := {"region": "us-east-1", "account_id": "123456789012", "cloudtrail": {"trails": [bad_trail]}}
-	_ct_violations_for("cloudtrail_06", inp) == 1
+	_ct_violations_for("cloudtrail_kms_encryption", inp) == 1
 }
 
 test_cloudtrail_06_pass if {
-	_ct_violations_for("cloudtrail_06", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_kms_encryption", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -129,11 +129,11 @@ test_cloudtrail_06_pass if {
 test_cloudtrail_07_alarm if {
 	bad_trail := object.remove(_good_trail, ["sns_topic_arn"])
 	inp := {"region": "us-east-1", "account_id": "123456789012", "cloudtrail": {"trails": [bad_trail]}}
-	_ct_violations_for("cloudtrail_07", inp) == 1
+	_ct_violations_for("cloudtrail_sns_notification", inp) == 1
 }
 
 test_cloudtrail_07_pass if {
-	_ct_violations_for("cloudtrail_07", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_sns_notification", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -141,11 +141,11 @@ test_cloudtrail_07_pass if {
 # =========================================================================
 test_cloudtrail_08_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/event_selectors/0/include_management_events", "value": false}])
-	_ct_violations_for("cloudtrail_08", inp) == 1
+	_ct_violations_for("cloudtrail_mgmt_events", inp) == 1
 }
 
 test_cloudtrail_08_pass if {
-	_ct_violations_for("cloudtrail_08", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_mgmt_events", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -153,16 +153,16 @@ test_cloudtrail_08_pass if {
 # =========================================================================
 test_cloudtrail_09_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/event_selectors/0/read_write_type", "value": "WriteOnly"}])
-	_ct_violations_for("cloudtrail_09", inp) == 1
+	_ct_violations_for("cloudtrail_read_write_events", inp) == 1
 }
 
 test_cloudtrail_09_pass if {
-	_ct_violations_for("cloudtrail_09", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_read_write_events", _good_ct_input) == 0
 }
 
 test_cloudtrail_09_pass_readonly if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/event_selectors/0/read_write_type", "value": "ReadOnly"}])
-	_ct_violations_for("cloudtrail_09", inp) == 0
+	_ct_violations_for("cloudtrail_read_write_events", inp) == 0
 }
 
 # =========================================================================
@@ -175,11 +175,11 @@ test_cloudtrail_10_alarm if {
 		"data_resources": [],
 	}]}])
 	inp := {"region": "us-east-1", "account_id": "123456789012", "cloudtrail": {"trails": [bad_trail]}}
-	_ct_violations_for("cloudtrail_10", inp) == 1
+	_ct_violations_for("cloudtrail_s3_data_events", inp) == 1
 }
 
 test_cloudtrail_10_pass if {
-	_ct_violations_for("cloudtrail_10", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_s3_data_events", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -192,11 +192,11 @@ test_cloudtrail_11_alarm if {
 		"data_resources": [{"type": "AWS::S3::Object", "values": ["arn:aws:s3"]}],
 	}]}])
 	inp := {"region": "us-east-1", "account_id": "123456789012", "cloudtrail": {"trails": [bad_trail]}}
-	_ct_violations_for("cloudtrail_11", inp) == 1
+	_ct_violations_for("cloudtrail_lambda_data_events", inp) == 1
 }
 
 test_cloudtrail_11_pass if {
-	_ct_violations_for("cloudtrail_11", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_lambda_data_events", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -204,11 +204,11 @@ test_cloudtrail_11_pass if {
 # =========================================================================
 test_cloudtrail_12_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/insight_selectors", "value": []}])
-	_ct_violations_for("cloudtrail_12", inp) == 1
+	_ct_violations_for("cloudtrail_insights", inp) == 1
 }
 
 test_cloudtrail_12_pass if {
-	_ct_violations_for("cloudtrail_12", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_insights", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -216,11 +216,11 @@ test_cloudtrail_12_pass if {
 # =========================================================================
 test_cloudtrail_13_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/include_global_service_events", "value": false}])
-	_ct_violations_for("cloudtrail_13", inp) == 1
+	_ct_violations_for("cloudtrail_global_events", inp) == 1
 }
 
 test_cloudtrail_13_pass if {
-	_ct_violations_for("cloudtrail_13", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_global_events", _good_ct_input) == 0
 }
 
 test_cloudtrail_13_pass_single_region if {
@@ -229,7 +229,7 @@ test_cloudtrail_13_pass_single_region if {
 	}, {
 		"op": "replace", "path": "/cloudtrail/trails/0/include_global_service_events", "value": false,
 	}])
-	_ct_violations_for("cloudtrail_13", inp) == 0
+	_ct_violations_for("cloudtrail_global_events", inp) == 0
 }
 
 # =========================================================================
@@ -237,16 +237,16 @@ test_cloudtrail_13_pass_single_region if {
 # =========================================================================
 test_cloudtrail_14_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/log_retention_days", "value": 90}])
-	_ct_violations_for("cloudtrail_14", inp) == 1
+	_ct_violations_for("cloudtrail_retention_365", inp) == 1
 }
 
 test_cloudtrail_14_pass if {
-	_ct_violations_for("cloudtrail_14", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_retention_365", _good_ct_input) == 0
 }
 
 test_cloudtrail_14_pass_over_365 if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/log_retention_days", "value": 730}])
-	_ct_violations_for("cloudtrail_14", inp) == 0
+	_ct_violations_for("cloudtrail_retention_365", inp) == 0
 }
 
 # =========================================================================
@@ -254,11 +254,11 @@ test_cloudtrail_14_pass_over_365 if {
 # =========================================================================
 test_cloudtrail_15_alarm if {
 	inp := json.patch(_good_ct_input, [{"op": "replace", "path": "/cloudtrail/trails/0/s3_bucket_mfa_delete_enabled", "value": false}])
-	_ct_violations_for("cloudtrail_15", inp) == 1
+	_ct_violations_for("cloudtrail_s3_mfa_delete", inp) == 1
 }
 
 test_cloudtrail_15_pass if {
-	_ct_violations_for("cloudtrail_15", _good_ct_input) == 0
+	_ct_violations_for("cloudtrail_s3_mfa_delete", _good_ct_input) == 0
 }
 
 # =========================================================================
@@ -340,11 +340,11 @@ _good_cfg_input := {
 # =========================================================================
 test_config_01_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/recorders/0/recording_group/all_supported", "value": false}])
-	_cfg_violations_for("config_01", inp) == 1
+	_cfg_violations_for("config_recorder_enabled", inp) == 1
 }
 
 test_config_01_pass if {
-	_cfg_violations_for("config_01", _good_cfg_input) == 0
+	_cfg_violations_for("config_recorder_enabled", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -352,11 +352,11 @@ test_config_01_pass if {
 # =========================================================================
 test_config_02_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/recorder_statuses/0/recording", "value": false}])
-	_cfg_violations_for("config_02", inp) == 1
+	_cfg_violations_for("config_recorder_active", inp) == 1
 }
 
 test_config_02_pass if {
-	_cfg_violations_for("config_02", _good_cfg_input) == 0
+	_cfg_violations_for("config_recorder_active", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -364,11 +364,11 @@ test_config_02_pass if {
 # =========================================================================
 test_config_03_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/delivery_channels", "value": []}])
-	_cfg_violations_for("config_03", inp) == 1
+	_cfg_violations_for("config_delivery_channel", inp) == 1
 }
 
 test_config_03_pass if {
-	_cfg_violations_for("config_03", _good_cfg_input) == 0
+	_cfg_violations_for("config_delivery_channel", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -376,11 +376,11 @@ test_config_03_pass if {
 # =========================================================================
 test_config_04_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/delivery_channels/0/s3_bucket_public_access", "value": true}])
-	_cfg_violations_for("config_04", inp) == 1
+	_cfg_violations_for("config_s3_private", inp) == 1
 }
 
 test_config_04_pass if {
-	_cfg_violations_for("config_04", _good_cfg_input) == 0
+	_cfg_violations_for("config_s3_private", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -388,11 +388,11 @@ test_config_04_pass if {
 # =========================================================================
 test_config_05_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/rules", "value": []}])
-	_cfg_violations_for("config_05", inp) == 1
+	_cfg_violations_for("config_rules_deployed", inp) == 1
 }
 
 test_config_05_pass if {
-	_cfg_violations_for("config_05", _good_cfg_input) == 0
+	_cfg_violations_for("config_rules_deployed", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -401,11 +401,11 @@ test_config_05_pass if {
 test_config_06_alarm if {
 	bad_channel := object.remove(_good_channel, ["sns_topic_arn"])
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/delivery_channels", "value": [bad_channel]}])
-	_cfg_violations_for("config_06", inp) == 1
+	_cfg_violations_for("config_sns_notification", inp) == 1
 }
 
 test_config_06_pass if {
-	_cfg_violations_for("config_06", _good_cfg_input) == 0
+	_cfg_violations_for("config_sns_notification", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -413,11 +413,11 @@ test_config_06_pass if {
 # =========================================================================
 test_config_07_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/recorders/0/recording_group/include_global_resource_types", "value": false}])
-	_cfg_violations_for("config_07", inp) == 1
+	_cfg_violations_for("config_global_iam_resources", inp) == 1
 }
 
 test_config_07_pass if {
-	_cfg_violations_for("config_07", _good_cfg_input) == 0
+	_cfg_violations_for("config_global_iam_resources", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -425,11 +425,11 @@ test_config_07_pass if {
 # =========================================================================
 test_config_08_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/aggregators", "value": []}])
-	_cfg_violations_for("config_08", inp) == 1
+	_cfg_violations_for("config_multi_account_aggregator", inp) == 1
 }
 
 test_config_08_pass if {
-	_cfg_violations_for("config_08", _good_cfg_input) == 0
+	_cfg_violations_for("config_multi_account_aggregator", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -437,11 +437,11 @@ test_config_08_pass if {
 # =========================================================================
 test_config_09_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/conformance_packs", "value": []}])
-	_cfg_violations_for("config_09", inp) == 1
+	_cfg_violations_for("config_conformance_packs", inp) == 1
 }
 
 test_config_09_pass if {
-	_cfg_violations_for("config_09", _good_cfg_input) == 0
+	_cfg_violations_for("config_conformance_packs", _good_cfg_input) == 0
 }
 
 # =========================================================================
@@ -451,11 +451,11 @@ test_config_10_alarm if {
 	bad_rule := object.remove(_good_rule, ["remediation_configuration"])
 	bad_rule2 := object.union(bad_rule, {"compliance_type": "NON_COMPLIANT"})
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/rules", "value": [bad_rule2]}])
-	_cfg_violations_for("config_10", inp) == 1
+	_cfg_violations_for("config_remediation_actions", inp) == 1
 }
 
 test_config_10_pass_compliant if {
-	_cfg_violations_for("config_10", _good_cfg_input) == 0
+	_cfg_violations_for("config_remediation_actions", _good_cfg_input) == 0
 }
 
 test_config_10_pass_has_remediation if {
@@ -464,7 +464,7 @@ test_config_10_pass_has_remediation if {
 		"remediation_configuration": {"target_id": "SSM-Fix"},
 	})
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/rules", "value": [rule_with_remediation]}])
-	_cfg_violations_for("config_10", inp) == 0
+	_cfg_violations_for("config_remediation_actions", inp) == 0
 }
 
 # =========================================================================
@@ -472,16 +472,16 @@ test_config_10_pass_has_remediation if {
 # =========================================================================
 test_config_11_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/delivery_channels/0/config_snapshot_delivery_properties/delivery_frequency", "value": "TwentyFour_Hours"}])
-	_cfg_violations_for("config_11", inp) == 1
+	_cfg_violations_for("config_daily_snapshots", inp) == 1
 }
 
 test_config_11_pass if {
-	_cfg_violations_for("config_11", _good_cfg_input) == 0
+	_cfg_violations_for("config_daily_snapshots", _good_cfg_input) == 0
 }
 
 test_config_11_pass_three_hours if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/delivery_channels/0/config_snapshot_delivery_properties/delivery_frequency", "value": "Three_Hours"}])
-	_cfg_violations_for("config_11", inp) == 0
+	_cfg_violations_for("config_daily_snapshots", inp) == 0
 }
 
 # =========================================================================
@@ -489,11 +489,11 @@ test_config_11_pass_three_hours if {
 # =========================================================================
 test_config_12_alarm if {
 	inp := json.patch(_good_cfg_input, [{"op": "replace", "path": "/aws_config/rules/0/config_rule_state", "value": "EVALUATING"}])
-	_cfg_violations_for("config_12", inp) == 1
+	_cfg_violations_for("config_no_error_rules", inp) == 1
 }
 
 test_config_12_pass if {
-	_cfg_violations_for("config_12", _good_cfg_input) == 0
+	_cfg_violations_for("config_no_error_rules", _good_cfg_input) == 0
 }
 
 # =========================================================================

@@ -1,7 +1,15 @@
-"""Compliance score endpoint — reads from DynamoDB."""
+"""Compliance score endpoints — reads from DynamoDB."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.compliance.mappings import (
+    ComplianceMappingRegistry,
+    get_registry,
+)
+from app.compliance.scorer import (
+    ComplianceFrameworkScorer,
+    FrameworkScore,
+)
 from app.dependencies import (
     get_settings,
     get_state_manager,
@@ -33,27 +41,121 @@ CHECKS_PER_DOMAIN: dict[str, int] = {
 }
 
 
-@router.get("/compliance/score")
-def get_compliance_score(
+def _get_registry() -> ComplianceMappingRegistry:
+    """FastAPI dependency: return cached registry."""
+    return get_registry()
+
+
+@router.get("/compliance/frameworks")
+def list_frameworks(
+    registry: ComplianceMappingRegistry = Depends(
+        _get_registry
+    ),
+) -> dict:
+    """Return the list of supported compliance frameworks.
+
+    Returns:
+        Dict with 'frameworks' key containing all
+        framework names loaded from the registry.
+    """
+    return {"frameworks": registry.frameworks()}
+
+
+@router.get(
+    "/compliance/framework/{framework_name}",
+    response_model=FrameworkScore,
+)
+def get_framework_score(
+    framework_name: str,
+    region: str | None = None,
+    account_id: str | None = None,
     state_manager: StateManager = Depends(
         get_state_manager
     ),
     settings=Depends(get_settings),
+    registry: ComplianceMappingRegistry = Depends(
+        _get_registry
+    ),
+) -> FrameworkScore:
+    """Return per-control compliance score for a framework.
+
+    Args:
+        framework_name: One of the supported frameworks
+            (cis_aws, nist_800_53, pci_dss, hipaa,
+            soc2, owasp).
+        region: Optional AWS region override.
+        account_id: Optional AWS account ID override.
+
+    Returns:
+        FrameworkScore with total_controls, compliant,
+        non_compliant, score_percent, and a per-control
+        breakdown.
+
+    Raises:
+        404: When framework_name is not recognised.
+    """
+    if framework_name not in registry.frameworks():
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Framework '{framework_name}' not found."
+                " Supported: "
+                + ", ".join(registry.frameworks())
+            ),
+        )
+
+    eff_region = region or settings.aws_region
+    eff_account = (
+        account_id or settings.aws_account_id
+    )
+
+    states = state_manager.query_by_account(
+        eff_account,
+        eff_region,
+        limit=5000,
+    )
+
+    scorer = ComplianceFrameworkScorer(
+        framework=framework_name,
+        violations=states,
+        registry=registry,
+    )
+    return scorer.score()
+
+
+@router.get("/compliance/score")
+def get_compliance_score(
+    region: str | None = None,
+    account_id: str | None = None,
+    state_manager: StateManager = Depends(
+        get_state_manager
+    ),
+    settings=Depends(get_settings),
+    registry: ComplianceMappingRegistry = Depends(
+        _get_registry
+    ),
 ) -> dict:
     """Compute compliance score from stored state.
 
     Score = passing checks / total defined checks.
-    A check "fails" if any resource has a violation
+    A check 'fails' if any resource has a violation
     for that check_id.
+
+    Includes a by_framework breakdown with per-framework
+    scores computed via ComplianceFrameworkScorer.
     """
+    eff_region = region or settings.aws_region
+    eff_account = (
+        account_id or settings.aws_account_id
+    )
+
     states = state_manager.query_by_account(
-        settings.aws_account_id,
-        settings.aws_region,
+        eff_account,
+        eff_region,
         limit=5000,
     )
 
     alarms = [s for s in states if s.status == "alarm"]
-    resolved = [s for s in states if s.status == "ok"]
 
     # Distinct check_ids with active violations
     failing_checks = {s.check_id for s in alarms}
@@ -164,6 +266,22 @@ def get_compliance_score(
                 ),
             }
 
+    # ── Per-framework breakdown ────────────────────
+    by_framework: dict[str, dict] = {}
+    for fw in registry.frameworks():
+        scorer = ComplianceFrameworkScorer(
+            framework=fw,
+            violations=states,
+            registry=registry,
+        )
+        fw_score = scorer.score()
+        by_framework[fw] = {
+            "score_percent": fw_score.score_percent,
+            "total_controls": fw_score.total_controls,
+            "compliant": fw_score.compliant,
+            "non_compliant": fw_score.non_compliant,
+        }
+
     return {
         "score_percent": score_pct,
         "total_checks": TOTAL_DEFINED_CHECKS,
@@ -174,4 +292,5 @@ def get_compliance_score(
         "skipped": 0,
         "by_domain": domain_scores,
         "by_severity": by_severity,
+        "by_framework": by_framework,
     }

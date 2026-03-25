@@ -13,7 +13,7 @@ REGION = "ap-south-1"
 
 
 def _make_state(
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     status="alarm",
     severity="critical",
     risk_score=92,
@@ -43,20 +43,20 @@ def _make_state(
 
 ALARM_STATES = [
     _make_state(
-        check_id="ec2_05",
+        check_id="ec2_no_open_ssh",
         risk_score=92,
         severity="critical",
         domain="network",
     ),
     _make_state(
-        check_id="s3_01",
+        check_id="s3_block_public_acls",
         risk_score=75,
         severity="high",
         domain="data_protection",
         resource_arn="arn:aws:s3:::bucket",
     ),
     _make_state(
-        check_id="iam_09",
+        check_id="iam_user_mfa",
         risk_score=60,
         severity="medium",
         domain="identity_access",
@@ -64,7 +64,7 @@ ALARM_STATES = [
         "user/dev",
     ),
     _make_state(
-        check_id="serverless_01",
+        check_id="serverless_lambda_xray",
         risk_score=30,
         severity="low",
         domain="serverless",

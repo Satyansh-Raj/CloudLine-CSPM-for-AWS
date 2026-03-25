@@ -4,13 +4,13 @@ import future.keywords.if
 import future.keywords.in
 
 # ---------------------------------------------------------------------------
-# Rule config_01 — AWS Config recorder must be enabled
+# Rule config_recorder_enabled — AWS Config recorder must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some recorder in input.aws_config.recorders
 	recorder.recording_group.all_supported == false
 	result := {
-		"check_id": "config_01",
+		"check_id": "config_recorder_enabled",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -20,23 +20,18 @@ violations contains result if {
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":recorder"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"cis_aws": ["3.5"],
-			"nist_800_53": ["CM-8"],
-			"pci_dss": ["10.1"],
-		},
 		"remediation_id": "REM_config_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_02 — AWS Config recorder must be active (not stopped)
+# Rule config_recorder_active — AWS Config recorder must be active (not stopped)
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some status in input.aws_config.recorder_statuses
 	status.recording == false
 	result := {
-		"check_id": "config_02",
+		"check_id": "config_recorder_active",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -46,44 +41,35 @@ violations contains result if {
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":recorder"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"cis_aws": ["3.5"],
-			"nist_800_53": ["CM-8"],
-			"pci_dss": ["10.1"],
-		},
 		"remediation_id": "REM_config_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_03 — Delivery channel must be configured for Config snapshots
+# Rule config_delivery_channel — Delivery channel must be configured for Config snapshots
 # ---------------------------------------------------------------------------
 violations contains result if {
 	count(input.aws_config.delivery_channels) == 0
 	result := {
-		"check_id": "config_03",
+		"check_id": "config_delivery_channel",
 		"status": "alarm",
 		"severity": "high",
 		"reason": "AWS Config has no delivery channel configured",
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":delivery-channel"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"cis_aws": ["3.5"],
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_config_03",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_04 — Config S3 delivery bucket must not be publicly accessible
+# Rule config_s3_private — Config S3 delivery bucket must not be publicly accessible
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some channel in input.aws_config.delivery_channels
 	channel.s3_bucket_public_access == true
 	result := {
-		"check_id": "config_04",
+		"check_id": "config_s3_private",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -93,65 +79,53 @@ violations contains result if {
 		"resource": concat("", ["arn:aws:s3:::", channel.s3_bucket_name]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"cis_aws": ["3.5"],
-			"nist_800_53": ["AU-9"],
-			"pci_dss": ["10.5"],
-		},
 		"remediation_id": "REM_config_04",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_05 — Config rules must be deployed
+# Rule config_rules_deployed — Config rules must be deployed
 # ---------------------------------------------------------------------------
 violations contains result if {
 	count(input.aws_config.rules) == 0
 	result := {
-		"check_id": "config_05",
+		"check_id": "config_rules_deployed",
 		"status": "alarm",
 		"severity": "high",
 		"reason": "No AWS Config rules are deployed — compliance posture is unmonitored",
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":config-rule/*"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["CA-7"],
-			"pci_dss": ["6.3.3"],
-		},
 		"remediation_id": "REM_config_05",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_06 — SNS notification must be configured for compliance changes
+# Rule config_sns_notification — SNS notification must be configured for compliance changes
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some channel in input.aws_config.delivery_channels
 	not channel.sns_topic_arn
 	result := {
-		"check_id": "config_06",
+		"check_id": "config_sns_notification",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": "AWS Config delivery channel has no SNS notification configured",
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":delivery-channel"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["IR-6"],
-		},
 		"remediation_id": "REM_config_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_07 — Config recorder must include global IAM resources
+# Rule config_global_iam_resources — Config recorder must include global IAM resources
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some recorder in input.aws_config.recorders
 	recorder.recording_group.include_global_resource_types == false
 	result := {
-		"check_id": "config_07",
+		"check_id": "config_global_iam_resources",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -161,64 +135,53 @@ violations contains result if {
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":recorder"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"cis_aws": ["3.5"],
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_config_07",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_08 — Multi-account aggregator must be configured
+# Rule config_multi_account_aggregator — Multi-account aggregator must be configured
 # ---------------------------------------------------------------------------
 violations contains result if {
 	count(input.aws_config.aggregators) == 0
 	result := {
-		"check_id": "config_08",
+		"check_id": "config_multi_account_aggregator",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": "No AWS Config multi-account aggregator configured",
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":config-aggregator/*"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["CA-7"],
-		},
 		"remediation_id": "REM_config_08",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_09 — Conformance packs must be deployed
+# Rule config_conformance_packs — Conformance packs must be deployed
 # ---------------------------------------------------------------------------
 violations contains result if {
 	count(input.aws_config.conformance_packs) == 0
 	result := {
-		"check_id": "config_09",
+		"check_id": "config_conformance_packs",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": "No AWS Config conformance packs deployed — compliance baselines missing",
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":conformance-pack/*"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["CA-7"],
-			"pci_dss": ["12.3.2"],
-		},
 		"remediation_id": "REM_config_09",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_10 — Non-compliant Config rules must have remediation actions
+# Rule config_remediation_actions — Non-compliant Config rules must have remediation actions
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some rule in input.aws_config.rules
 	rule.compliance_type == "NON_COMPLIANT"
 	not rule.remediation_configuration
 	result := {
-		"check_id": "config_10",
+		"check_id": "config_remediation_actions",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -228,42 +191,36 @@ violations contains result if {
 		"resource": rule.config_rule_arn,
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["CA-7"],
-		},
 		"remediation_id": "REM_config_10",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_11 — Config delivery channel snapshot frequency must be daily
+# Rule config_daily_snapshots — Config delivery channel snapshot frequency must be daily
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some channel in input.aws_config.delivery_channels
 	channel.config_snapshot_delivery_properties.delivery_frequency == "TwentyFour_Hours"
 	result := {
-		"check_id": "config_11",
+		"check_id": "config_daily_snapshots",
 		"status": "alarm",
 		"severity": "low",
 		"reason": "AWS Config snapshot delivery frequency is 24 hours — use 1 or 3 hours",
 		"resource": concat("", ["arn:aws:config:", input.region, ":", input.account_id, ":delivery-channel"]),
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_config_11",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule config_12 — Config rules must not have ERROR state
+# Rule config_no_error_rules — Config rules must not have ERROR state
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some rule in input.aws_config.rules
 	rule.config_rule_state == "EVALUATING"
 	result := {
-		"check_id": "config_12",
+		"check_id": "config_no_error_rules",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -273,9 +230,6 @@ violations contains result if {
 		"resource": rule.config_rule_arn,
 		"domain": "logging_monitoring",
 		"service": "config",
-		"compliance": {
-			"nist_800_53": ["CA-7"],
-		},
 		"remediation_id": "REM_config_12",
 	}
 }
@@ -286,7 +240,7 @@ violations contains result if {
 error contains result if {
 	not input.aws_config
 	result := {
-		"check_id": "config_00",
+		"check_id": "config_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "AWS Config data missing from input — collector may have failed",

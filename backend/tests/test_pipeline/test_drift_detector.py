@@ -19,7 +19,7 @@ ARN = "arn:aws:ec2:us-east-1:123:sg/sg-1"
 
 def _make_prev_state(
     status="ok",
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     resource_arn=ARN,
     resolved_at=None,
     regression_count=0,
@@ -201,7 +201,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             severity="critical",
             risk_score=92,
@@ -217,7 +217,7 @@ class TestDriftDetectorDetect:
         )
         assert alert.current_status == "alarm"
         assert alert.previous_status == ""
-        assert alert.check_id == "ec2_05"
+        assert alert.check_id == "ec2_no_open_ssh"
         assert alert.resource_arn == ARN
         assert alert.risk_score == 92
         assert (
@@ -229,7 +229,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=None,
             current_status="ok",
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
             resource_arn="arn:aws:s3:::bucket",
         )
         assert (
@@ -243,7 +243,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
         )
         assert "First evaluation" in alert.reason
@@ -253,7 +253,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             reason="Port 22 open to world",
         )
@@ -267,7 +267,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             severity="critical",
             risk_score=92,
@@ -292,7 +292,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=prev,
             current_status="ok",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             reason="Fixed by admin",
         )
@@ -310,7 +310,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
         )
         assert (
@@ -323,7 +323,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=prev,
             current_status="ok",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
         )
         assert (
@@ -340,7 +340,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -360,7 +360,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -375,7 +375,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
         )
         assert alert.timestamp.endswith("Z")
@@ -386,7 +386,7 @@ class TestDriftDetectorDetect:
         alert = self.detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
         )
         assert (
@@ -405,7 +405,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             severity="critical",
             risk_score=92,
@@ -419,7 +419,7 @@ class TestBuildUpdatedState:
             domain="network",
         )
         assert state.pk == f"{ACCOUNT}#{REGION}"
-        assert state.sk == f"ec2_05#{ARN}"
+        assert state.sk == f"ec2_no_open_ssh#{ARN}"
         assert state.status == "alarm"
         assert state.previous_status == ""
         assert state.severity == "critical"
@@ -434,7 +434,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=None,
             current_status="ok",
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
             resource_arn="arn:aws:s3:::bucket",
             account_id=ACCOUNT,
             region=REGION,
@@ -450,7 +450,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -471,7 +471,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=prev,
             current_status="ok",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -492,7 +492,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -513,7 +513,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=prev,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -529,7 +529,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=prev,
             current_status="ok",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,
@@ -545,7 +545,7 @@ class TestBuildUpdatedState:
         alert = self.detector.detect(
             previous=prev,
             current_status="ok",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=ARN,
             account_id=ACCOUNT,
             region=REGION,

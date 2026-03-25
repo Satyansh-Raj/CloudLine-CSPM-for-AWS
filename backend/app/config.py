@@ -1,20 +1,111 @@
 """Application configuration via environment variables."""
 
 import logging
+import os
 import secrets
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, EnvSettingsSource
 
 logger = logging.getLogger(__name__)
+
+
+class _RegionEnvSource(EnvSettingsSource):
+    """Custom env source that parses AWS_REGIONS as a
+    comma-separated string (e.g. us-east-1,eu-west-1)
+    in addition to the standard JSON list format.
+
+    Also falls back to AWS_REGION (singular) for
+    backward compatibility with older .env files.
+    """
+
+    def prepare_field_value(
+        self,
+        field_name: str,
+        field,
+        value: object,
+        value_is_complex: bool,
+    ) -> object:
+        if field_name == "aws_regions":
+            # Fallback: AWS_REGION (singular) → list
+            if value is None:
+                single = os.environ.get("AWS_REGION")
+                if single and single.strip():
+                    return [single.strip()]
+            if isinstance(value, str):
+                stripped = value.strip()
+                # JSON array — let parent handle it.
+                if stripped.startswith("["):
+                    return super().prepare_field_value(
+                        field_name,
+                        field,
+                        value,
+                        value_is_complex,
+                    )
+                # Comma-separated string.
+                return [
+                    r.strip()
+                    for r in stripped.split(",")
+                    if r.strip()
+                ]
+        return super().prepare_field_value(
+            field_name, field, value, value_is_complex
+        )
 
 
 class Settings(BaseSettings):
     """Application settings loaded from env vars / .env."""
 
-    # AWS
-    aws_region: str = "us-east-1"
+    # AWS — multi-region support.
+    # aws_regions is the canonical field.
+    # aws_region is a computed property that returns
+    # the first element (backward compat).
+    aws_regions: list[str] = ["us-east-1"]
     aws_account_id: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_aws_region(
+        cls, values: object
+    ) -> object:
+        """If caller passes aws_region=X (old style),
+        convert it to aws_regions=[X] so existing code
+        and tests keep working without changes."""
+        if not isinstance(values, dict):
+            return values
+        if (
+            "aws_region" in values
+            and "aws_regions" not in values
+        ):
+            values = dict(values)
+            values["aws_regions"] = [
+                values.pop("aws_region")
+            ]
+        return values
+
+    @property
+    def aws_region(self) -> str:
+        """First region — backward compatibility."""
+        return self.aws_regions[0]
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls,
+        init_settings,
+        env_settings,
+        dotenv_settings,
+        file_secret_settings,
+    ):
+        """Replace the default env source with our custom
+        one that handles comma-separated AWS_REGIONS."""
+        return (
+            init_settings,
+            _RegionEnvSource(settings_cls),
+            dotenv_settings,
+            file_secret_settings,
+        )
 
     # Authentication
     api_key: str = "change-me-in-env"
@@ -34,6 +125,10 @@ class Settings(BaseSettings):
     dynamodb_correlation_table: str = (
         "event-correlation"
     )
+    dynamodb_inventory_table: str = (
+        "resource-inventory"
+    )
+    dynamodb_accounts_table: str = "target-accounts"
     # SNS (gracefully skips when empty)
     sns_alert_topic_arn: str = ""
 
@@ -46,6 +141,12 @@ class Settings(BaseSettings):
 
     # Rate limiting
     rate_limit: str = "60/minute"
+
+    # Jira integration
+    jira_url: str = ""
+    jira_email: str = ""
+    jira_api_token: str = ""
+    jira_project_key: str = ""
 
     # App
     app_version: str = "0.1.0"

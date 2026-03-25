@@ -135,6 +135,12 @@ class EC2Collector(BaseCollector):
             ),
         }
 
+        # Tags
+        tags = {
+            t["Key"]: t["Value"]
+            for t in inst.get("Tags", [])
+        }
+
         return {
             "instance_id": iid,
             "arn": arn,
@@ -150,6 +156,7 @@ class EC2Collector(BaseCollector):
             "security_groups": sg_ids,
             "iam_role": iam_role,
             "metadata_options": metadata_options,
+            "tags": tags,
         }
 
     def _get_security_groups(
@@ -272,6 +279,10 @@ class EC2Collector(BaseCollector):
                         f":{account}"
                         f":volume/{vol_id}"
                     )
+                    vol_tags = {
+                        t["Key"]: t["Value"]
+                        for t in vol.get("Tags", [])
+                    }
                     volumes.append(
                         {
                             "volume_id": vol_id,
@@ -289,6 +300,7 @@ class EC2Collector(BaseCollector):
                             "attached_instance": (
                                 attached or None
                             ),
+                            "tags": vol_tags,
                         }
                     )
         except Exception as e:

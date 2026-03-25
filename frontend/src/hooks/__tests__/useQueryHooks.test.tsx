@@ -24,7 +24,7 @@ vi.mock("@/api", () => ({
   }),
   getViolations: vi.fn().mockResolvedValue([
     {
-      check_id: "s3_01",
+      check_id: "s3_block_public_acls",
       status: "alarm",
       severity: "critical",
     },
@@ -33,7 +33,7 @@ vi.mock("@/api", () => ({
     alerts: [
       {
         type: "new_violation",
-        check_id: "s3_01",
+        check_id: "s3_block_public_acls",
         severity: "critical",
       },
     ],
@@ -99,7 +99,7 @@ describe("useViolations", () => {
     );
     expect(result.current.data).toHaveLength(1);
     expect(result.current.data?.[0].check_id).toBe(
-      "s3_01",
+      "s3_block_public_acls",
     );
   });
 });

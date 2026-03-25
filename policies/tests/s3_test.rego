@@ -64,11 +64,11 @@ test_s3_01_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_01"
+	v.check_id == "s3_block_public_acls"
 }
 
 test_s3_01_compliant if {
-	_violations_for("s3_01", _full_input) == 0
+	_violations_for("s3_block_public_acls", _full_input) == 0
 }
 
 # =========================================================================
@@ -83,11 +83,11 @@ test_s3_02_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_02"
+	v.check_id == "s3_ignore_public_acls"
 }
 
 test_s3_02_compliant if {
-	_violations_for("s3_02", _full_input) == 0
+	_violations_for("s3_ignore_public_acls", _full_input) == 0
 }
 
 # =========================================================================
@@ -102,11 +102,11 @@ test_s3_03_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_03"
+	v.check_id == "s3_block_public_policy"
 }
 
 test_s3_03_compliant if {
-	_violations_for("s3_03", _full_input) == 0
+	_violations_for("s3_block_public_policy", _full_input) == 0
 }
 
 # =========================================================================
@@ -121,11 +121,11 @@ test_s3_04_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_04"
+	v.check_id == "s3_restrict_public_buckets"
 }
 
 test_s3_04_compliant if {
-	_violations_for("s3_04", _full_input) == 0
+	_violations_for("s3_restrict_public_buckets", _full_input) == 0
 }
 
 # =========================================================================
@@ -135,11 +135,11 @@ test_s3_05_alarm if {
 	bucket := object.remove(_good_bucket, ["encryption"])
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_05"
+	v.check_id == "s3_encryption"
 }
 
 test_s3_05_compliant if {
-	_violations_for("s3_05", _full_input) == 0
+	_violations_for("s3_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -151,11 +151,11 @@ test_s3_06_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_06"
+	v.check_id == "s3_versioning"
 }
 
 test_s3_06_compliant if {
-	_violations_for("s3_06", _full_input) == 0
+	_violations_for("s3_versioning", _full_input) == 0
 }
 
 test_s3_06_compliant_not_sensitive if {
@@ -166,7 +166,7 @@ test_s3_06_compliant_not_sensitive if {
 			{"data_classification": "public"},
 		),
 	})
-	_violations_for("s3_06", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_versioning", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -178,11 +178,11 @@ test_s3_07_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_07"
+	v.check_id == "s3_mfa_delete"
 }
 
 test_s3_07_compliant if {
-	_violations_for("s3_07", _full_input) == 0
+	_violations_for("s3_mfa_delete", _full_input) == 0
 }
 
 # =========================================================================
@@ -193,11 +193,11 @@ test_s3_08_alarm if {
 	bucket2 := object.union(bucket, {"logging": {}})
 	r := s3.violations with input as {"s3": {"buckets": [bucket2]}}
 	some v in r
-	v.check_id == "s3_08"
+	v.check_id == "s3_access_logging"
 }
 
 test_s3_08_compliant if {
-	_violations_for("s3_08", _full_input) == 0
+	_violations_for("s3_access_logging", _full_input) == 0
 }
 
 test_s3_08_compliant_non_prod if {
@@ -208,7 +208,7 @@ test_s3_08_compliant_non_prod if {
 		),
 		"logging": {},
 	})
-	_violations_for("s3_08", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_access_logging", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -220,11 +220,11 @@ test_s3_09_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_09"
+	v.check_id == "s3_deny_http"
 }
 
 test_s3_09_compliant if {
-	_violations_for("s3_09", _full_input) == 0
+	_violations_for("s3_deny_http", _full_input) == 0
 }
 
 # =========================================================================
@@ -239,11 +239,11 @@ test_s3_10_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_10"
+	v.check_id == "s3_no_public_read_acl"
 }
 
 test_s3_10_compliant if {
-	_violations_for("s3_10", _full_input) == 0
+	_violations_for("s3_no_public_read_acl", _full_input) == 0
 }
 
 # =========================================================================
@@ -258,11 +258,11 @@ test_s3_11_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_11"
+	v.check_id == "s3_no_public_write_acl"
 }
 
 test_s3_11_compliant if {
-	_violations_for("s3_11", _full_input) == 0
+	_violations_for("s3_no_public_write_acl", _full_input) == 0
 }
 
 # =========================================================================
@@ -272,11 +272,11 @@ test_s3_12_alarm if {
 	bucket := object.remove(_good_bucket, ["lifecycle_rules"])
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_12"
+	v.check_id == "s3_lifecycle_policy"
 }
 
 test_s3_12_compliant if {
-	_violations_for("s3_12", _full_input) == 0
+	_violations_for("s3_lifecycle_policy", _full_input) == 0
 }
 
 test_s3_12_compliant_non_prod if {
@@ -287,7 +287,7 @@ test_s3_12_compliant_non_prod if {
 			{"environment": "development"},
 		)},
 	)
-	_violations_for("s3_12", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_lifecycle_policy", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -299,11 +299,11 @@ test_s3_13_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_13"
+	v.check_id == "s3_object_lock"
 }
 
 test_s3_13_compliant if {
-	_violations_for("s3_13", _full_input) == 0
+	_violations_for("s3_object_lock", _full_input) == 0
 }
 
 test_s3_13_compliant_not_required if {
@@ -314,7 +314,7 @@ test_s3_13_compliant_not_required if {
 			{"compliance_required": "false"},
 		),
 	})
-	_violations_for("s3_13", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_object_lock", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -326,11 +326,11 @@ test_s3_14_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_14"
+	v.check_id == "s3_cors_wildcard"
 }
 
 test_s3_14_compliant if {
-	_violations_for("s3_14", _full_input) == 0
+	_violations_for("s3_cors_wildcard", _full_input) == 0
 }
 
 # =========================================================================
@@ -346,11 +346,11 @@ test_s3_15_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_15"
+	v.check_id == "s3_kms_encryption"
 }
 
 test_s3_15_compliant if {
-	_violations_for("s3_15", _full_input) == 0
+	_violations_for("s3_kms_encryption", _full_input) == 0
 }
 
 test_s3_15_compliant_not_sensitive if {
@@ -365,7 +365,7 @@ test_s3_15_compliant_not_sensitive if {
 			{"data_classification": "public"},
 		),
 	})
-	_violations_for("s3_15", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_kms_encryption", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -381,11 +381,11 @@ test_s3_16_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_16"
+	v.check_id == "s3_no_public_principal"
 }
 
 test_s3_16_compliant if {
-	_violations_for("s3_16", _full_input) == 0
+	_violations_for("s3_no_public_principal", _full_input) == 0
 }
 
 test_s3_16_compliant_with_condition if {
@@ -397,7 +397,7 @@ test_s3_16_compliant_with_condition if {
 			"Condition": {"StringEquals": {"aws:PrincipalOrgID": "o-abc123"}},
 		}]},
 	})
-	_violations_for("s3_16", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_no_public_principal", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -407,11 +407,11 @@ test_s3_17_alarm if {
 	bucket := object.remove(_good_bucket, ["replication_configuration"])
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_17"
+	v.check_id == "s3_replication"
 }
 
 test_s3_17_compliant if {
-	_violations_for("s3_17", _full_input) == 0
+	_violations_for("s3_replication", _full_input) == 0
 }
 
 test_s3_17_compliant_low_criticality if {
@@ -422,7 +422,7 @@ test_s3_17_compliant_low_criticality if {
 			{"data_criticality": "low"},
 		)},
 	)
-	_violations_for("s3_17", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_replication", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -435,11 +435,11 @@ test_s3_18_alarm if {
 	)
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_18"
+	v.check_id == "s3_event_notifications"
 }
 
 test_s3_18_compliant if {
-	_violations_for("s3_18", _full_input) == 0
+	_violations_for("s3_event_notifications", _full_input) == 0
 }
 
 test_s3_18_compliant_not_monitored if {
@@ -450,7 +450,7 @@ test_s3_18_compliant_not_monitored if {
 			{"security_monitoring": "optional"},
 		)},
 	)
-	_violations_for("s3_18", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_event_notifications", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -469,11 +469,11 @@ test_s3_19_alarm if {
 		"account_id": "123456789012",
 	}
 	some v in r
-	v.check_id == "s3_19"
+	v.check_id == "s3_cross_account_org_id"
 }
 
 test_s3_19_compliant if {
-	_violations_for("s3_19", _full_input) == 0
+	_violations_for("s3_cross_account_org_id", _full_input) == 0
 }
 
 test_s3_19_compliant_same_account if {
@@ -484,7 +484,7 @@ test_s3_19_compliant_same_account if {
 			"Action": "s3:GetObject",
 		}]},
 	})
-	_violations_for("s3_19", {
+	_violations_for("s3_cross_account_org_id", {
 		"s3": {"buckets": [bucket]},
 		"account_id": "123456789012",
 	}) == 0
@@ -500,11 +500,11 @@ test_s3_20_alarm if {
 	})
 	r := s3.violations with input as {"s3": {"buckets": [bucket]}}
 	some v in r
-	v.check_id == "s3_20"
+	v.check_id == "s3_intelligent_tiering"
 }
 
 test_s3_20_compliant if {
-	_violations_for("s3_20", _full_input) == 0
+	_violations_for("s3_intelligent_tiering", _full_input) == 0
 }
 
 test_s3_20_compliant_small_bucket if {
@@ -512,7 +512,7 @@ test_s3_20_compliant_small_bucket if {
 		"size_gb": 50,
 		"intelligent_tiering_enabled": false,
 	})
-	_violations_for("s3_20", {"s3": {"buckets": [bucket]}}) == 0
+	_violations_for("s3_intelligent_tiering", {"s3": {"buckets": [bucket]}}) == 0
 }
 
 # =========================================================================
@@ -521,5 +521,5 @@ test_s3_20_compliant_small_bucket if {
 test_error_s3_missing if {
 	r := s3.error with input as {}
 	some e in r
-	e.check_id == "s3_00"
+	e.check_id == "s3_error"
 }

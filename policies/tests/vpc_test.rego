@@ -106,11 +106,11 @@ test_vpc_01_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_01"
+	x.check_id == "vpc_flow_logs"
 }
 
 test_vpc_01_compliant if {
-	_violations_for("vpc_01", _full_input) == 0
+	_violations_for("vpc_flow_logs", _full_input) == 0
 }
 
 # =========================================================================
@@ -126,11 +126,11 @@ test_vpc_02_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_02"
+	x.check_id == "vpc_default_no_resources"
 }
 
 test_vpc_02_compliant if {
-	_violations_for("vpc_02", _full_input) == 0
+	_violations_for("vpc_default_no_resources", _full_input) == 0
 }
 
 test_vpc_02_compliant_default_empty if {
@@ -138,7 +138,7 @@ test_vpc_02_compliant_default_empty if {
 		"is_default": true,
 		"resource_count": 0,
 	})
-	_violations_for("vpc_02", object.union(
+	_violations_for("vpc_default_no_resources", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)) == 0
@@ -157,11 +157,11 @@ test_vpc_03_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"security_groups": [sg]})},
 	)
 	some x in r
-	x.check_id == "vpc_03"
+	x.check_id == "vpc_default_sg_no_inbound"
 }
 
 test_vpc_03_compliant if {
-	_violations_for("vpc_03", _full_input) == 0
+	_violations_for("vpc_default_sg_no_inbound", _full_input) == 0
 }
 
 test_vpc_03_compliant_non_default if {
@@ -169,7 +169,7 @@ test_vpc_03_compliant_non_default if {
 		"group_name": "my-sg",
 		"ip_permissions": [{"from_port": 443, "to_port": 443}],
 	})
-	_violations_for("vpc_03", object.union(
+	_violations_for("vpc_default_sg_no_inbound", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"security_groups": [sg]})},
 	)) == 0
@@ -188,11 +188,11 @@ test_vpc_04_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"security_groups": [sg]})},
 	)
 	some x in r
-	x.check_id == "vpc_04"
+	x.check_id == "vpc_default_sg_no_outbound"
 }
 
 test_vpc_04_compliant if {
-	_violations_for("vpc_04", _full_input) == 0
+	_violations_for("vpc_default_sg_no_outbound", _full_input) == 0
 }
 
 # =========================================================================
@@ -212,11 +212,11 @@ test_vpc_05_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"nacls": [nacl]})},
 	)
 	some x in r
-	x.check_id == "vpc_05"
+	x.check_id == "vpc_nacl_no_all_inbound"
 }
 
 test_vpc_05_compliant if {
-	_violations_for("vpc_05", _full_input) == 0
+	_violations_for("vpc_nacl_no_all_inbound", _full_input) == 0
 }
 
 # =========================================================================
@@ -229,11 +229,11 @@ test_vpc_06_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_06"
+	x.check_id == "vpc_dns_resolution"
 }
 
 test_vpc_06_compliant if {
-	_violations_for("vpc_06", _full_input) == 0
+	_violations_for("vpc_dns_resolution", _full_input) == 0
 }
 
 # =========================================================================
@@ -246,11 +246,11 @@ test_vpc_07_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_07"
+	x.check_id == "vpc_dns_hostnames"
 }
 
 test_vpc_07_compliant if {
-	_violations_for("vpc_07", _full_input) == 0
+	_violations_for("vpc_dns_hostnames", _full_input) == 0
 }
 
 # =========================================================================
@@ -265,11 +265,11 @@ test_vpc_08_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"subnets": [subnet]})},
 	)
 	some x in r
-	x.check_id == "vpc_08"
+	x.check_id == "vpc_private_no_public_ip"
 }
 
 test_vpc_08_compliant if {
-	_violations_for("vpc_08", _full_input) == 0
+	_violations_for("vpc_private_no_public_ip", _full_input) == 0
 }
 
 test_vpc_08_compliant_public_subnet if {
@@ -277,7 +277,7 @@ test_vpc_08_compliant_public_subnet if {
 		"subnet_type": "public",
 		"map_public_ip_on_launch": true,
 	})
-	_violations_for("vpc_08", object.union(
+	_violations_for("vpc_private_no_public_ip", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"subnets": [subnet]})},
 	)) == 0
@@ -298,11 +298,11 @@ test_vpc_09_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"route_tables": [rt]})},
 	)
 	some x in r
-	x.check_id == "vpc_09"
+	x.check_id == "vpc_private_no_igw_route"
 }
 
 test_vpc_09_compliant if {
-	_violations_for("vpc_09", _full_input) == 0
+	_violations_for("vpc_private_no_igw_route", _full_input) == 0
 }
 
 test_vpc_09_compliant_public_rt if {
@@ -313,7 +313,7 @@ test_vpc_09_compliant_public_rt if {
 			"gateway_id": "igw-abc123",
 		}],
 	})
-	_violations_for("vpc_09", object.union(
+	_violations_for("vpc_private_no_igw_route", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"route_tables": [rt]})},
 	)) == 0
@@ -329,11 +329,11 @@ test_vpc_10_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_10"
+	x.check_id == "vpc_multi_az"
 }
 
 test_vpc_10_compliant if {
-	_violations_for("vpc_10", _full_input) == 0
+	_violations_for("vpc_multi_az", _full_input) == 0
 }
 
 test_vpc_10_compliant_dev if {
@@ -344,7 +344,7 @@ test_vpc_10_compliant_dev if {
 			"tags": {"environment": "development", "data_classification": "internal"},
 		},
 	)
-	_violations_for("vpc_10", object.union(
+	_violations_for("vpc_multi_az", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)) == 0
@@ -366,11 +366,11 @@ test_vpc_11_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"security_groups": [sg]})},
 	)
 	some x in r
-	x.check_id == "vpc_11"
+	x.check_id == "vpc_sg_no_all_ports"
 }
 
 test_vpc_11_compliant if {
-	_violations_for("vpc_11", _full_input) == 0
+	_violations_for("vpc_sg_no_all_ports", _full_input) == 0
 }
 
 # =========================================================================
@@ -385,11 +385,11 @@ test_vpc_12_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"peering_connections": [p]})},
 	)
 	some x in r
-	x.check_id == "vpc_12"
+	x.check_id == "vpc_peering_internal_cidr"
 }
 
 test_vpc_12_compliant if {
-	_violations_for("vpc_12", _full_input) == 0
+	_violations_for("vpc_peering_internal_cidr", _full_input) == 0
 }
 
 # =========================================================================
@@ -402,11 +402,11 @@ test_vpc_13_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_13"
+	x.check_id == "vpc_endpoints_s3_dynamodb"
 }
 
 test_vpc_13_compliant if {
-	_violations_for("vpc_13", _full_input) == 0
+	_violations_for("vpc_endpoints_s3_dynamodb", _full_input) == 0
 }
 
 test_vpc_13_compliant_dev if {
@@ -414,7 +414,7 @@ test_vpc_13_compliant_dev if {
 		object.remove(_good_vpc, ["has_s3_endpoint", "tags"]),
 		{"tags": {"environment": "development", "data_classification": "internal"}},
 	)
-	_violations_for("vpc_13", object.union(
+	_violations_for("vpc_endpoints_s3_dynamodb", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)) == 0
@@ -430,11 +430,11 @@ test_vpc_14_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_14"
+	x.check_id == "vpc_cidr_not_slash8"
 }
 
 test_vpc_14_compliant if {
-	_violations_for("vpc_14", _full_input) == 0
+	_violations_for("vpc_cidr_not_slash8", _full_input) == 0
 }
 
 # =========================================================================
@@ -455,7 +455,7 @@ test_vpc_15_alarm_ssh if {
 		{"vpc": object.union(_full_input.vpc, {"nacls": [nacl]})},
 	)
 	some x in r
-	x.check_id == "vpc_15"
+	x.check_id == "vpc_nacl_no_admin_ports"
 }
 
 test_vpc_15_alarm_rdp if {
@@ -473,11 +473,11 @@ test_vpc_15_alarm_rdp if {
 		{"vpc": object.union(_full_input.vpc, {"nacls": [nacl]})},
 	)
 	some x in r
-	x.check_id == "vpc_15"
+	x.check_id == "vpc_nacl_no_admin_ports"
 }
 
 test_vpc_15_compliant if {
-	_violations_for("vpc_15", _full_input) == 0
+	_violations_for("vpc_nacl_no_admin_ports", _full_input) == 0
 }
 
 # =========================================================================
@@ -492,11 +492,11 @@ test_vpc_16_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"transit_gateways": [tgw]})},
 	)
 	some x in r
-	x.check_id == "vpc_16"
+	x.check_id == "vpc_tgw_restrict_propagation"
 }
 
 test_vpc_16_compliant if {
-	_violations_for("vpc_16", _full_input) == 0
+	_violations_for("vpc_tgw_restrict_propagation", _full_input) == 0
 }
 
 # =========================================================================
@@ -509,11 +509,11 @@ test_vpc_17_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_17"
+	x.check_id == "vpc_private_nat_gateway"
 }
 
 test_vpc_17_compliant if {
-	_violations_for("vpc_17", _full_input) == 0
+	_violations_for("vpc_private_nat_gateway", _full_input) == 0
 }
 
 # =========================================================================
@@ -532,7 +532,7 @@ test_vpc_18_alarm_mysql if {
 		{"vpc": object.union(_full_input.vpc, {"security_groups": [sg]})},
 	)
 	some x in r
-	x.check_id == "vpc_18"
+	x.check_id == "vpc_sg_no_db_ports_open"
 }
 
 test_vpc_18_alarm_postgres if {
@@ -548,11 +548,11 @@ test_vpc_18_alarm_postgres if {
 		{"vpc": object.union(_full_input.vpc, {"security_groups": [sg]})},
 	)
 	some x in r
-	x.check_id == "vpc_18"
+	x.check_id == "vpc_sg_no_db_ports_open"
 }
 
 test_vpc_18_compliant if {
-	_violations_for("vpc_18", _full_input) == 0
+	_violations_for("vpc_sg_no_db_ports_open", _full_input) == 0
 }
 
 # =========================================================================
@@ -571,16 +571,16 @@ test_vpc_19_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)
 	some x in r
-	x.check_id == "vpc_19"
+	x.check_id == "vpc_no_igw_sensitive"
 }
 
 test_vpc_19_compliant if {
-	_violations_for("vpc_19", _full_input) == 0
+	_violations_for("vpc_no_igw_sensitive", _full_input) == 0
 }
 
 test_vpc_19_compliant_internal if {
 	v := object.union(_good_vpc, {"has_internet_gateway": true})
-	_violations_for("vpc_19", object.union(
+	_violations_for("vpc_no_igw_sensitive", object.union(
 		_full_input,
 		{"vpc": object.union(_full_input.vpc, {"vpcs": [v]})},
 	)) == 0
@@ -596,11 +596,11 @@ test_vpc_20_alarm if {
 		{"vpc": object.union(_full_input.vpc, {"flow_logs": [fl]})},
 	)
 	some x in r
-	x.check_id == "vpc_20"
+	x.check_id == "vpc_flow_logs_reject"
 }
 
 test_vpc_20_compliant if {
-	_violations_for("vpc_20", _full_input) == 0
+	_violations_for("vpc_flow_logs_reject", _full_input) == 0
 }
 
 # =========================================================================
@@ -609,5 +609,5 @@ test_vpc_20_compliant if {
 test_error_vpc_missing if {
 	r := vpc.error with input as {}
 	some e in r
-	e.check_id == "vpc_00"
+	e.check_id == "vpc_error"
 }

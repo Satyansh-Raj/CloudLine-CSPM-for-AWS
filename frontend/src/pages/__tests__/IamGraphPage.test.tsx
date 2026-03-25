@@ -85,7 +85,7 @@ function makeApiData(
         effective_permissions: {},
         violations: [
           {
-            check_id: "iam_09",
+            check_id: "iam_user_mfa",
             status: "alarm",
             severity: "high",
             reason: "MFA not enabled",
@@ -103,7 +103,7 @@ function makeViol(
   overrides: Partial<Violation> = {},
 ): Violation {
   return {
-    check_id: "iam_09",
+    check_id: "iam_user_mfa",
     status: "alarm",
     severity: "high",
     reason: "MFA not enabled",
@@ -116,7 +116,7 @@ function makeViol(
       hipaa: [],
       soc2: [],
     },
-    remediation_id: "iam_09",
+    remediation_id: "iam_user_mfa",
     risk_score: 72,
     ...overrides,
   };

@@ -11,7 +11,7 @@ import type { WsMessage } from "@/types";
 const mockMsg: WsMessage = {
   type: "violation_new",
   data: {
-    check_id: "ec2_05",
+    check_id: "ec2_no_open_ssh",
     resource_arn: "arn:aws:ec2:::i-1234",
     previous_status: "ok",
     current_status: "alarm",
@@ -65,7 +65,7 @@ describe("AlertBanner", () => {
 
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(
-      screen.getByText("ec2_05"),
+      screen.getByText("ec2_no_open_ssh"),
     ).toBeInTheDocument();
     expect(
       screen.getByText("New Violation"),

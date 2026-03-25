@@ -127,7 +127,7 @@ class CreatePolicyRequest(BaseModel):
     remediation_id: str = Field(
         ...,
         pattern=r"^REM_[A-Za-z0-9_]+$",
-        description="e.g. REM_21 or REM_iam_01",
+        description="e.g. REM_21 or REM_iam_root_mfa",
     )
 
 

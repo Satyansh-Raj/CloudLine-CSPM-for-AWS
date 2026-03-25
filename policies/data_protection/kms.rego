@@ -4,7 +4,7 @@ import future.keywords.if
 import future.keywords.in
 
 # ---------------------------------------------------------------------------
-# Rule kms_01 — Customer-managed key rotation must be enabled
+# Rule kms_key_rotation — Customer-managed key rotation must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -12,7 +12,7 @@ violations contains result if {
 	key.key_state == "Enabled"
 	key.key_rotation_enabled == false
 	result := {
-		"check_id": "kms_01",
+		"check_id": "kms_key_rotation",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -22,17 +22,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"cis_aws": ["3.7"],
-			"nist_800_53": ["IA-5(1)"],
-			"pci_dss": ["3.7.4"],
-		},
 		"remediation_id": "REM_kms_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_02 — Key policy must not allow Principal: * without conditions
+# Rule kms_no_public_principal — Key policy must not allow Principal: * without conditions
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -42,7 +37,7 @@ violations contains result if {
 	stmt.Principal == "*"
 	not stmt.Condition
 	result := {
-		"check_id": "kms_02",
+		"check_id": "kms_no_public_principal",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -52,23 +47,19 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-			"pci_dss": ["3.7.2"],
-		},
 		"remediation_id": "REM_kms_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_03 — Key must not be pending deletion without approval tag
+# Rule kms_pending_deletion_approval — Key must not be pending deletion without approval tag
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
 	key.key_state == "PendingDeletion"
 	not key.tags.deletion_approved
 	result := {
-		"check_id": "kms_03",
+		"check_id": "kms_pending_deletion_approval",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -78,16 +69,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["CP-9"],
-			"pci_dss": ["3.7.1"],
-		},
 		"remediation_id": "REM_kms_03",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_04 — Key policy must separate administrators from users
+# Rule kms_separate_admin_users — Key policy must separate administrators from users
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -104,7 +91,7 @@ violations contains result if {
 	}
 	count(admin_principals & user_principals) > 0
 	result := {
-		"check_id": "kms_04",
+		"check_id": "kms_separate_admin_users",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -114,23 +101,19 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["AC-5"],
-			"pci_dss": ["7.2.4"],
-		},
 		"remediation_id": "REM_kms_04",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_05 — Key must have a non-empty description
+# Rule kms_key_description — Key must have a non-empty description
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
 	key.key_manager == "CUSTOMER"
 	key.description == ""
 	result := {
-		"check_id": "kms_05",
+		"check_id": "kms_key_description",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -140,15 +123,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_kms_05",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_06 — Multi-region keys must only be used where required
+# Rule kms_multi_region_required — Multi-region keys must only be used where required
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -156,7 +136,7 @@ violations contains result if {
 	key.multi_region == true
 	not key.tags.multi_region_justified
 	result := {
-		"check_id": "kms_06",
+		"check_id": "kms_multi_region_required",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -166,15 +146,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["CM-6"],
-		},
 		"remediation_id": "REM_kms_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_07 — Key policy must not grant cross-account access to unknown accounts
+# Rule kms_no_unknown_cross_account — Key policy must not grant cross-account access to unknown accounts
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -186,7 +163,7 @@ violations contains result if {
 	not stmt.Condition["aws:PrincipalOrgID"]
 	not key.tags.cross_account_approved
 	result := {
-		"check_id": "kms_07",
+		"check_id": "kms_no_unknown_cross_account",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -196,22 +173,19 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-		},
 		"remediation_id": "REM_kms_07",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_08 — Keys must have owner and purpose tags
+# Rule kms_owner_purpose_tags — Keys must have owner and purpose tags
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
 	key.key_manager == "CUSTOMER"
 	not key.tags.owner
 	result := {
-		"check_id": "kms_08",
+		"check_id": "kms_owner_purpose_tags",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -221,15 +195,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_kms_08",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_09 — Disabled keys older than 90 days should be scheduled for deletion
+# Rule kms_disabled_keys_cleanup — Disabled keys older than 90 days should be scheduled for deletion
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -238,7 +209,7 @@ violations contains result if {
 	key.days_since_disabled > 90
 	not key.tags.deletion_reviewed
 	result := {
-		"check_id": "kms_09",
+		"check_id": "kms_disabled_keys_cleanup",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -248,15 +219,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_kms_09",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_10 — Key policy must not use root account wildcard for all actions
+# Rule kms_no_root_wildcard — Key policy must not use root account wildcard for all actions
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -267,7 +235,7 @@ violations contains result if {
 	stmt.Principal.AWS == concat("", ["arn:aws:iam::", input.account_id, ":root"])
 	not stmt.Condition
 	result := {
-		"check_id": "kms_10",
+		"check_id": "kms_no_root_wildcard",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -277,16 +245,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["AC-6"],
-			"pci_dss": ["3.7.2"],
-		},
 		"remediation_id": "REM_kms_10",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_11 — Key aliases must not use the aws/ prefix (reserved for AWS)
+# Rule kms_no_aws_alias_prefix — Key aliases must not use the aws/ prefix (reserved for AWS)
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some alias in input.kms.aliases
@@ -294,7 +258,7 @@ violations contains result if {
 	startswith(alias.alias_name, "alias/aws/")
 	alias.key_manager == "CUSTOMER"
 	result := {
-		"check_id": "kms_11",
+		"check_id": "kms_no_aws_alias_prefix",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -304,15 +268,12 @@ violations contains result if {
 		"resource": alias.alias_arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["CM-6"],
-		},
 		"remediation_id": "REM_kms_11",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_12 — Symmetric keys used for S3 must have rotation enabled
+# Rule kms_s3_rotation — Symmetric keys used for S3 must have rotation enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -321,7 +282,7 @@ violations contains result if {
 	key.tags.used_for == "s3"
 	key.key_rotation_enabled == false
 	result := {
-		"check_id": "kms_12",
+		"check_id": "kms_s3_rotation",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -331,16 +292,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"cis_aws": ["3.7"],
-			"nist_800_53": ["IA-5(1)"],
-		},
 		"remediation_id": "REM_kms_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_13 — CloudWatch alarm must exist for key deletion/disablement
+# Rule kms_deletion_alarm — CloudWatch alarm must exist for key deletion/disablement
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -348,7 +305,7 @@ violations contains result if {
 	key.key_state == "Enabled"
 	not key.deletion_alarm_configured
 	result := {
-		"check_id": "kms_13",
+		"check_id": "kms_deletion_alarm",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -358,23 +315,19 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"cis_aws": ["3.7"],
-			"nist_800_53": ["AU-6"],
-		},
 		"remediation_id": "REM_kms_13",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_14 — Key material origin must not be EXTERNAL without approval
+# Rule kms_external_material_approval — Key material origin must not be EXTERNAL without approval
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
 	key.origin == "EXTERNAL"
 	not key.tags.external_key_approved
 	result := {
-		"check_id": "kms_14",
+		"check_id": "kms_external_material_approval",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -384,16 +337,12 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["SC-12"],
-			"pci_dss": ["3.7.3"],
-		},
 		"remediation_id": "REM_kms_14",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule kms_15 — Key grants must not grant kms:Decrypt to unapproved services
+# Rule kms_decrypt_grant_approved — Key grants must not grant kms:Decrypt to unapproved services
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some key in input.kms.keys
@@ -402,7 +351,7 @@ violations contains result if {
 	"kms:Decrypt" in grant.operations
 	not grant.retiring_principal
 	result := {
-		"check_id": "kms_15",
+		"check_id": "kms_decrypt_grant_approved",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -412,9 +361,6 @@ violations contains result if {
 		"resource": key.arn,
 		"domain": "data_protection",
 		"service": "kms",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-		},
 		"remediation_id": "REM_kms_15",
 	}
 }
@@ -425,7 +371,7 @@ violations contains result if {
 error contains result if {
 	not input.kms
 	result := {
-		"check_id": "kms_00",
+		"check_id": "kms_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "KMS data missing from input — collector may have failed",

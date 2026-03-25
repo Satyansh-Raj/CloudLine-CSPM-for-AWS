@@ -102,6 +102,7 @@ class S3Bucket(BaseModel):
     logging: BucketLogging = Field(
         default_factory=BucketLogging
     )
+    tags: dict = Field(default_factory=dict)
 
 
 class S3Data(BaseModel):
@@ -136,6 +137,7 @@ class EC2Instance(BaseModel):
     metadata_options: MetadataOptions = Field(
         default_factory=MetadataOptions
     )
+    tags: dict = Field(default_factory=dict)
 
 
 class IngressRule(BaseModel):
@@ -163,6 +165,7 @@ class EBSVolume(BaseModel):
     size_gb: int = 0
     state: str = ""
     attached_instance: str | None = None
+    tags: dict = Field(default_factory=dict)
 
 
 class EC2Data(BaseModel):
@@ -219,6 +222,7 @@ class RDSInstance(BaseModel):
     multi_az: bool = False
     backup_retention_period: int = 0
     auto_minor_version_upgrade: bool = False
+    tags: dict = Field(default_factory=dict)
 
 
 class RDSData(BaseModel):
@@ -246,6 +250,7 @@ class LambdaFunction(BaseModel):
     )
     environment_encryption: bool = False
     tracing_config: str = "PassThrough"
+    tags: dict = Field(default_factory=dict)
 
 
 class LambdaData(BaseModel):
@@ -306,6 +311,7 @@ class KMSKey(BaseModel):
     arn: str = ""
     key_state: str = "Enabled"
     key_rotation_enabled: bool = False
+    tags: dict = Field(default_factory=dict)
 
 
 class KMSData(BaseModel):

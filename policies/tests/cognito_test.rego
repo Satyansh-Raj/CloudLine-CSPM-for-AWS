@@ -44,15 +44,15 @@ _compliant_pool := {
 test_cognito_01_alarm_off if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [object.union(_compliant_pool, {"mfa_configuration": "OFF"})]}}
 	some v in r
-	v.check_id == "cognito_01"
+	v.check_id == "cognito_mfa_required"
 }
 
 test_cognito_01_compliant_on if {
-	_violations_for("cognito_01", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_mfa_required", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 test_cognito_01_compliant_optional if {
-	_violations_for("cognito_01", {"cognito": {"user_pools": [object.union(_compliant_pool, {"mfa_configuration": "OPTIONAL"})]}}) == 0
+	_violations_for("cognito_mfa_required", {"cognito": {"user_pools": [object.union(_compliant_pool, {"mfa_configuration": "OPTIONAL"})]}}) == 0
 }
 
 # =========================================================================
@@ -66,17 +66,17 @@ _pool_with_pw(overrides) := object.union(_compliant_pool, {"policies": {"passwor
 test_cognito_02_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"minimum_length": 6})]}}
 	some v in r
-	v.check_id == "cognito_02"
+	v.check_id == "cognito_pwd_min_length"
 }
 
 test_cognito_02_compliant if {
-	_violations_for("cognito_02", {"cognito": {"user_pools": [_pool_with_pw({"minimum_length": 8})]}}) == 0
+	_violations_for("cognito_pwd_min_length", {"cognito": {"user_pools": [_pool_with_pw({"minimum_length": 8})]}}) == 0
 }
 
 test_cognito_02_boundary if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"minimum_length": 7})]}}
 	some v in r
-	v.check_id == "cognito_02"
+	v.check_id == "cognito_pwd_min_length"
 }
 
 # =========================================================================
@@ -85,11 +85,11 @@ test_cognito_02_boundary if {
 test_cognito_03_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"require_uppercase": false})]}}
 	some v in r
-	v.check_id == "cognito_03"
+	v.check_id == "cognito_pwd_uppercase"
 }
 
 test_cognito_03_compliant if {
-	_violations_for("cognito_03", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_pwd_uppercase", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -98,11 +98,11 @@ test_cognito_03_compliant if {
 test_cognito_04_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"require_lowercase": false})]}}
 	some v in r
-	v.check_id == "cognito_04"
+	v.check_id == "cognito_pwd_lowercase"
 }
 
 test_cognito_04_compliant if {
-	_violations_for("cognito_04", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_pwd_lowercase", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -111,11 +111,11 @@ test_cognito_04_compliant if {
 test_cognito_05_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"require_numbers": false})]}}
 	some v in r
-	v.check_id == "cognito_05"
+	v.check_id == "cognito_pwd_numbers"
 }
 
 test_cognito_05_compliant if {
-	_violations_for("cognito_05", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_pwd_numbers", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -124,11 +124,11 @@ test_cognito_05_compliant if {
 test_cognito_06_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"require_symbols": false})]}}
 	some v in r
-	v.check_id == "cognito_06"
+	v.check_id == "cognito_pwd_symbols"
 }
 
 test_cognito_06_compliant if {
-	_violations_for("cognito_06", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_pwd_symbols", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -137,11 +137,11 @@ test_cognito_06_compliant if {
 test_cognito_07_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [object.union(_compliant_pool, {"user_pool_add_ons": {"advanced_security_mode": "AUDIT"}})]}}
 	some v in r
-	v.check_id == "cognito_07"
+	v.check_id == "cognito_advanced_security"
 }
 
 test_cognito_07_compliant if {
-	_violations_for("cognito_07", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_advanced_security", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -150,15 +150,15 @@ test_cognito_07_compliant if {
 test_cognito_08_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_pw({"temporary_password_validity_days": 14})]}}
 	some v in r
-	v.check_id == "cognito_08"
+	v.check_id == "cognito_temp_pwd_validity"
 }
 
 test_cognito_08_compliant if {
-	_violations_for("cognito_08", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_temp_pwd_validity", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 test_cognito_08_boundary if {
-	_violations_for("cognito_08", {"cognito": {"user_pools": [_pool_with_pw({"temporary_password_validity_days": 7})]}}) == 0
+	_violations_for("cognito_temp_pwd_validity", {"cognito": {"user_pools": [_pool_with_pw({"temporary_password_validity_days": 7})]}}) == 0
 }
 
 # =========================================================================
@@ -167,11 +167,11 @@ test_cognito_08_boundary if {
 test_cognito_09_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [object.union(_compliant_pool, {"auto_verified_attributes": []})]}}
 	some v in r
-	v.check_id == "cognito_09"
+	v.check_id == "cognito_verification_required"
 }
 
 test_cognito_09_compliant if {
-	_violations_for("cognito_09", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_verification_required", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -180,11 +180,11 @@ test_cognito_09_compliant if {
 test_cognito_10_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [object.union(_compliant_pool, {"device_configuration": {"challenge_required_on_new_device": false}})]}}
 	some v in r
-	v.check_id == "cognito_10"
+	v.check_id == "cognito_device_tracking"
 }
 
 test_cognito_10_compliant if {
-	_violations_for("cognito_10", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_device_tracking", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -198,15 +198,15 @@ _pool_with_client(overrides) := object.union(_compliant_pool, {"app_clients": [o
 test_cognito_11_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_client({"access_token_validity": 120})]}}
 	some v in r
-	v.check_id == "cognito_11"
+	v.check_id == "cognito_access_token_validity"
 }
 
 test_cognito_11_compliant if {
-	_violations_for("cognito_11", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_access_token_validity", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 test_cognito_11_boundary if {
-	_violations_for("cognito_11", {"cognito": {"user_pools": [_pool_with_client({"access_token_validity": 60})]}}) == 0
+	_violations_for("cognito_access_token_validity", {"cognito": {"user_pools": [_pool_with_client({"access_token_validity": 60})]}}) == 0
 }
 
 # =========================================================================
@@ -215,11 +215,11 @@ test_cognito_11_boundary if {
 test_cognito_12_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_client({"refresh_token_validity": 90})]}}
 	some v in r
-	v.check_id == "cognito_12"
+	v.check_id == "cognito_refresh_token_validity"
 }
 
 test_cognito_12_compliant if {
-	_violations_for("cognito_12", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_refresh_token_validity", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -231,11 +231,11 @@ test_cognito_13_alarm if {
 		"allow_unauthenticated_identities": true,
 	}]}}
 	some v in r
-	v.check_id == "cognito_13"
+	v.check_id == "cognito_no_unauth_identities"
 }
 
 test_cognito_13_compliant if {
-	_violations_for("cognito_13", {"cognito": {"identity_pools": [{
+	_violations_for("cognito_no_unauth_identities", {"cognito": {"identity_pools": [{
 		"identity_pool_id": "us-east-1:abc",
 		"allow_unauthenticated_identities": false,
 	}]}}) == 0
@@ -247,11 +247,11 @@ test_cognito_13_compliant if {
 test_cognito_14_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [_pool_with_client({"explicit_auth_flows": ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_USER_SRP_AUTH"]})]}}
 	some v in r
-	v.check_id == "cognito_14"
+	v.check_id == "cognito_no_user_pwd_auth"
 }
 
 test_cognito_14_compliant if {
-	_violations_for("cognito_14", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_no_user_pwd_auth", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -263,18 +263,18 @@ test_cognito_15_alarm if {
 		"client_secret": "",
 	})]}}
 	some v in r
-	v.check_id == "cognito_15"
+	v.check_id == "cognito_app_client_secret"
 }
 
 test_cognito_15_compliant_has_secret if {
-	_violations_for("cognito_15", {"cognito": {"user_pools": [_pool_with_client({
+	_violations_for("cognito_app_client_secret", {"cognito": {"user_pools": [_pool_with_client({
 		"client_type": "server",
 		"client_secret": "supersecret",
 	})]}}) == 0
 }
 
 test_cognito_15_compliant_public_client if {
-	_violations_for("cognito_15", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_app_client_secret", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -283,11 +283,11 @@ test_cognito_15_compliant_public_client if {
 test_cognito_16_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [object.union(_compliant_pool, {"deletion_protection": "INACTIVE"})]}}
 	some v in r
-	v.check_id == "cognito_16"
+	v.check_id == "cognito_deletion_protection"
 }
 
 test_cognito_16_compliant if {
-	_violations_for("cognito_16", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_deletion_protection", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -296,11 +296,11 @@ test_cognito_16_compliant if {
 test_cognito_17_alarm if {
 	r := cognito.violations with input as {"cognito": {"user_pools": [object.union(_compliant_pool, {"email_configuration": {"email_sending_account": "COGNITO_DEFAULT"}})]}}
 	some v in r
-	v.check_id == "cognito_17"
+	v.check_id == "cognito_ses_sender"
 }
 
 test_cognito_17_compliant if {
-	_violations_for("cognito_17", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
+	_violations_for("cognito_ses_sender", {"cognito": {"user_pools": [_compliant_pool]}}) == 0
 }
 
 # =========================================================================
@@ -309,7 +309,7 @@ test_cognito_17_compliant if {
 test_cognito_00_error if {
 	r := cognito.error with input as {"account_id": "123456789012"}
 	some v in r
-	v.check_id == "cognito_00"
+	v.check_id == "cognito_error"
 }
 
 test_cognito_00_no_error if {

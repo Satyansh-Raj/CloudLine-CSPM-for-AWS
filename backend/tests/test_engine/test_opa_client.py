@@ -174,7 +174,7 @@ class TestOPACLIClient:
                                     "critical": 100
                                 }
                             },
-                            "iam_01": {
+                            "iam_root_mfa": {
                                 "violations": [{
                                     "check_id": "C01",
                                     "status": "alarm",
@@ -187,4 +187,4 @@ class TestOPACLIClient:
             stderr="",
         )
         results = self.client.evaluate_all({})
-        assert "iam_01" in results
+        assert "iam_root_mfa" in results

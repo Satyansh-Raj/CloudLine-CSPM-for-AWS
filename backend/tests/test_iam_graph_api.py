@@ -15,7 +15,7 @@ from app.routers import iam_graph
 
 
 def _make_state(
-    check_id="iam_01",
+    check_id="iam_root_mfa",
     status="alarm",
     severity="critical",
     risk_score=95,
@@ -89,14 +89,14 @@ MOCK_GRAPH_USERS = [
 
 IDENTITY_VIOLATIONS = [
     _make_state(
-        check_id="iam_01",
+        check_id="iam_root_mfa",
         resource_arn=(
             "arn:aws:iam::123456:root"
         ),
         reason="Root MFA not enabled",
     ),
     _make_state(
-        check_id="iam_05",
+        check_id="iam_pwd_numbers",
         severity="high",
         risk_score=72,
         resource_arn=(
@@ -105,7 +105,7 @@ IDENTITY_VIOLATIONS = [
         reason="MFA not enabled for user bob",
     ),
     _make_state(
-        check_id="iam_08",
+        check_id="iam_pwd_max_age",
         severity="medium",
         risk_score=50,
         resource_arn=(
@@ -214,7 +214,7 @@ class TestIamGraphEndpoint:
             "/api/v1/iam/graph"
         ).json()
 
-        # alice has iam_08 violation
+        # alice has iam_pwd_max_age violation
         alice = next(
             u
             for u in data["users"]
@@ -223,10 +223,10 @@ class TestIamGraphEndpoint:
         assert len(alice["violations"]) == 1
         assert (
             alice["violations"][0]["check_id"]
-            == "iam_08"
+            == "iam_pwd_max_age"
         )
 
-        # bob has iam_05 violation
+        # bob has iam_pwd_numbers violation
         bob = next(
             u
             for u in data["users"]
@@ -235,7 +235,7 @@ class TestIamGraphEndpoint:
         assert len(bob["violations"]) == 1
         assert (
             bob["violations"][0]["check_id"]
-            == "iam_05"
+            == "iam_pwd_numbers"
         )
 
     @patch(
@@ -251,10 +251,10 @@ class TestIamGraphEndpoint:
             "/api/v1/iam/graph"
         ).json()
 
-        # iam_01 (root) not matched to any user
+        # iam_root_mfa (root) not matched to any user
         acct = data["account_violations"]
         assert len(acct) == 1
-        assert acct[0]["check_id"] == "iam_01"
+        assert acct[0]["check_id"] == "iam_root_mfa"
         assert "resource" in acct[0]
 
     @patch(

@@ -103,12 +103,12 @@ export default memo(function GroupNodeComponent({
 
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         className="!bg-indigo-400 !border-indigo-600"
       />
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         className="!bg-gray-400 !border-gray-500"
       />
     </div>

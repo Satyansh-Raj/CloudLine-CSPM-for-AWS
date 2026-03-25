@@ -9,108 +9,87 @@ import future.keywords.in
 # =============================================================================
 
 # ---------------------------------------------------------------------------
-# Rule storage_01 — EBS: all volumes must be encrypted
+# Rule storage_ebs_encryption — EBS: all volumes must be encrypted
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vol in input.ebs.volumes
 	vol.encrypted == false
 	result := {
-		"check_id": "storage_01",
+		"check_id": "storage_ebs_encryption",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf("EBS volume '%s' is not encrypted", [vol.volume_id]),
 		"resource": vol.volume_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"cis_aws": ["2.2.1"],
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-			"hipaa": ["164.312(a)(2)(iv)"],
-		},
 		"remediation_id": "REM_storage_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_02 — EBS: default encryption must be enabled at account level
+# Rule storage_ebs_default_encryption — EBS: default encryption must be enabled at account level
 # ---------------------------------------------------------------------------
 violations contains result if {
 	input.ebs.default_encryption_enabled == false
 	result := {
-		"check_id": "storage_02",
+		"check_id": "storage_ebs_default_encryption",
 		"status": "alarm",
 		"severity": "high",
 		"reason": "EBS default encryption is not enabled for this region/account",
 		"resource": concat("", ["arn:aws:ec2:", input.region, ":", input.account_id, ":volume/*"]),
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"cis_aws": ["2.2.1"],
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-		},
 		"remediation_id": "REM_storage_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_03 — EBS: snapshots must not be publicly shared
+# Rule storage_ebs_snapshot_private — EBS: snapshots must not be publicly shared
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some snap in input.ebs.snapshots
 	some perm in snap.create_volume_permissions
 	perm.group == "all"
 	result := {
-		"check_id": "storage_03",
+		"check_id": "storage_ebs_snapshot_private",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf("EBS snapshot '%s' is publicly accessible", [snap.snapshot_id]),
 		"resource": snap.snapshot_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"cis_aws": ["2.2.2"],
-			"nist_800_53": ["AC-3"],
-			"pci_dss": ["3.3.1"],
-		},
 		"remediation_id": "REM_storage_03",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_04 — EBS: snapshots must be encrypted
+# Rule storage_ebs_snapshot_encrypted — EBS: snapshots must be encrypted
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some snap in input.ebs.snapshots
 	snap.encrypted == false
 	snap.owner_id == input.account_id
 	result := {
-		"check_id": "storage_04",
+		"check_id": "storage_ebs_snapshot_encrypted",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf("EBS snapshot '%s' is not encrypted", [snap.snapshot_id]),
 		"resource": snap.snapshot_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"cis_aws": ["2.2.1"],
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-		},
 		"remediation_id": "REM_storage_04",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_05 — EBS: unattached volumes older than 30 days must be reviewed
+# Rule storage_ebs_unattached_review — EBS: unattached volumes older than 30 days must be reviewed
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vol in input.ebs.volumes
 	vol.state == "available"
 	vol.days_since_detached > 30
 	result := {
-		"check_id": "storage_05",
+		"check_id": "storage_ebs_unattached_review",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -120,15 +99,12 @@ violations contains result if {
 		"resource": vol.volume_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_storage_05",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_06 — EBS: snapshots must only be shared with approved accounts
+# Rule storage_ebs_snapshot_approved_accts — EBS: snapshots must only be shared with approved accounts
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some snap in input.ebs.snapshots
@@ -137,7 +113,7 @@ violations contains result if {
 	perm.user_id
 	not perm.user_id in input.ebs.approved_sharing_accounts
 	result := {
-		"check_id": "storage_06",
+		"check_id": "storage_ebs_snapshot_approved_accts",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -147,43 +123,36 @@ violations contains result if {
 		"resource": snap.snapshot_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-			"pci_dss": ["3.3.1"],
-		},
 		"remediation_id": "REM_storage_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_07 — EBS: snapshot lifecycle manager must be configured
+# Rule storage_ebs_snapshot_lifecycle — EBS: snapshot lifecycle manager must be configured
 # ---------------------------------------------------------------------------
 violations contains result if {
 	input.ebs.lifecycle_policies_count == 0
 	result := {
-		"check_id": "storage_07",
+		"check_id": "storage_ebs_snapshot_lifecycle",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": "No EBS snapshot lifecycle policies configured — snapshots may accumulate",
 		"resource": concat("", ["arn:aws:ec2:", input.region, ":", input.account_id, ":snapshot/*"]),
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["CP-9"],
-		},
 		"remediation_id": "REM_storage_07",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_08 — EBS: production volumes must not use deprecated magnetic type
+# Rule storage_ebs_no_magnetic — EBS: production volumes must not use deprecated magnetic type
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vol in input.ebs.volumes
 	vol.tags.environment == "production"
 	vol.volume_type == "standard"
 	result := {
-		"check_id": "storage_08",
+		"check_id": "storage_ebs_no_magnetic",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -193,15 +162,12 @@ violations contains result if {
 		"resource": vol.volume_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["CM-6"],
-		},
 		"remediation_id": "REM_storage_08",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_09 — EBS: sensitive volumes must use customer-managed KMS key
+# Rule storage_ebs_kms_encryption — EBS: sensitive volumes must use customer-managed KMS key
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vol in input.ebs.volumes
@@ -209,7 +175,7 @@ violations contains result if {
 	vol.tags.data_classification == "sensitive"
 	endswith(vol.kms_key_id, "aws/ebs")
 	result := {
-		"check_id": "storage_09",
+		"check_id": "storage_ebs_kms_encryption",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -219,46 +185,36 @@ violations contains result if {
 		"resource": vol.volume_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["SC-28(1)"],
-			"pci_dss": ["3.7.2"],
-		},
 		"remediation_id": "REM_storage_09",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_10 — EFS: file system must have encryption at rest enabled
+# Rule storage_efs_encryption_rest — EFS: file system must have encryption at rest enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
 	fs.encrypted == false
 	result := {
-		"check_id": "storage_10",
+		"check_id": "storage_efs_encryption_rest",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf("EFS file system '%s' is not encrypted at rest", [fs.file_system_id]),
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"cis_aws": ["2.4.1"],
-			"nist_800_53": ["SC-28"],
-			"pci_dss": ["3.5.1"],
-			"hipaa": ["164.312(a)(2)(iv)"],
-		},
 		"remediation_id": "REM_storage_10",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_11 — EFS: encryption in transit must be enforced via TLS mount
+# Rule storage_efs_encryption_transit — EFS: encryption in transit must be enforced via TLS mount
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
 	fs.transit_encryption_enabled == false
 	result := {
-		"check_id": "storage_11",
+		"check_id": "storage_efs_encryption_transit",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -268,22 +224,18 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_storage_11",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_12 — EFS: backup must be enabled
+# Rule storage_efs_backup — EFS: backup must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
 	fs.backup_policy.status != "ENABLED"
 	result := {
-		"check_id": "storage_12",
+		"check_id": "storage_efs_backup",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -293,16 +245,12 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["CP-9"],
-			"pci_dss": ["12.3.4"],
-		},
 		"remediation_id": "REM_storage_12",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_13 — EFS: must not be publicly accessible via resource policy
+# Rule storage_efs_no_public_policy — EFS: must not be publicly accessible via resource policy
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
@@ -311,7 +259,7 @@ violations contains result if {
 	stmt.Principal == "*"
 	not stmt.Condition
 	result := {
-		"check_id": "storage_13",
+		"check_id": "storage_efs_no_public_policy",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -321,22 +269,18 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-			"pci_dss": ["7.2.1"],
-		},
 		"remediation_id": "REM_storage_13",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_14 — EFS: access points must enforce root directory and user identity
+# Rule storage_efs_access_point_enforcement — EFS: access points must enforce root directory and user identity
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some ap in input.efs.access_points
 	not ap.posix_user.uid
 	result := {
-		"check_id": "storage_14",
+		"check_id": "storage_efs_access_point_enforcement",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -346,15 +290,12 @@ violations contains result if {
 		"resource": ap.access_point_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["AC-3"],
-		},
 		"remediation_id": "REM_storage_14",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_15 — EFS: must use customer-managed KMS key for sensitive data
+# Rule storage_efs_kms_encryption — EFS: must use customer-managed KMS key for sensitive data
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
@@ -362,7 +303,7 @@ violations contains result if {
 	fs.tags.data_classification == "sensitive"
 	endswith(fs.kms_key_id, "aws/elasticfilesystem")
 	result := {
-		"check_id": "storage_15",
+		"check_id": "storage_efs_kms_encryption",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -372,22 +313,18 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["SC-28(1)"],
-			"hipaa": ["164.312(a)(2)(iv)"],
-		},
 		"remediation_id": "REM_storage_15",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_16 — EFS: mount targets must be in private subnets only
+# Rule storage_efs_private_subnets — EFS: mount targets must be in private subnets only
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some mt in input.efs.mount_targets
 	mt.subnet_map_public_ip == true
 	result := {
-		"check_id": "storage_16",
+		"check_id": "storage_efs_private_subnets",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -397,22 +334,18 @@ violations contains result if {
 		"resource": mt.mount_target_id,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_storage_16",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_17 — EFS: lifecycle management must be configured
+# Rule storage_efs_lifecycle — EFS: lifecycle management must be configured
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
 	not fs.lifecycle_policies
 	result := {
-		"check_id": "storage_17",
+		"check_id": "storage_efs_lifecycle",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -422,21 +355,18 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["SI-12"],
-		},
 		"remediation_id": "REM_storage_17",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_18 — EFS: file system must have owner and data classification tags
+# Rule storage_efs_tags — EFS: file system must have owner and data classification tags
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
 	not fs.tags.owner
 	result := {
-		"check_id": "storage_18",
+		"check_id": "storage_efs_tags",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -446,22 +376,19 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["CM-8"],
-		},
 		"remediation_id": "REM_storage_18",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_19 — EFS: replication must be configured for critical file systems
+# Rule storage_efs_replication — EFS: replication must be configured for critical file systems
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
 	fs.tags.data_criticality == "high"
 	count(fs.replication_configuration.destinations) == 0
 	result := {
-		"check_id": "storage_19",
+		"check_id": "storage_efs_replication",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -471,15 +398,12 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["CP-9"],
-		},
 		"remediation_id": "REM_storage_19",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule storage_20 — EFS: throughput mode must be set appropriately for production
+# Rule storage_efs_throughput_mode — EFS: throughput mode must be set appropriately for production
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some fs in input.efs.file_systems
@@ -487,7 +411,7 @@ violations contains result if {
 	fs.throughput_mode == "bursting"
 	fs.size_in_bytes.value_in_ia > 1073741824
 	result := {
-		"check_id": "storage_20",
+		"check_id": "storage_efs_throughput_mode",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -497,9 +421,6 @@ violations contains result if {
 		"resource": fs.file_system_arn,
 		"domain": "data_protection",
 		"service": "storage",
-		"compliance": {
-			"nist_800_53": ["SC-5"],
-		},
 		"remediation_id": "REM_storage_20",
 	}
 }
@@ -510,7 +431,7 @@ violations contains result if {
 error contains result if {
 	not input.ebs
 	result := {
-		"check_id": "storage_00_ebs",
+		"check_id": "storage_ebs_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "EBS data missing from input — collector may have failed",
@@ -523,7 +444,7 @@ error contains result if {
 error contains result if {
 	not input.efs
 	result := {
-		"check_id": "storage_00_efs",
+		"check_id": "storage_efs_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "EFS data missing from input — collector may have failed",

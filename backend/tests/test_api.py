@@ -5,8 +5,10 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from moto import mock_aws
 
+from app.config import Settings
 from app.dependencies import (
     get_evaluator,
+    get_settings,
     get_state_manager,
 )
 from app.engine.evaluator import PolicyEvaluator
@@ -50,8 +52,8 @@ class TestScanEndpoint:
 MOCK_STATES = [
     ViolationState(
         pk="832843292195#us-east-1",
-        sk="iam_01#arn:root",
-        check_id="iam_01",
+        sk="iam_root_mfa#arn:root",
+        check_id="iam_root_mfa",
         status="alarm",
         severity="critical",
         reason="Root MFA off",
@@ -60,8 +62,8 @@ MOCK_STATES = [
     ),
     ViolationState(
         pk="832843292195#us-east-1",
-        sk="ec2_05#arn:sg",
-        check_id="ec2_05",
+        sk="ec2_no_open_ssh#arn:sg",
+        check_id="ec2_no_open_ssh",
         status="alarm",
         severity="high",
         reason="SSH open",
@@ -70,8 +72,8 @@ MOCK_STATES = [
     ),
     ViolationState(
         pk="832843292195#us-east-1",
-        sk="iam_02#arn:policy",
-        check_id="iam_02",
+        sk="iam_pwd_min_length#arn:policy",
+        check_id="iam_pwd_min_length",
         status="ok",
         severity="medium",
         reason="Password policy OK",
@@ -115,10 +117,19 @@ class TestViolationsEndpoint:
         app.dependency_overrides[
             get_state_manager
         ] = lambda: self._mock
+        app.dependency_overrides[
+            get_settings
+        ] = lambda: Settings(
+            aws_account_id="832843292195",
+            aws_regions=["ap-south-1"],
+        )
 
     def teardown_method(self):
         app.dependency_overrides.pop(
             get_state_manager, None
+        )
+        app.dependency_overrides.pop(
+            get_settings, None
         )
 
     def test_list_violations(self):
@@ -164,11 +175,11 @@ class TestViolationsEndpoint:
         client = TestClient(app)
         resp = client.get(
             "/api/v1/violations"
-            "?check_id=ec2_05"
+            "?check_id=ec2_no_open_ssh"
         )
         data = resp.json()
         assert len(data) == 1
-        assert data[0]["check_id"] == "ec2_05"
+        assert data[0]["check_id"] == "ec2_no_open_ssh"
 
     def test_filter_no_match(self):
         client = TestClient(app)
@@ -177,6 +188,32 @@ class TestViolationsEndpoint:
         )
         data = resp.json()
         assert len(data) == 0
+
+    def test_filter_by_region(self):
+        """Region param is forwarded to
+        query_by_account."""
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/violations"
+            "?region=eu-west-1"
+        )
+        assert resp.status_code == 200
+        self._mock.query_by_account.assert_called_with(
+            "832843292195",
+            "eu-west-1",
+            limit=100,
+        )
+
+    def test_default_region_from_settings(self):
+        """No region param uses settings default."""
+        client = TestClient(app)
+        resp = client.get("/api/v1/violations")
+        assert resp.status_code == 200
+        self._mock.query_by_account.assert_called_with(
+            "832843292195",
+            "ap-south-1",
+            limit=100,
+        )
 
 
 class TestComplianceEndpoint:

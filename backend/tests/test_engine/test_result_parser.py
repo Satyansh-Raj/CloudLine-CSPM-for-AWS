@@ -9,7 +9,7 @@ class TestResultParser:
 
     def test_parse_valid_violation(self):
         raw = {
-            "check_id": "iam_01",
+            "check_id": "iam_root_mfa",
             "status": "alarm",
             "severity": "critical",
             "reason": "Root MFA not enabled",
@@ -23,7 +23,7 @@ class TestResultParser:
         }
         result = self.parser.parse(raw)
         assert result is not None
-        assert result.check_id == "iam_01"
+        assert result.check_id == "iam_root_mfa"
         assert result.status == "alarm"
         assert result.severity == "critical"
         assert result.reason == "Root MFA not enabled"
@@ -33,12 +33,12 @@ class TestResultParser:
 
     def test_parse_minimal_result(self):
         raw = {
-            "check_id": "iam_02",
+            "check_id": "iam_pwd_min_length",
             "status": "ok",
         }
         result = self.parser.parse(raw)
         assert result is not None
-        assert result.check_id == "iam_02"
+        assert result.check_id == "iam_pwd_min_length"
         assert result.status == "ok"
         assert result.severity == ""
         assert result.compliance.cis_aws == []
@@ -63,7 +63,7 @@ class TestResultParser:
 
     def test_parse_compliance_all_fields(self):
         raw = {
-            "check_id": "storage_01",
+            "check_id": "storage_ebs_encryption",
             "status": "alarm",
             "compliance": {
                 "cis_aws": ["2.2.1"],

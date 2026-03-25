@@ -1,10 +1,5 @@
 import "@xyflow/react/dist/style.css";
-import {
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -46,10 +41,7 @@ const nodeTypes = {
   serviceNode: ServiceNode,
 };
 
-function toggleSet(
-  set: Set<string>,
-  val: string,
-): Set<string> {
+function toggleSet(set: Set<string>, val: string): Set<string> {
   const next = new Set(set);
   if (next.has(val)) next.delete(val);
   else next.add(val);
@@ -58,18 +50,10 @@ function toggleSet(
 
 // ── Legend ─────────────────────────────────────────
 
-function LegendRow({
-  color,
-  label,
-}: {
-  color: string;
-  label: string;
-}) {
+function LegendRow({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span
-        className={`w-2.5 h-2.5 rounded-sm ${color} shrink-0`}
-      />
+      <span className={`w-2.5 h-2.5 rounded-sm ${color} shrink-0`} />
       <span className="capitalize">{label}</span>
     </div>
   );
@@ -139,11 +123,8 @@ function DetailPanel({
   onClose: () => void;
 }) {
   const apiComp = violation.compliance;
-  const hasApiComp =
-    Object.values(apiComp).some((arr) => arr.length > 0);
-  const comp = hasApiComp
-    ? apiComp
-    : getComplianceMapping(violation.check_id);
+  const hasApiComp = Object.values(apiComp).some((arr) => arr.length > 0);
+  const comp = hasApiComp ? apiComp : getComplianceMapping(violation.check_id);
 
   const hasComp =
     comp &&
@@ -240,9 +221,7 @@ function DetailPanel({
               <span className="text-2xl font-black text-gray-900 dark:text-white">
                 {violation.risk_score}
               </span>
-              <span className="text-sm text-gray-400">
-                / 100
-              </span>
+              <span className="text-sm text-gray-400">/ 100</span>
             </div>
             <div className="h-1.5 bg-gray-100 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
               <div
@@ -261,26 +240,14 @@ function DetailPanel({
             <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
               Compliance
             </p>
-            <ComplianceRow
-              label="CIS AWS"
-              controls={comp.cis_aws ?? []}
-            />
+            <ComplianceRow label="CIS AWS" controls={comp.cis_aws ?? []} />
             <ComplianceRow
               label="NIST 800-53"
               controls={comp.nist_800_53 ?? []}
             />
-            <ComplianceRow
-              label="PCI DSS"
-              controls={comp.pci_dss ?? []}
-            />
-            <ComplianceRow
-              label="HIPAA"
-              controls={comp.hipaa ?? []}
-            />
-            <ComplianceRow
-              label="SOC 2"
-              controls={comp.soc2 ?? []}
-            />
+            <ComplianceRow label="PCI DSS" controls={comp.pci_dss ?? []} />
+            <ComplianceRow label="HIPAA" controls={comp.hipaa ?? []} />
+            <ComplianceRow label="SOC 2" controls={comp.soc2 ?? []} />
           </div>
         )}
       </div>
@@ -299,20 +266,15 @@ function FlowCanvas({
   onToggleCollapse: (id: string) => void;
   onSelect: (v: Violation) => void;
 }) {
-  const [nodes, setNodes, onNodesChange] =
-    useNodesState<IamNode>([]);
-  const [edges, setEdges, onEdgesChange] =
-    useEdgesState<IamEdge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<IamNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IamEdge>([]);
   const { fitView } = useReactFlow();
 
   useEffect(() => {
     if (!graphData) return;
     setNodes(graphData.nodes);
     setEdges(graphData.edges);
-    const t = setTimeout(
-      () => fitView({ duration: 400 }),
-      50,
-    );
+    const t = setTimeout(() => fitView({ duration: 400 }), 50);
     return () => clearTimeout(t);
   }, [graphData, setNodes, setEdges, fitView]);
 
@@ -325,9 +287,7 @@ function FlowCanvas({
       ) {
         onToggleCollapse(node.id);
       } else if (node.type === "checkNode") {
-        const v = (
-          node.data as { violation: Violation }
-        ).violation;
+        const v = (node.data as { violation: Violation }).violation;
         onSelect(v);
       }
     },
@@ -360,36 +320,27 @@ function FlowCanvas({
 // ── Main Page ─────────────────────────────────────
 
 export default function IamGraphPage() {
-  const [collapsedIds, setCollapsedIds] = useState(
-    () => new Set<string>(),
-  );
+  const [collapsedIds, setCollapsedIds] = useState(() => new Set<string>());
   const [initialized, setInitialized] = useState(false);
-  const [selectedViolation, setSelectedViolation] =
-    useState<Violation | null>(null);
-  const [isFullscreen, setIsFullscreen] =
-    useState(false);
+  const [selectedViolation, setSelectedViolation] = useState<Violation | null>(
+    null,
+  );
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const {
-    data: apiData,
-    isLoading,
-    isError,
-  } = useIamGraph();
+  const { data: apiData, isLoading, isError } = useIamGraph();
 
-  // Collapse all nodes on first data load
-  useEffect(() => {
-    if (apiData && !initialized) {
-      setCollapsedIds(getInitialCollapsedIds(apiData));
-      setInitialized(true);
-    }
-  }, [apiData, initialized]);
+  // Collapse all nodes synchronously on first data load
+  // (React 18 pattern: set state during render to avoid
+  // a one-frame flash of the fully-expanded tree)
+  if (apiData && !initialized) {
+    setCollapsedIds(getInitialCollapsedIds(apiData));
+    setInitialized(true);
+  }
 
-  const onToggleCollapse = useCallback(
-    (id: string) => {
-      setCollapsedIds((prev) => toggleSet(prev, id));
-    },
-    [],
-  );
+  const onToggleCollapse = useCallback((id: string) => {
+    setCollapsedIds((prev) => toggleSet(prev, id));
+  }, []);
 
   const onSelect = useCallback((v: Violation) => {
     setSelectedViolation(v);
@@ -404,8 +355,7 @@ export default function IamGraphPage() {
       ...apiData,
       users: apiData.users.filter(
         (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.arn.toLowerCase().includes(q),
+          u.name.toLowerCase().includes(q) || u.arn.toLowerCase().includes(q),
       ),
     };
   }, [apiData, search]);
@@ -418,17 +368,11 @@ export default function IamGraphPage() {
       onToggleCollapse,
       onSelect,
     );
-  }, [
-    filteredResponse,
-    collapsedIds,
-    onToggleCollapse,
-    onSelect,
-  ]);
+  }, [filteredResponse, collapsedIds, onToggleCollapse, onSelect]);
 
   const hasData =
     !!apiData &&
-    (apiData.users.length > 0 ||
-      apiData.account_violations.length > 0);
+    (apiData.users.length > 0 || apiData.account_violations.length > 0);
 
   const noMatches =
     hasData &&
@@ -458,8 +402,7 @@ export default function IamGraphPage() {
           </h2>
           {!isFullscreen && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              IAM permission surface — users, policies,
-              effective permissions
+              IAM permission surface — users, policies, effective permissions
             </p>
           )}
         </div>
@@ -557,8 +500,7 @@ export default function IamGraphPage() {
                 Failed to load IAM data
               </p>
               <p className="text-xs text-red-500 dark:text-red-500/70">
-                Check that the backend is running and
-                retry.
+                Check that the backend is running and retry.
               </p>
             </div>
           </div>
@@ -575,17 +517,14 @@ export default function IamGraphPage() {
               viewBox="0 0 24 24"
             >
               <circle cx="12" cy="12" r="10" />
-              <path
-                strokeLinecap="round"
-                d="M8 12h8M12 8v8"
-              />
+              <path strokeLinecap="round" d="M8 12h8M12 8v8" />
             </svg>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
               No IAM data — run a scan first
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-600 text-center max-w-xs">
-              Trigger a scan to populate IAM checks and
-              see the permission graph here.
+              Trigger a scan to populate IAM checks and see the permission graph
+              here.
             </p>
           </div>
         )}
@@ -617,9 +556,7 @@ export default function IamGraphPage() {
             {selectedViolation && (
               <DetailPanel
                 violation={selectedViolation}
-                onClose={() =>
-                  setSelectedViolation(null)
-                }
+                onClose={() => setSelectedViolation(null)}
               />
             )}
           </ReactFlowProvider>

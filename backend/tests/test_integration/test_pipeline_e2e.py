@@ -88,7 +88,7 @@ def _raw_event(
 
 
 def _violation(
-    check_id="s3_01",
+    check_id="s3_block_public_acls",
     status="alarm",
     severity="high",
     reason="S3 bucket publicly accessible",
@@ -196,7 +196,7 @@ class TestFullPipelineFlow:
         handler, evaluator, state_mgr = _make_handler(
             eval_return=[
                 [_violation(
-                    check_id="ec2_05",
+                    check_id="ec2_no_open_ssh",
                     status="alarm",
                     severity="critical",
                     reason="Port 22 open",
@@ -237,7 +237,7 @@ class TestFullPipelineFlow:
         handler, evaluator, state_mgr = _make_handler(
             eval_return=[
                 _violation(
-                    check_id="iam_09",
+                    check_id="iam_user_mfa",
                     status="alarm",
                     severity="high",
                     reason="MFA not enabled",
@@ -254,7 +254,7 @@ class TestFullPipelineFlow:
         alerts = handler.process_event(raw)
 
         assert len(alerts) == 1
-        assert alerts[0].check_id == "iam_09"
+        assert alerts[0].check_id == "iam_user_mfa"
 
     def test_rds_create_db_full_flow(self):
         """RDS CreateDBInstance full pipeline."""
@@ -291,7 +291,7 @@ class TestFullPipelineFlow:
         handler, evaluator, state_mgr = _make_handler(
             eval_return=[
                 _violation(
-                    check_id="cloudtrail_01",
+                    check_id="cloudtrail_enabled",
                     status="alarm",
                     severity="critical",
                     reason="CloudTrail logging stopped",
@@ -404,7 +404,7 @@ class TestStateTransitionCycle:
         alert_1 = detector.detect(
             previous=None,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn="arn:aws:ec2:...:sg/sg-1",
             severity="critical",
             trigger_event=(
@@ -424,7 +424,7 @@ class TestStateTransitionCycle:
         alert_2 = detector.detect(
             previous=state_1,
             current_status="ok",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn="arn:aws:ec2:...:sg/sg-1",
             severity="critical",
             trigger_event=(
@@ -445,7 +445,7 @@ class TestStateTransitionCycle:
         alert_3 = detector.detect(
             previous=state_2,
             current_status="alarm",
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn="arn:aws:ec2:...:sg/sg-1",
             severity="critical",
             trigger_event=(
@@ -512,7 +512,7 @@ class TestAlertToWebSocket:
         WebSocket broadcast."""
         alert = DriftAlert(
             drift_type=DriftType.NEW_VIOLATION,
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn=(
                 "arn:aws:ec2:us-east-1:123:sg/sg-1"
             ),
@@ -534,7 +534,7 @@ class TestAlertToWebSocket:
         assert msg["type"] == "violation_new"
         assert (
             msg["data"]["check_id"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
         assert msg["data"]["severity"] == "critical"
         assert msg["data"]["risk_score"] == 92
@@ -544,7 +544,7 @@ class TestAlertToWebSocket:
         violation_resolved."""
         alert = DriftAlert(
             drift_type=DriftType.RESOLUTION,
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
             resource_arn="arn:aws:s3:::my-bucket",
             previous_status="alarm",
             current_status="ok",
@@ -601,11 +601,11 @@ class TestAlertGeneratorIntegration:
 
         first_seen = DriftAlert(
             drift_type=DriftType.FIRST_SEEN,
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
         )
         no_change = DriftAlert(
             drift_type=DriftType.NO_CHANGE,
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
         )
 
         assert gen.publish(first_seen) is False
@@ -620,7 +620,7 @@ class TestMultiServiceEvents:
         handler, evaluator, state_mgr = _make_handler(
             eval_return=[
                 _violation(
-                    check_id="serverless_01",
+                    check_id="serverless_lambda_xray",
                     status="alarm",
                     severity="medium",
                     reason="Lambda not in VPC",
@@ -639,7 +639,7 @@ class TestMultiServiceEvents:
         assert len(alerts) == 1
         assert (
             alerts[0].check_id
-            == "serverless_01"
+            == "serverless_lambda_xray"
         )
         handler.orchestrator.collect_targeted.assert_called_once_with(
             "lambda", "my-function"
@@ -650,7 +650,7 @@ class TestMultiServiceEvents:
         handler, evaluator, state_mgr = _make_handler(
             eval_return=[
                 _violation(
-                    check_id="awssec_01",
+                    check_id="awssec_guardduty_enabled",
                     status="alarm",
                     severity="critical",
                     reason="GuardDuty disabled",
@@ -669,7 +669,7 @@ class TestMultiServiceEvents:
         assert len(alerts) == 1
         assert (
             alerts[0].check_id
-            == "awssec_01"
+            == "awssec_guardduty_enabled"
         )
 
     def test_ebs_create_volume(self):
@@ -677,7 +677,7 @@ class TestMultiServiceEvents:
         handler, evaluator, state_mgr = _make_handler(
             eval_return=[
                 _violation(
-                    check_id="storage_01",
+                    check_id="storage_ebs_encryption",
                     status="alarm",
                     severity="medium",
                     reason="EBS volume unencrypted",
@@ -696,7 +696,7 @@ class TestMultiServiceEvents:
         assert len(alerts) == 1
         assert (
             alerts[0].check_id
-            == "storage_01"
+            == "storage_ebs_encryption"
         )
 
 
@@ -842,8 +842,8 @@ class TestStatePersistenceFields:
         previous_status."""
         prev = ViolationState(
             pk=f"{ACCOUNT}#{REGION}",
-            sk="s3_01#test-bucket",
-            check_id="s3_01",
+            sk="s3_block_public_acls#test-bucket",
+            check_id="s3_block_public_acls",
             status="ok",
             severity="high",
             domain="data_protection",

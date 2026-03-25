@@ -15,13 +15,13 @@ weak_tls_policies := {
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_01 — API Gateway: access logging must be enabled
+# Rule apigw_access_logging — API Gateway: access logging must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some stage in input.apigateway.stages
 	not stage.access_log_settings.destination_arn
 	result := {
-		"check_id": "apigw_01",
+		"check_id": "apigw_access_logging",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -31,23 +31,18 @@ violations contains result if {
 		"resource": stage.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"cis_aws": ["3.10"],
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.2"],
-		},
 		"remediation_id": "REM_apigw_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_02 — API Gateway: execution logging must be enabled
+# Rule apigw_execution_logging — API Gateway: execution logging must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some stage in input.apigateway.stages
 	stage.default_route_settings.logging_level == "OFF"
 	result := {
-		"check_id": "apigw_02",
+		"check_id": "apigw_execution_logging",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -57,16 +52,12 @@ violations contains result if {
 		"resource": stage.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.2"],
-		},
 		"remediation_id": "REM_apigw_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_03 — API Gateway: TLS 1.2 minimum must be enforced
+# Rule apigw_tls_12 — API Gateway: TLS 1.2 minimum must be enforced
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some api in input.apigateway.rest_apis
@@ -74,7 +65,7 @@ violations contains result if {
 	api.tags.enforce_tls == "true"
 	api.tls_config.insecure_skip_verification == true
 	result := {
-		"check_id": "apigw_03",
+		"check_id": "apigw_tls_12",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -84,23 +75,19 @@ violations contains result if {
 		"resource": api.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_apigw_03",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_04 — API Gateway: WAF WebACL must be associated
+# Rule apigw_waf_webacl — API Gateway: WAF WebACL must be associated
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some stage in input.apigateway.stages
 	stage.tags.environment == "production"
 	not stage.web_acl_arn
 	result := {
-		"check_id": "apigw_04",
+		"check_id": "apigw_waf_webacl",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -110,23 +97,19 @@ violations contains result if {
 		"resource": stage.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["6.4.1"],
-		},
 		"remediation_id": "REM_apigw_04",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_05 — API Gateway: throttling must be configured
+# Rule apigw_throttling — API Gateway: throttling must be configured
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some stage in input.apigateway.stages
 	stage.default_route_settings.throttling_rate_limit == 0
 	stage.tags.environment == "production"
 	result := {
-		"check_id": "apigw_05",
+		"check_id": "apigw_throttling",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -136,22 +119,19 @@ violations contains result if {
 		"resource": stage.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-5"],
-		},
 		"remediation_id": "REM_apigw_05",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_06 — API Gateway: private APIs must use VPC endpoint
+# Rule apigw_vpc_endpoint — API Gateway: private APIs must use VPC endpoint
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some api in input.apigateway.rest_apis
 	api.endpoint_configuration.types[_] == "PRIVATE"
 	count(api.endpoint_configuration.vpc_endpoint_ids) == 0
 	result := {
-		"check_id": "apigw_06",
+		"check_id": "apigw_vpc_endpoint",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -161,23 +141,19 @@ violations contains result if {
 		"resource": api.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_apigw_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_07 — API Gateway: CORS must not allow all origins (*)
+# Rule apigw_cors_wildcard — API Gateway: CORS must not allow all origins (*)
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some api in input.apigateway.rest_apis
 	some cors in api.cors_configuration.allow_origins
 	cors == "*"
 	result := {
-		"check_id": "apigw_07",
+		"check_id": "apigw_cors_wildcard",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -187,16 +163,12 @@ violations contains result if {
 		"resource": api.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SI-10"],
-			"owasp": ["A05:2021"],
-		},
 		"remediation_id": "REM_apigw_07",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_08 — API Gateway: API keys must be required for usage plans
+# Rule apigw_api_keys_required — API Gateway: API keys must be required for usage plans
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some plan in input.apigateway.usage_plans
@@ -204,7 +176,7 @@ violations contains result if {
 	plan.tags.environment == "production"
 	plan.throttle.rate_limit == 0
 	result := {
-		"check_id": "apigw_08",
+		"check_id": "apigw_api_keys_required",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -214,22 +186,19 @@ violations contains result if {
 		"resource": plan.id,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-5"],
-		},
 		"remediation_id": "REM_apigw_08",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_09 — API Gateway: request validation must be enabled
+# Rule apigw_request_validation — API Gateway: request validation must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some api in input.apigateway.rest_apis
 	api.tags.environment == "production"
 	not api.request_validator_id
 	result := {
-		"check_id": "apigw_09",
+		"check_id": "apigw_request_validation",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -239,23 +208,19 @@ violations contains result if {
 		"resource": api.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SI-10"],
-			"pci_dss": ["6.2.4"],
-		},
 		"remediation_id": "REM_apigw_09",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_10 — API Gateway: client certificate must be configured for backend
+# Rule apigw_client_certificate — API Gateway: client certificate must be configured for backend
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some stage in input.apigateway.stages
 	stage.tags.environment == "production"
 	not stage.client_certificate_id
 	result := {
-		"check_id": "apigw_10",
+		"check_id": "apigw_client_certificate",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -265,16 +230,12 @@ violations contains result if {
 		"resource": stage.arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_apigw_10",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_11 — Load Balancer: must have at least one HTTPS listener
+# Rule apigw_lb_https_listener — Load Balancer: must have at least one HTTPS listener
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
@@ -282,24 +243,19 @@ violations contains result if {
 	https_listeners := [l | some l in lb.listeners; l.protocol == "HTTPS"]
 	count(https_listeners) == 0
 	result := {
-		"check_id": "apigw_11",
+		"check_id": "apigw_lb_https_listener",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf("ALB '%s' has no HTTPS listener configured", [lb.load_balancer_name]),
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"cis_aws": ["2.1.2"],
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_apigw_11",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_12 — Load Balancer: TLS policy must use TLS 1.2 or higher
+# Rule apigw_lb_tls_12 — Load Balancer: TLS policy must use TLS 1.2 or higher
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
@@ -307,7 +263,7 @@ violations contains result if {
 	listener.protocol == "HTTPS"
 	listener.ssl_policy in weak_tls_policies
 	result := {
-		"check_id": "apigw_12",
+		"check_id": "apigw_lb_tls_12",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -317,23 +273,18 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"cis_aws": ["2.1.2"],
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_apigw_12",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_13 — Load Balancer: access logging must be enabled
+# Rule apigw_lb_access_logging — Load Balancer: access logging must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
 	lb.attributes.access_logs_s3_enabled == false
 	result := {
-		"check_id": "apigw_13",
+		"check_id": "apigw_lb_access_logging",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -343,24 +294,19 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"cis_aws": ["3.10"],
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.2"],
-		},
 		"remediation_id": "REM_apigw_13",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_14 — Load Balancer: deletion protection must be enabled for production
+# Rule apigw_lb_deletion_protection — Load Balancer: deletion protection must be enabled for production
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
 	lb.tags.environment == "production"
 	lb.attributes.deletion_protection_enabled == false
 	result := {
-		"check_id": "apigw_14",
+		"check_id": "apigw_lb_deletion_protection",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -370,15 +316,12 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["CP-9"],
-		},
 		"remediation_id": "REM_apigw_14",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_15 — Load Balancer: HTTP must redirect to HTTPS
+# Rule apigw_lb_http_redirect_https — Load Balancer: HTTP must redirect to HTTPS
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
@@ -386,7 +329,7 @@ violations contains result if {
 	listener.protocol == "HTTP"
 	listener.default_actions[_].type != "redirect"
 	result := {
-		"check_id": "apigw_15",
+		"check_id": "apigw_lb_http_redirect_https",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -396,23 +339,19 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_apigw_15",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_16 — Load Balancer: internal LBs must not be internet-facing
+# Rule apigw_lb_internal_not_public — Load Balancer: internal LBs must not be internet-facing
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
 	lb.tags.exposure == "internal"
 	lb.scheme == "internet-facing"
 	result := {
-		"check_id": "apigw_16",
+		"check_id": "apigw_lb_internal_not_public",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -422,16 +361,12 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_apigw_16",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_17 — Load Balancer: WAF WebACL must be associated with production ALBs
+# Rule apigw_lb_waf_webacl — Load Balancer: WAF WebACL must be associated with production ALBs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
@@ -439,7 +374,7 @@ violations contains result if {
 	lb.tags.environment == "production"
 	not lb.web_acl_arn
 	result := {
-		"check_id": "apigw_17",
+		"check_id": "apigw_lb_waf_webacl",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -449,16 +384,12 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["6.4.1"],
-		},
 		"remediation_id": "REM_waf_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_18 — Load Balancer: TLS certificate must not be expired
+# Rule apigw_lb_cert_not_expired — Load Balancer: TLS certificate must not be expired
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
@@ -467,7 +398,7 @@ violations contains result if {
 	some cert in listener.certificates
 	cert.days_until_expiry <= 0
 	result := {
-		"check_id": "apigw_18",
+		"check_id": "apigw_lb_cert_not_expired",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -477,23 +408,19 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SC-8"],
-			"pci_dss": ["4.2.1"],
-		},
 		"remediation_id": "REM_apigw_18",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_19 — Load Balancer: drop invalid HTTP headers must be enabled
+# Rule apigw_lb_drop_invalid_headers — Load Balancer: drop invalid HTTP headers must be enabled
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
 	lb.type == "application"
 	lb.attributes.routing_http_drop_invalid_header_fields_enabled == false
 	result := {
-		"check_id": "apigw_19",
+		"check_id": "apigw_lb_drop_invalid_headers",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -503,23 +430,19 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["SI-10"],
-			"pci_dss": ["6.2.4"],
-		},
 		"remediation_id": "REM_apigw_19",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule apigw_20 — Load Balancer: must be deployed across at least 2 AZs
+# Rule apigw_lb_multi_az — Load Balancer: must be deployed across at least 2 AZs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some lb in input.elb.load_balancers
 	lb.type == "application"
 	count(lb.availability_zones) < 2
 	result := {
-		"check_id": "apigw_20",
+		"check_id": "apigw_lb_multi_az",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -529,9 +452,6 @@ violations contains result if {
 		"resource": lb.load_balancer_arn,
 		"domain": "network",
 		"service": "api_gateway",
-		"compliance": {
-			"nist_800_53": ["CP-7"],
-		},
 		"remediation_id": "REM_apigw_20",
 	}
 }
@@ -542,7 +462,7 @@ violations contains result if {
 error contains result if {
 	not input.apigateway
 	result := {
-		"check_id": "apigw_00_apigateway",
+		"check_id": "apigw_apigateway_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "API Gateway data missing from input — collector may have failed",
@@ -555,7 +475,7 @@ error contains result if {
 error contains result if {
 	not input.elb
 	result := {
-		"check_id": "apigw_00_elb",
+		"check_id": "apigw_elb_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "ELB data missing from input — collector may have failed",

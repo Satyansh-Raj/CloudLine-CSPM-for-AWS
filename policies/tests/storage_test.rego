@@ -93,11 +93,11 @@ test_storage_01_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)
 	some v in r
-	v.check_id == "storage_01"
+	v.check_id == "storage_ebs_encryption"
 }
 
 test_storage_01_compliant if {
-	_violations_for("storage_01", _full_input) == 0
+	_violations_for("storage_ebs_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -112,11 +112,11 @@ test_storage_02_alarm if {
 		)},
 	)
 	some v in r
-	v.check_id == "storage_02"
+	v.check_id == "storage_ebs_default_encryption"
 }
 
 test_storage_02_compliant if {
-	_violations_for("storage_02", _full_input) == 0
+	_violations_for("storage_ebs_default_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -131,11 +131,11 @@ test_storage_03_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"snapshots": [snap]})},
 	)
 	some v in r
-	v.check_id == "storage_03"
+	v.check_id == "storage_ebs_snapshot_private"
 }
 
 test_storage_03_compliant if {
-	_violations_for("storage_03", _full_input) == 0
+	_violations_for("storage_ebs_snapshot_private", _full_input) == 0
 }
 
 # =========================================================================
@@ -148,11 +148,11 @@ test_storage_04_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"snapshots": [snap]})},
 	)
 	some v in r
-	v.check_id == "storage_04"
+	v.check_id == "storage_ebs_snapshot_encrypted"
 }
 
 test_storage_04_compliant if {
-	_violations_for("storage_04", _full_input) == 0
+	_violations_for("storage_ebs_snapshot_encrypted", _full_input) == 0
 }
 
 test_storage_04_skip_other_account if {
@@ -160,7 +160,7 @@ test_storage_04_skip_other_account if {
 		"encrypted": false,
 		"owner_id": "999888777666",
 	})
-	_violations_for("storage_04", object.union(
+	_violations_for("storage_ebs_snapshot_encrypted", object.union(
 		_full_input,
 		{"ebs": object.union(_full_input.ebs, {"snapshots": [snap]})},
 	)) == 0
@@ -179,11 +179,11 @@ test_storage_05_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)
 	some v in r
-	v.check_id == "storage_05"
+	v.check_id == "storage_ebs_unattached_review"
 }
 
 test_storage_05_compliant if {
-	_violations_for("storage_05", _full_input) == 0
+	_violations_for("storage_ebs_unattached_review", _full_input) == 0
 }
 
 test_storage_05_compliant_under_30 if {
@@ -191,7 +191,7 @@ test_storage_05_compliant_under_30 if {
 		"state": "available",
 		"days_since_detached": 10,
 	})
-	_violations_for("storage_05", object.union(
+	_violations_for("storage_ebs_unattached_review", object.union(
 		_full_input,
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)) == 0
@@ -209,11 +209,11 @@ test_storage_06_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"snapshots": [snap]})},
 	)
 	some v in r
-	v.check_id == "storage_06"
+	v.check_id == "storage_ebs_snapshot_approved_accts"
 }
 
 test_storage_06_compliant if {
-	_violations_for("storage_06", _full_input) == 0
+	_violations_for("storage_ebs_snapshot_approved_accts", _full_input) == 0
 }
 
 # =========================================================================
@@ -228,11 +228,11 @@ test_storage_07_alarm if {
 		)},
 	)
 	some v in r
-	v.check_id == "storage_07"
+	v.check_id == "storage_ebs_snapshot_lifecycle"
 }
 
 test_storage_07_compliant if {
-	_violations_for("storage_07", _full_input) == 0
+	_violations_for("storage_ebs_snapshot_lifecycle", _full_input) == 0
 }
 
 # =========================================================================
@@ -245,11 +245,11 @@ test_storage_08_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)
 	some v in r
-	v.check_id == "storage_08"
+	v.check_id == "storage_ebs_no_magnetic"
 }
 
 test_storage_08_compliant if {
-	_violations_for("storage_08", _full_input) == 0
+	_violations_for("storage_ebs_no_magnetic", _full_input) == 0
 }
 
 test_storage_08_compliant_dev if {
@@ -260,7 +260,7 @@ test_storage_08_compliant_dev if {
 			"tags": {"environment": "development"},
 		},
 	)
-	_violations_for("storage_08", object.union(
+	_violations_for("storage_ebs_no_magnetic", object.union(
 		_full_input,
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)) == 0
@@ -278,11 +278,11 @@ test_storage_09_alarm if {
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)
 	some v in r
-	v.check_id == "storage_09"
+	v.check_id == "storage_ebs_kms_encryption"
 }
 
 test_storage_09_compliant if {
-	_violations_for("storage_09", _full_input) == 0
+	_violations_for("storage_ebs_kms_encryption", _full_input) == 0
 }
 
 test_storage_09_compliant_not_sensitive if {
@@ -296,7 +296,7 @@ test_storage_09_compliant_not_sensitive if {
 			},
 		},
 	)
-	_violations_for("storage_09", object.union(
+	_violations_for("storage_ebs_kms_encryption", object.union(
 		_full_input,
 		{"ebs": object.union(_full_input.ebs, {"volumes": [vol]})},
 	)) == 0
@@ -312,11 +312,11 @@ test_storage_10_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_10"
+	v.check_id == "storage_efs_encryption_rest"
 }
 
 test_storage_10_compliant if {
-	_violations_for("storage_10", _full_input) == 0
+	_violations_for("storage_efs_encryption_rest", _full_input) == 0
 }
 
 # =========================================================================
@@ -331,11 +331,11 @@ test_storage_11_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_11"
+	v.check_id == "storage_efs_encryption_transit"
 }
 
 test_storage_11_compliant if {
-	_violations_for("storage_11", _full_input) == 0
+	_violations_for("storage_efs_encryption_transit", _full_input) == 0
 }
 
 # =========================================================================
@@ -350,11 +350,11 @@ test_storage_12_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_12"
+	v.check_id == "storage_efs_backup"
 }
 
 test_storage_12_compliant if {
-	_violations_for("storage_12", _full_input) == 0
+	_violations_for("storage_efs_backup", _full_input) == 0
 }
 
 # =========================================================================
@@ -373,11 +373,11 @@ test_storage_13_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_13"
+	v.check_id == "storage_efs_no_public_policy"
 }
 
 test_storage_13_compliant if {
-	_violations_for("storage_13", _full_input) == 0
+	_violations_for("storage_efs_no_public_policy", _full_input) == 0
 }
 
 test_storage_13_compliant_with_condition if {
@@ -389,7 +389,7 @@ test_storage_13_compliant_with_condition if {
 			"Condition": {"Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"}},
 		}]},
 	})
-	_violations_for("storage_13", object.union(
+	_violations_for("storage_efs_no_public_policy", object.union(
 		_full_input,
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)) == 0
@@ -405,11 +405,11 @@ test_storage_14_alarm if {
 		{"efs": object.union(_full_input.efs, {"access_points": [ap]})},
 	)
 	some v in r
-	v.check_id == "storage_14"
+	v.check_id == "storage_efs_access_point_enforcement"
 }
 
 test_storage_14_compliant if {
-	_violations_for("storage_14", _full_input) == 0
+	_violations_for("storage_efs_access_point_enforcement", _full_input) == 0
 }
 
 # =========================================================================
@@ -424,11 +424,11 @@ test_storage_15_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_15"
+	v.check_id == "storage_efs_kms_encryption"
 }
 
 test_storage_15_compliant if {
-	_violations_for("storage_15", _full_input) == 0
+	_violations_for("storage_efs_kms_encryption", _full_input) == 0
 }
 
 test_storage_15_compliant_not_sensitive if {
@@ -444,7 +444,7 @@ test_storage_15_compliant_not_sensitive if {
 			},
 		},
 	)
-	_violations_for("storage_15", object.union(
+	_violations_for("storage_efs_kms_encryption", object.union(
 		_full_input,
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)) == 0
@@ -462,11 +462,11 @@ test_storage_16_alarm if {
 		{"efs": object.union(_full_input.efs, {"mount_targets": [mt]})},
 	)
 	some v in r
-	v.check_id == "storage_16"
+	v.check_id == "storage_efs_private_subnets"
 }
 
 test_storage_16_compliant if {
-	_violations_for("storage_16", _full_input) == 0
+	_violations_for("storage_efs_private_subnets", _full_input) == 0
 }
 
 # =========================================================================
@@ -479,11 +479,11 @@ test_storage_17_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_17"
+	v.check_id == "storage_efs_lifecycle"
 }
 
 test_storage_17_compliant if {
-	_violations_for("storage_17", _full_input) == 0
+	_violations_for("storage_efs_lifecycle", _full_input) == 0
 }
 
 # =========================================================================
@@ -503,11 +503,11 @@ test_storage_18_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_18"
+	v.check_id == "storage_efs_tags"
 }
 
 test_storage_18_compliant if {
-	_violations_for("storage_18", _full_input) == 0
+	_violations_for("storage_efs_tags", _full_input) == 0
 }
 
 # =========================================================================
@@ -522,11 +522,11 @@ test_storage_19_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_19"
+	v.check_id == "storage_efs_replication"
 }
 
 test_storage_19_compliant if {
-	_violations_for("storage_19", _full_input) == 0
+	_violations_for("storage_efs_replication", _full_input) == 0
 }
 
 test_storage_19_compliant_low_criticality if {
@@ -542,7 +542,7 @@ test_storage_19_compliant_low_criticality if {
 			},
 		},
 	)
-	_violations_for("storage_19", object.union(
+	_violations_for("storage_efs_replication", object.union(
 		_full_input,
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)) == 0
@@ -561,11 +561,11 @@ test_storage_20_alarm if {
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)
 	some v in r
-	v.check_id == "storage_20"
+	v.check_id == "storage_efs_throughput_mode"
 }
 
 test_storage_20_compliant if {
-	_violations_for("storage_20", _full_input) == 0
+	_violations_for("storage_efs_throughput_mode", _full_input) == 0
 }
 
 test_storage_20_compliant_small_ia if {
@@ -573,7 +573,7 @@ test_storage_20_compliant_small_ia if {
 		"throughput_mode": "bursting",
 		"size_in_bytes": {"value_in_ia": 500000000},
 	})
-	_violations_for("storage_20", object.union(
+	_violations_for("storage_efs_throughput_mode", object.union(
 		_full_input,
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)) == 0
@@ -593,7 +593,7 @@ test_storage_20_compliant_dev if {
 			},
 		},
 	)
-	_violations_for("storage_20", object.union(
+	_violations_for("storage_efs_throughput_mode", object.union(
 		_full_input,
 		{"efs": object.union(_full_input.efs, {"file_systems": [fs]})},
 	)) == 0
@@ -607,7 +607,7 @@ test_error_ebs_missing if {
 		"efs": _full_input.efs,
 	}
 	some e in r
-	e.check_id == "storage_00_ebs"
+	e.check_id == "storage_ebs_error"
 }
 
 test_error_efs_missing if {
@@ -615,5 +615,5 @@ test_error_efs_missing if {
 		"ebs": _full_input.ebs,
 	}
 	some e in r
-	e.check_id == "storage_00_efs"
+	e.check_id == "storage_efs_error"
 }

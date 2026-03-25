@@ -5,15 +5,18 @@ export { getHealth } from "./health";
 export { triggerScan } from "./scans";
 export {
   getViolations,
+  createJiraTicket,
+  deleteJiraTicket,
   type ViolationParams,
 } from "./violations";
-export { getComplianceScore } from "./compliance";
+export {
+  getComplianceScore,
+  getComplianceFrameworks,
+  getFrameworkScore,
+} from "./compliance";
 export { getDriftAlerts } from "./drift";
 export { getRiskScores, getRiskSummary } from "./risk";
-export {
-  createWsConnection,
-  type WsConnectionOptions,
-} from "./websocket";
+export { createWsConnection, type WsConnectionOptions } from "./websocket";
 export {
   getPolicies,
   createPolicy,
@@ -22,3 +25,11 @@ export {
   type CreatePolicyRequest,
 } from "./policies";
 export { getIamGraph } from "./iamGraph";
+export {
+  getInventory,
+  getInventorySummary,
+  getInventoryDetail,
+  getSecurityGraph,
+} from "./inventory";
+export { getRegions, type RegionsResponse } from "./regions";
+export { getExecutiveSummary, type ExecutiveSummaryParams } from "./executive";

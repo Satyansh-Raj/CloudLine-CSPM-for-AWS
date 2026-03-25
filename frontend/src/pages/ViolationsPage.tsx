@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useViolations } from "@/hooks";
+import { useRegion } from "@/hooks/useRegion";
 import {
   ViolationsTable,
   ViolationFilters,
@@ -15,13 +16,16 @@ export default function ViolationsPage() {
     severity: "",
     domain: "",
   });
+  const [region, setRegion] = useState("");
+  const { regions } = useRegion();
 
   const params = useMemo(() => {
     const p: Record<string, string> = { status: "alarm" };
     if (filters.severity) p.severity = filters.severity;
     if (filters.domain) p.domain = filters.domain;
+    if (region) p.region = region;
     return p;
-  }, [filters]);
+  }, [filters, region]);
 
   const { data, isLoading, error } = useViolations(params);
 
@@ -33,7 +37,27 @@ export default function ViolationsPage() {
 
       {/* Filters */}
       <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-4 shadow-sm">
-        <ViolationFilters filters={filters} onChange={setFilters} />
+        <div className="flex flex-wrap items-end gap-4">
+          <ViolationFilters filters={filters} onChange={setFilters} />
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Region
+            </label>
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className="block w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              aria-label="Select region"
+            >
+              <option value="">All Regions</option>
+              {regions.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Loading */}
@@ -63,10 +87,9 @@ export default function ViolationsPage() {
         <ViolationsTable
           data={data}
           onRowClick={(v: Violation) =>
-            navigate(
-              toViolationPath(v.check_id, v.resource),
-              { state: { violation: v } },
-            )
+            navigate(toViolationPath(v.check_id, v.resource), {
+              state: { violation: v },
+            })
           }
         />
       )}

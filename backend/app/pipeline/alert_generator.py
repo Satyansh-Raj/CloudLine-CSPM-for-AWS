@@ -124,51 +124,51 @@ class AlertGenerator:
 
     # Immediate actions per check_id
     _ACTIONS: dict[str, list[str]] = {
-        "iam_01": [
+        "iam_root_mfa": [
             "1. Sign in to AWS as root",
             "2. Go to IAM > Security credentials",
             "3. Enable MFA under Multi-factor"
             " authentication",
             "4. Use a virtual or hardware MFA device",
         ],
-        "iam_02": [
+        "iam_pwd_min_length": [
             "1. Go to IAM > Account settings",
             "2. Set minimum password length to 14+",
             "3. Enable complexity requirements",
             "4. Set password expiration to 90 days",
         ],
-        "iam_09": [
+        "iam_user_mfa": [
             "1. Go to IAM > Users > select user",
             "2. Click Security credentials tab",
             "3. Assign a virtual MFA device",
             "4. Or disable the account if unused",
         ],
-        "s3_01": [
+        "s3_block_public_acls": [
             "1. Go to S3 > select bucket > Permissions",
             "2. Click Edit under Block public access",
             "3. Enable all 4 checkboxes",
             "4. Save changes",
         ],
-        "cloudtrail_01": [
+        "cloudtrail_enabled": [
             "1. Go to CloudTrail > Trails",
             "2. Edit the trail",
             "3. Enable multi-region trail",
             "4. Ensure log file validation is on",
         ],
-        "ec2_05": [
+        "ec2_no_open_ssh": [
             "1. Go to EC2 > Security Groups",
             "2. Find the rule allowing 0.0.0.0/0 on 22",
             "3. Remove or restrict to specific IPs",
             "4. Use a bastion host or VPN instead",
         ],
-        "ec2_01": [
+        "ec2_imdsv2": [
             "1. Go to EC2 > Instances > select instance",
             "2. Actions > Instance settings > Modify"
             " instance metadata options",
             "3. Set IMDSv2 to Required",
             "4. Verify applications support IMDSv2",
         ],
-        "storage_01": [
+        "storage_ebs_encryption": [
             "1. Go to EC2 > Account Attributes"
             " > EBS encryption",
             "2. Click Manage > Enable encryption"

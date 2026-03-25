@@ -12,6 +12,8 @@ from app.models.violation import (
 
 logger = logging.getLogger(__name__)
 
+_ENRICH_COMPLIANCE = True
+
 
 class PolicyEvaluator:
     """Runs OPA policies against collected data and
@@ -27,7 +29,10 @@ class PolicyEvaluator:
         """Evaluate all policies against input.
 
         Returns a flat list of all violations and
-        compliant results.
+        compliant results.  Compliance mappings are
+        enriched from the external JSON config
+        (post-OPA) so Rego rules don't need to embed
+        framework references.
         """
         raw = self.opa.evaluate_all(input_data)
         results = []
@@ -46,6 +51,20 @@ class PolicyEvaluator:
                 parsed = self.parser.parse(c)
                 if parsed:
                     results.append(parsed)
+
+        if _ENRICH_COMPLIANCE and results:
+            try:
+                from app.compliance.mappings import (
+                    enrich_compliance,
+                )
+
+                enrich_compliance(results)
+            except Exception as exc:
+                logger.warning(
+                    "Compliance enrichment failed, "
+                    "using Rego-embedded values: %s",
+                    exc,
+                )
 
         return results
 

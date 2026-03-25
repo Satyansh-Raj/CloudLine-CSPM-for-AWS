@@ -21,9 +21,15 @@ from app.collectors.vpc import VPCCollector
 
 logger = logging.getLogger(__name__)
 
-# Maps service names to collector classes
-COLLECTOR_MAP = {
+# IAM is a global service — collected once per scan
+# regardless of how many regions are scanned.
+GLOBAL_COLLECTORS = {
     "iam": IAMCollector,
+}
+
+# These collectors are region-scoped and run once per
+# region in a multi-region scan.
+REGIONAL_COLLECTORS = {
     "s3": S3Collector,
     "ec2": EC2Collector,
     "vpc": VPCCollector,
@@ -31,6 +37,12 @@ COLLECTOR_MAP = {
     "lambda": LambdaCollector,
     "logging": LoggingCollector,
     "kms": KMSCollector,
+}
+
+# Full map preserved for backward compatibility.
+COLLECTOR_MAP = {
+    **GLOBAL_COLLECTORS,
+    **REGIONAL_COLLECTORS,
 }
 
 
@@ -54,10 +66,112 @@ class CollectionOrchestrator:
             for cls in COLLECTOR_MAP.values()
         ]
 
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _run_collectors(
+        self, collectors: list
+    ) -> dict:
+        """Run *collectors* and return merged data dict.
+
+        Does NOT include top-level metadata keys
+        (account_id, region, …) — callers add those.
+        """
+        data: dict = {}
+        errors: list[str] = []
+        for collector in collectors:
+            name = collector.__class__.__name__
+            try:
+                if isinstance(
+                    collector, KMSCollector
+                ):
+                    extra = collector.collect_full()
+                    data["kms"] = extra.get(
+                        "kms", {"keys": []}
+                    )
+                    data[
+                        "secrets_manager"
+                    ] = extra.get(
+                        "secrets_manager",
+                        {"secrets": []},
+                    )
+                    data["backup"] = extra.get(
+                        "backup",
+                        {
+                            "plans": [],
+                            "protected_resources": [],
+                        },
+                    )
+                else:
+                    key, svc_data = collector.collect()
+                    data[key] = svc_data
+            except Exception as e:
+                logger.error(
+                    "Collector %s failed: %s",
+                    name, e,
+                )
+                errors.append(f"{name}: {e}")
+        if errors:
+            data["_collection_errors"] = errors
+        return data
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def collect_iam(self) -> dict:
+        """Collect IAM data only (global, not regional).
+
+        Returns a dict that contains account metadata
+        and the 'iam' key.  Suitable for merging into
+        per-region results in a multi-region scan.
+        """
+        iam_collectors = [
+            c for c in self.collectors
+            if isinstance(c, IAMCollector)
+        ]
+        result = {
+            "account_id": self.account_id,
+            "collection_timestamp": (
+                datetime.now(timezone.utc).isoformat()
+            ),
+        }
+        result.update(
+            self._run_collectors(iam_collectors)
+        )
+        return result
+
+    def collect_regional(self) -> dict:
+        """Collect all regional services (excludes IAM).
+
+        Returns a dict that contains region metadata and
+        all regional service keys (s3, ec2, vpc, …).
+        Designed to be called once per region in a
+        multi-region scan and then merged with IAM data.
+        """
+        regional_collectors = [
+            c for c in self.collectors
+            if not isinstance(c, IAMCollector)
+        ]
+        result = {
+            "account_id": self.account_id,
+            "region": self.region,
+            "collection_timestamp": (
+                datetime.now(timezone.utc).isoformat()
+            ),
+            "collection_mode": "regional",
+        }
+        result.update(
+            self._run_collectors(regional_collectors)
+        )
+        return result
+
     def collect_full(self) -> dict:
         """Pull mode: full collection of all services.
 
         Returns the unified JSON document.
+        Backward-compatible — behaviour unchanged.
         """
         unified = {
             "account_id": self.account_id,
@@ -67,49 +181,9 @@ class CollectionOrchestrator:
             ),
             "collection_mode": "full",
         }
-        errors: list[str] = []
-
-        for collector in self.collectors:
-            name = collector.__class__.__name__
-            try:
-                if isinstance(
-                    collector, KMSCollector
-                ):
-                    # Use collect_full to get kms,
-                    # secrets_manager, and backup
-                    # in a single round-trip.
-                    extra = collector.collect_full()
-                    unified["kms"] = extra.get(
-                        "kms", {"keys": []}
-                    )
-                    unified[
-                        "secrets_manager"
-                    ] = extra.get(
-                        "secrets_manager",
-                        {"secrets": []},
-                    )
-                    unified["backup"] = extra.get(
-                        "backup",
-                        {
-                            "plans": [],
-                            "protected_resources": [],
-                        },
-                    )
-                else:
-                    key, data = collector.collect()
-                    unified[key] = data
-            except Exception as e:
-                logger.error(
-                    "Collector %s failed: %s",
-                    name, e,
-                )
-                errors.append(
-                    f"{name}: {e}"
-                )
-
-        if errors:
-            unified["_collection_errors"] = errors
-
+        unified.update(
+            self._run_collectors(self.collectors)
+        )
         return unified
 
     def collect_targeted(

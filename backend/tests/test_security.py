@@ -29,7 +29,8 @@ class TestSecurityHeaders:
         resp = client.get("/health")
         assert (
             resp.headers["Content-Security-Policy"]
-            == "default-src 'self'"
+            == "default-src 'self'; "
+            "style-src 'self' 'unsafe-inline'"
         )
 
     def test_strict_transport_security(self, client):

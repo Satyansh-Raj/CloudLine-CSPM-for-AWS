@@ -5,9 +5,18 @@ export type {
   ViolationStatus,
   ComplianceMapping,
   Violation,
+  JiraTicketResponse,
+  CreateTicketParams,
 } from "./violation";
 
-export type { DomainScore, ComplianceScore } from "./compliance";
+export type {
+  DomainScore,
+  ComplianceScore,
+  FrameworkSummary,
+  ControlViolation,
+  ControlStatus,
+  FrameworkScore,
+} from "./compliance";
 
 export type {
   DriftType,
@@ -61,3 +70,18 @@ export type {
   WsAlert,
 } from "./websocket";
 
+export type {
+  Exposure,
+  Resource,
+  InventorySummary,
+  InventoryParams,
+} from "./inventory";
+
+export type {
+  DomainBreakdown,
+  SeverityBreakdown,
+  TrendData,
+  ExecutiveSummary,
+} from "./executive";
+
+export type { GraphNode, GraphEdge, SecurityGraph } from "./securityGraph";

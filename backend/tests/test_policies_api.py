@@ -51,7 +51,7 @@ def policies_dir(tmp_path):
             some user in input.iam.users
             user.mfa_enabled == false
             result := {
-                "check_id": "iam_01",
+                "check_id": "iam_root_mfa",
                 "status": "alarm",
                 "severity": "critical",
                 "reason": sprintf(
@@ -74,7 +74,7 @@ def policies_dir(tmp_path):
             some user in input.iam.users
             user.access_key_age > 90
             result := {
-                "check_id": "iam_02",
+                "check_id": "iam_pwd_min_length",
                 "status": "alarm",
                 "severity": "high",
                 "reason": "Access key too old",
@@ -138,7 +138,7 @@ class TestListPolicies:
         data = resp.json()
         assert data["total"] >= 1
         p = data["policies"][0]
-        assert p["check_id"] == "iam_01"
+        assert p["check_id"] == "iam_root_mfa"
         assert p["domain"] == "identity"
         assert p["service"] == "iam"
 
@@ -185,11 +185,11 @@ class TestGetPolicySource:
         self, override_policy_dir
     ):
         resp = client.get(
-            "/api/v1/policies/iam_01/source"
+            "/api/v1/policies/iam_root_mfa/source"
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["check_id"] == "iam_01"
+        assert data["check_id"] == "iam_root_mfa"
         assert data["filename"] == "iam.rego"
         assert "violations contains" in (
             data["rego_code"]
@@ -324,7 +324,7 @@ class TestCreateRawPolicy:
         self, override_policy_dir
     ):
         rego = VALID_REGO.replace(
-            "custom_test_01", "iam_01"
+            "custom_test_01", "iam_root_mfa"
         )
         with patch(
             "app.routers.policies.subprocess.run"
@@ -347,7 +347,7 @@ class TestCreateRawPolicy:
                 },
             )
         assert resp.status_code == 409
-        assert "iam_01" in resp.json()["detail"]
+        assert "iam_root_mfa" in resp.json()["detail"]
 
     def test_create_raw_file_exists(
         self, override_policy_dir

@@ -53,7 +53,7 @@ def _raw_eventbridge(
 
 
 def _make_violation(
-    check_id="s3_01",
+    check_id="s3_block_public_acls",
     status="alarm",
     severity="high",
     reason="S3 bucket publicly accessible",
@@ -302,8 +302,8 @@ class TestProcessEventDrift:
         ]
         prev_state = ViolationState(
             pk=f"{ACCOUNT}#{REGION}",
-            sk="s3_01#my-bucket",
-            check_id="s3_01",
+            sk="s3_block_public_acls#my-bucket",
+            check_id="s3_block_public_acls",
             status="ok",
             severity="high",
             domain="data_protection",
@@ -339,8 +339,8 @@ class TestProcessEventDrift:
         ]
         prev_state = ViolationState(
             pk=f"{ACCOUNT}#{REGION}",
-            sk="s3_01#my-bucket",
-            check_id="s3_01",
+            sk="s3_block_public_acls#my-bucket",
+            check_id="s3_block_public_acls",
             status="alarm",
             severity="high",
             domain="data_protection",
@@ -375,8 +375,8 @@ class TestProcessEventDrift:
         ]
         prev_state = ViolationState(
             pk=f"{ACCOUNT}#{REGION}",
-            sk="s3_01#my-bucket",
-            check_id="s3_01",
+            sk="s3_block_public_acls#my-bucket",
+            check_id="s3_block_public_acls",
             status="alarm",
             severity="high",
             domain="data_protection",
@@ -430,7 +430,7 @@ class TestProcessEventPersistence:
         state_mgr.put_state.assert_called_once()
         saved = state_mgr.put_state.call_args.args[0]
         assert saved.status == "alarm"
-        assert saved.check_id == "s3_01"
+        assert saved.check_id == "s3_block_public_acls"
 
     def test_state_preserves_compliance_info(self):
         """Compliance mapping propagated to state."""
@@ -463,8 +463,8 @@ class TestProcessEventPersistence:
         ]
         prev_state = ViolationState(
             pk=f"{ACCOUNT}#{REGION}",
-            sk="s3_01#my-bucket",
-            check_id="s3_01",
+            sk="s3_block_public_acls#my-bucket",
+            check_id="s3_block_public_acls",
             status="ok",
             severity="high",
             domain="data_protection",
@@ -525,11 +525,11 @@ class TestProcessEventMultiPolicy:
     def test_mixed_results_per_policy(self):
         """One policy alarm, another ok."""
         alarm_v = _make_violation(
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             status="alarm",
         )
         ok_v = _make_violation(
-            check_id="CROSS_01",
+            check_id="cross_capital_one_pattern",
             status="ok",
         )
         evaluator = MagicMock()
@@ -696,7 +696,7 @@ class TestExtractStatus:
         ]
         status, sev, reason, domain = (
             handler._extract_status(
-                violations, "ec2_05"
+                violations, "ec2_no_open_ssh"
             )
         )
         assert status == "alarm"
@@ -712,7 +712,7 @@ class TestExtractStatus:
         ]
         status, sev, reason, domain = (
             handler._extract_status(
-                violations, "s3_01"
+                violations, "s3_block_public_acls"
             )
         )
         assert status == "ok"
@@ -721,7 +721,7 @@ class TestExtractStatus:
         """No results → ok status."""
         handler = _make_handler()
         status, sev, reason, domain = (
-            handler._extract_status([], "s3_01")
+            handler._extract_status([], "s3_block_public_acls")
         )
         assert status == "ok"
         assert sev == ""
@@ -766,7 +766,7 @@ class TestRunEvaluation:
         )
         handler = _make_handler(evaluator=evaluator)
         result = handler._run_evaluation(
-            "s3_01", {}
+            "s3_block_public_acls", {}
         )
         assert result is None
 
@@ -777,7 +777,7 @@ class TestRunEvaluation:
         evaluator.evaluate_check.return_value = [v]
         handler = _make_handler(evaluator=evaluator)
         result = handler._run_evaluation(
-            "s3_01", {}
+            "s3_block_public_acls", {}
         )
         assert result == [v]
 
@@ -993,7 +993,7 @@ class TestRiskScoreIntegration:
     def test_service_param_passed_from_mapping(self):
         """Service from EventMapping used for scoring."""
         v = Violation(
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             status="alarm",
             severity="critical",
             reason="Open SG",

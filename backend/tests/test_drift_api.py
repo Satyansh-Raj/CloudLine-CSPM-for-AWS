@@ -13,7 +13,7 @@ REGION = "us-east-1"
 
 
 def _make_state(
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     status="alarm",
     previous_status="ok",
     severity="critical",
@@ -42,14 +42,14 @@ def _make_state(
 
 ALARM_STATES = [
     _make_state(
-        check_id="ec2_05",
+        check_id="ec2_no_open_ssh",
         status="alarm",
         previous_status="ok",
         severity="critical",
         last_evaluated="2026-02-28T12:00:00Z",
     ),
     _make_state(
-        check_id="s3_01",
+        check_id="s3_block_public_acls",
         status="alarm",
         previous_status="ok",
         severity="high",
@@ -62,7 +62,7 @@ ALARM_STATES = [
 
 OK_STATES = [
     _make_state(
-        check_id="ec2_01",
+        check_id="ec2_imdsv2",
         status="ok",
         previous_status="alarm",
         severity="medium",
@@ -204,11 +204,11 @@ class TestDriftFilterBySince:
             "?since=2026-02-28T11:45:00Z"
         )
         data = resp.json()
-        # Only ec2_05 at 12:00:00Z passes
+        # Only ec2_no_open_ssh at 12:00:00Z passes
         assert len(data["alerts"]) == 1
         assert (
             data["alerts"][0]["check_id"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
 
     def test_since_returns_all_when_old(self):
@@ -288,13 +288,13 @@ class TestDriftFilterByCheckId:
         client = TestClient(app)
         resp = client.get(
             "/api/v1/drift/alerts"
-            "?check_id=ec2_05"
+            "?check_id=ec2_no_open_ssh"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
         assert (
             data["alerts"][0]["check_id"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
 
 
@@ -440,7 +440,7 @@ class TestDriftCombinedFilters:
         assert len(data["alerts"]) == 1
         assert (
             data["alerts"][0]["check_id"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
 
     def test_check_id_and_type(self):
@@ -449,13 +449,13 @@ class TestDriftCombinedFilters:
         resp = client.get(
             "/api/v1/drift/alerts"
             "?type=new_violation"
-            "&check_id=ec2_05"
+            "&check_id=ec2_no_open_ssh"
         )
         data = resp.json()
         for a in data["alerts"]:
             assert (
                 a["check_id"]
-                == "ec2_05"
+                == "ec2_no_open_ssh"
             )
 
 
@@ -469,7 +469,7 @@ class TestStateToAlertOkNoPrevious:
                 _make_state(
                     status="ok",
                     previous_status="",
-                    check_id="ec2_01",
+                    check_id="ec2_imdsv2",
                 ),
             ],
         )

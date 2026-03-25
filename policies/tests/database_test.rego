@@ -84,11 +84,11 @@ test_db_01_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_01"
+	v.check_id == "db_rds_no_public_access"
 }
 
 test_db_01_compliant if {
-	_violations_for("db_01", _full_input) == 0
+	_violations_for("db_rds_no_public_access", _full_input) == 0
 }
 
 # =========================================================================
@@ -101,11 +101,11 @@ test_db_02_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_02"
+	v.check_id == "db_rds_encryption"
 }
 
 test_db_02_compliant if {
-	_violations_for("db_02", _full_input) == 0
+	_violations_for("db_rds_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -118,16 +118,16 @@ test_db_03_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_03"
+	v.check_id == "db_rds_backup_retention"
 }
 
 test_db_03_compliant if {
-	_violations_for("db_03", _full_input) == 0
+	_violations_for("db_rds_backup_retention", _full_input) == 0
 }
 
 test_db_03_compliant_boundary if {
 	db := object.union(_good_rds, {"backup_retention_period": 7})
-	_violations_for("db_03", object.union(
+	_violations_for("db_rds_backup_retention", object.union(
 		_full_input,
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)) == 0
@@ -143,11 +143,11 @@ test_db_04_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_04"
+	v.check_id == "db_rds_multi_az"
 }
 
 test_db_04_compliant if {
-	_violations_for("db_04", _full_input) == 0
+	_violations_for("db_rds_multi_az", _full_input) == 0
 }
 
 test_db_04_compliant_dev if {
@@ -155,7 +155,7 @@ test_db_04_compliant_dev if {
 		"multi_az": false,
 		"tags": {"environment": "development"},
 	})
-	_violations_for("db_04", object.union(
+	_violations_for("db_rds_multi_az", object.union(
 		_full_input,
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)) == 0
@@ -171,11 +171,11 @@ test_db_05_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_05"
+	v.check_id == "db_rds_deletion_protection"
 }
 
 test_db_05_compliant if {
-	_violations_for("db_05", _full_input) == 0
+	_violations_for("db_rds_deletion_protection", _full_input) == 0
 }
 
 # =========================================================================
@@ -190,11 +190,11 @@ test_db_06_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_06"
+	v.check_id == "db_rds_iam_auth"
 }
 
 test_db_06_compliant if {
-	_violations_for("db_06", _full_input) == 0
+	_violations_for("db_rds_iam_auth", _full_input) == 0
 }
 
 # =========================================================================
@@ -209,11 +209,11 @@ test_db_07_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_snapshots": [snap]})},
 	)
 	some v in r
-	v.check_id == "db_07"
+	v.check_id == "db_rds_snapshot_private"
 }
 
 test_db_07_compliant if {
-	_violations_for("db_07", _full_input) == 0
+	_violations_for("db_rds_snapshot_private", _full_input) == 0
 }
 
 # =========================================================================
@@ -228,11 +228,11 @@ test_db_08_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_08"
+	v.check_id == "db_rds_log_exports"
 }
 
 test_db_08_compliant if {
-	_violations_for("db_08", _full_input) == 0
+	_violations_for("db_rds_log_exports", _full_input) == 0
 }
 
 # =========================================================================
@@ -247,11 +247,11 @@ test_db_09_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_09"
+	v.check_id == "db_rds_auto_minor_upgrade"
 }
 
 test_db_09_compliant if {
-	_violations_for("db_09", _full_input) == 0
+	_violations_for("db_rds_auto_minor_upgrade", _full_input) == 0
 }
 
 # =========================================================================
@@ -264,7 +264,7 @@ test_db_10_alarm_mysql if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_10"
+	v.check_id == "db_rds_no_default_port"
 }
 
 test_db_10_alarm_postgres if {
@@ -274,11 +274,11 @@ test_db_10_alarm_postgres if {
 		{"rds": object.union(_full_input.rds, {"db_instances": [db]})},
 	)
 	some v in r
-	v.check_id == "db_10"
+	v.check_id == "db_rds_no_default_port"
 }
 
 test_db_10_compliant if {
-	_violations_for("db_10", _full_input) == 0
+	_violations_for("db_rds_no_default_port", _full_input) == 0
 }
 
 # =========================================================================
@@ -293,11 +293,11 @@ test_db_11_alarm if {
 		{"dynamodb": {"tables": [tbl]}},
 	)
 	some v in r
-	v.check_id == "db_11"
+	v.check_id == "db_dynamodb_kms_encryption"
 }
 
 test_db_11_compliant if {
-	_violations_for("db_11", _full_input) == 0
+	_violations_for("db_dynamodb_kms_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -316,11 +316,11 @@ test_db_12_alarm if {
 		{"dynamodb": {"tables": [tbl]}},
 	)
 	some v in r
-	v.check_id == "db_12"
+	v.check_id == "db_dynamodb_pitr"
 }
 
 test_db_12_compliant if {
-	_violations_for("db_12", _full_input) == 0
+	_violations_for("db_dynamodb_pitr", _full_input) == 0
 }
 
 # =========================================================================
@@ -335,11 +335,11 @@ test_db_13_alarm if {
 		{"dynamodb": {"tables": [tbl]}},
 	)
 	some v in r
-	v.check_id == "db_13"
+	v.check_id == "db_dynamodb_deletion_protection"
 }
 
 test_db_13_compliant if {
-	_violations_for("db_13", _full_input) == 0
+	_violations_for("db_dynamodb_deletion_protection", _full_input) == 0
 }
 
 test_db_13_compliant_dev if {
@@ -347,7 +347,7 @@ test_db_13_compliant_dev if {
 		"deletion_protection_enabled": false,
 		"tags": {"environment": "development"},
 	})
-	_violations_for("db_13", object.union(
+	_violations_for("db_dynamodb_deletion_protection", object.union(
 		_full_input,
 		{"dynamodb": {"tables": [tbl]}},
 	)) == 0
@@ -369,11 +369,11 @@ test_db_14_alarm if {
 		{"dynamodb": {"tables": [tbl]}},
 	)
 	some v in r
-	v.check_id == "db_14"
+	v.check_id == "db_dynamodb_no_public_policy"
 }
 
 test_db_14_compliant if {
-	_violations_for("db_14", _full_input) == 0
+	_violations_for("db_dynamodb_no_public_policy", _full_input) == 0
 }
 
 test_db_14_compliant_with_condition if {
@@ -385,7 +385,7 @@ test_db_14_compliant_with_condition if {
 			"Condition": {"IpAddress": {"aws:SourceIp": "10.0.0.0/8"}},
 		}]},
 	})
-	_violations_for("db_14", object.union(
+	_violations_for("db_dynamodb_no_public_policy", object.union(
 		_full_input,
 		{"dynamodb": {"tables": [tbl]}},
 	)) == 0
@@ -404,11 +404,11 @@ test_db_15_alarm if {
 		{"dynamodb": {"tables": [tbl]}},
 	)
 	some v in r
-	v.check_id == "db_15"
+	v.check_id == "db_dynamodb_auto_scaling"
 }
 
 test_db_15_compliant_pay_per_request if {
-	_violations_for("db_15", _full_input) == 0
+	_violations_for("db_dynamodb_auto_scaling", _full_input) == 0
 }
 
 test_db_15_compliant_autoscaling_on if {
@@ -416,7 +416,7 @@ test_db_15_compliant_autoscaling_on if {
 		"billing_mode": "PROVISIONED",
 		"auto_scaling_enabled": true,
 	})
-	_violations_for("db_15", object.union(
+	_violations_for("db_dynamodb_auto_scaling", object.union(
 		_full_input,
 		{"dynamodb": {"tables": [tbl]}},
 	)) == 0
@@ -434,11 +434,11 @@ test_db_16_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "db_16"
+	v.check_id == "db_aurora_no_public_access"
 }
 
 test_db_16_compliant if {
-	_violations_for("db_16", _full_input) == 0
+	_violations_for("db_aurora_no_public_access", _full_input) == 0
 }
 
 # =========================================================================
@@ -453,11 +453,11 @@ test_db_17_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "db_17"
+	v.check_id == "db_aurora_encryption"
 }
 
 test_db_17_compliant if {
-	_violations_for("db_17", _full_input) == 0
+	_violations_for("db_aurora_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -472,11 +472,11 @@ test_db_18_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "db_18"
+	v.check_id == "db_aurora_deletion_protection"
 }
 
 test_db_18_compliant if {
-	_violations_for("db_18", _full_input) == 0
+	_violations_for("db_aurora_deletion_protection", _full_input) == 0
 }
 
 test_db_18_compliant_dev if {
@@ -486,7 +486,7 @@ test_db_18_compliant_dev if {
 			"environment": "development",
 		}),
 	})
-	_violations_for("db_18", object.union(
+	_violations_for("db_aurora_deletion_protection", object.union(
 		_full_input,
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)) == 0
@@ -502,11 +502,11 @@ test_db_19_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "db_19"
+	v.check_id == "db_aurora_backtrack"
 }
 
 test_db_19_compliant if {
-	_violations_for("db_19", _full_input) == 0
+	_violations_for("db_aurora_backtrack", _full_input) == 0
 }
 
 test_db_19_compliant_postgres if {
@@ -514,7 +514,7 @@ test_db_19_compliant_postgres if {
 		"backtrack_window": 0,
 		"engine": "aurora-postgresql",
 	})
-	_violations_for("db_19", object.union(
+	_violations_for("db_aurora_backtrack", object.union(
 		_full_input,
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)) == 0
@@ -527,7 +527,7 @@ test_db_19_compliant_low_criticality if {
 			"data_criticality": "low",
 		}),
 	})
-	_violations_for("db_19", object.union(
+	_violations_for("db_aurora_backtrack", object.union(
 		_full_input,
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)) == 0
@@ -545,11 +545,11 @@ test_db_20_alarm if {
 		{"rds": object.union(_full_input.rds, {"db_clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "db_20"
+	v.check_id == "db_aurora_iam_auth"
 }
 
 test_db_20_compliant if {
-	_violations_for("db_20", _full_input) == 0
+	_violations_for("db_aurora_iam_auth", _full_input) == 0
 }
 
 # =========================================================================
@@ -560,7 +560,7 @@ test_error_rds_missing if {
 		"dynamodb": {"tables": [_good_dynamo]},
 	}
 	some e in r
-	e.check_id == "db_00_rds"
+	e.check_id == "db_rds_error"
 }
 
 test_error_dynamodb_missing if {
@@ -568,5 +568,5 @@ test_error_dynamodb_missing if {
 		"rds": _full_input.rds,
 	}
 	some e in r
-	e.check_id == "db_00_dynamodb"
+	e.check_id == "db_dynamodb_error"
 }

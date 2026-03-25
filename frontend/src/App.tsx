@@ -3,12 +3,11 @@ import {
   Navigate,
   RouterProvider,
 } from "react-router-dom";
-import {
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { AlertProvider } from "@/context/AlertContext";
+import { AccountProvider } from "@/context/AccountContext";
+import { RegionProvider } from "@/context/RegionContext";
 import { Layout } from "@/components/layout";
 import {
   DashboardPage,
@@ -18,11 +17,14 @@ import {
   TrendsPage,
   ExecutiveSummaryPage,
   PoliciesPage,
+  InventoryPage,
+  CategoryResourcesPage,
+  ResourceDetailPage,
+  CompliancePage,
 } from "@/pages";
 
-const IamGraphPage = lazy(
-  () => import("@/pages/IamGraphPage"),
-);
+const IamGraphPage = lazy(() => import("@/pages/IamGraphPage"));
+const SecurityGraphPage = lazy(() => import("@/pages/SecurityGraphPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +73,22 @@ const router = createBrowserRouter([
         element: <ResolvedIssuesPage />,
       },
       {
+        path: "inventory",
+        element: <InventoryPage />,
+      },
+      {
+        path: "inventory/:category",
+        element: <CategoryResourcesPage />,
+      },
+      {
+        path: "inventory/detail",
+        element: <ResourceDetailPage />,
+      },
+      {
+        path: "compliance",
+        element: <CompliancePage />,
+      },
+      {
         path: "iam-graph",
         element: (
           <Suspense
@@ -84,6 +102,20 @@ const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      {
+        path: "security-graph",
+        element: (
+          <Suspense
+            fallback={
+              <div className="p-8 animate-pulse text-sm text-gray-400">
+                Loading Security Graph…
+              </div>
+            }
+          >
+            <SecurityGraphPage />
+          </Suspense>
+        ),
+      },
     ],
   },
 ]);
@@ -92,7 +124,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
-        <RouterProvider router={router} />
+        <AccountProvider>
+          <RegionProvider>
+            <RouterProvider router={router} />
+          </RegionProvider>
+        </AccountProvider>
       </AlertProvider>
     </QueryClientProvider>
   );

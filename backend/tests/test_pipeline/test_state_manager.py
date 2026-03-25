@@ -120,7 +120,7 @@ def _create_table(session):
 
 
 def _make_state(
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     resource_arn="arn:aws:ec2:us-east-1:123:sg/sg-1",
     status="alarm",
     severity="critical",
@@ -166,11 +166,11 @@ class TestPutAndGetState:
         result = state_mgr.get_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert result is not None
-        assert result.check_id == "ec2_05"
+        assert result.check_id == "ec2_no_open_ssh"
         assert result.status == "alarm"
         assert result.severity == "critical"
         assert result.risk_score == 92
@@ -197,7 +197,7 @@ class TestPutAndGetState:
         result = state_mgr.get_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert result.status == "alarm"
@@ -214,7 +214,7 @@ class TestPutAndGetState:
         result = state_mgr.get_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert result is not None
@@ -234,7 +234,7 @@ class TestUpdateStatus:
         ok = state_mgr.update_status(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
             "ok",
             reason="Fixed",
@@ -245,7 +245,7 @@ class TestUpdateStatus:
         result = state_mgr.get_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert result.status == "ok"
@@ -263,7 +263,7 @@ class TestUpdateStatus:
         state_mgr.update_status(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
             "alarm",
         )
@@ -271,7 +271,7 @@ class TestUpdateStatus:
         result = state_mgr.get_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert result.last_evaluated != ""
@@ -285,8 +285,8 @@ class TestQueryByAccount:
         self, state_mgr
     ):
         """Query returns all records for account."""
-        s1 = _make_state(check_id="iam_01")
-        s2 = _make_state(check_id="iam_02")
+        s1 = _make_state(check_id="iam_root_mfa")
+        s2 = _make_state(check_id="iam_pwd_min_length")
         state_mgr.put_state(s1)
         state_mgr.put_state(s2)
 
@@ -296,8 +296,8 @@ class TestQueryByAccount:
         assert len(results) == 2
         check_ids = {r.check_id for r in results}
         assert check_ids == {
-            "iam_01",
-            "iam_02",
+            "iam_root_mfa",
+            "iam_pwd_min_length",
         }
 
     def test_empty_account_returns_empty(
@@ -330,22 +330,22 @@ class TestQueryByStatus:
     ):
         """Query alarm status returns matches."""
         s1 = _make_state(
-            check_id="iam_01", status="alarm"
+            check_id="iam_root_mfa", status="alarm"
         )
         s2 = _make_state(
-            check_id="iam_02", status="ok"
+            check_id="iam_pwd_min_length", status="ok"
         )
         state_mgr.put_state(s1)
         state_mgr.put_state(s2)
 
         alarms = state_mgr.query_by_status("alarm")
         assert len(alarms) == 1
-        assert alarms[0].check_id == "iam_01"
+        assert alarms[0].check_id == "iam_root_mfa"
 
     def test_returns_ok_records(self, state_mgr):
         """Query ok status returns matches."""
         s1 = _make_state(
-            check_id="iam_01", status="ok"
+            check_id="iam_root_mfa", status="ok"
         )
         state_mgr.put_state(s1)
 
@@ -370,10 +370,10 @@ class TestQueryByDomain:
     ):
         """Query by domain returns matches."""
         s1 = _make_state(
-            check_id="ec2_05", domain="network"
+            check_id="ec2_no_open_ssh", domain="network"
         )
         s2 = _make_state(
-            check_id="s3_01",
+            check_id="s3_block_public_acls",
             domain="data_protection",
         )
         state_mgr.put_state(s1)
@@ -403,24 +403,24 @@ class TestQueryByCheck:
     ):
         """Query by check_id returns matches."""
         s1 = _make_state(
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn="arn:aws:ec2:...:sg/sg-1",
         )
         s2 = _make_state(
-            check_id="ec2_05",
+            check_id="ec2_no_open_ssh",
             resource_arn="arn:aws:ec2:...:sg/sg-2",
         )
-        s3 = _make_state(check_id="s3_01")
+        s3 = _make_state(check_id="s3_block_public_acls")
         state_mgr.put_state(s1)
         state_mgr.put_state(s2)
         state_mgr.put_state(s3)
 
         results = state_mgr.query_by_check(
-            "ec2_05"
+            "ec2_no_open_ssh"
         )
         assert len(results) == 2
         for r in results:
-            assert r.check_id == "ec2_05"
+            assert r.check_id == "ec2_no_open_ssh"
 
     def test_empty_check_returns_empty(
         self, state_mgr
@@ -445,7 +445,7 @@ class TestDeleteState:
         ok = state_mgr.delete_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert ok is True
@@ -453,7 +453,7 @@ class TestDeleteState:
         result = state_mgr.get_state(
             ACCOUNT,
             REGION,
-            "ec2_05",
+            "ec2_no_open_ssh",
             "arn:aws:ec2:us-east-1:123:sg/sg-1",
         )
         assert result is None
@@ -523,7 +523,7 @@ class TestStateToItem:
         state.resolved_at = "2026-02-27T13:00:00Z"
         item = _state_to_item(state)
         assert item["pk"] == f"{ACCOUNT}#{REGION}"
-        assert item["check_id"] == "ec2_05"
+        assert item["check_id"] == "ec2_no_open_ssh"
         assert item["status"] == "alarm"
         assert item["resolved_at"] == (
             "2026-02-27T13:00:00Z"
@@ -539,8 +539,8 @@ class TestItemToState:
 
         item = {
             "pk": f"{ACCOUNT}#{REGION}",
-            "sk": "ec2_05#arn",
-            "check_id": "ec2_05",
+            "sk": "ec2_no_open_ssh#arn",
+            "check_id": "ec2_no_open_ssh",
             "status": "alarm",
             "risk_score": Decimal("92"),
             "regression_count": Decimal("3"),
@@ -554,8 +554,8 @@ class TestItemToState:
         """Minimal item converts successfully."""
         item = {
             "pk": f"{ACCOUNT}#{REGION}",
-            "sk": "iam_01#arn",
-            "check_id": "iam_01",
+            "sk": "iam_root_mfa#arn",
+            "check_id": "iam_root_mfa",
         }
         state = _item_to_state(item)
         assert state.status == "ok"
@@ -566,8 +566,8 @@ class TestItemToState:
         """Null TTL stays None."""
         item = {
             "pk": f"{ACCOUNT}#{REGION}",
-            "sk": "iam_01#arn",
-            "check_id": "iam_01",
+            "sk": "iam_root_mfa#arn",
+            "check_id": "iam_root_mfa",
             "ttl": None,
         }
         state = _item_to_state(item)
@@ -623,7 +623,7 @@ class TestErrorBranches:
         """get_state returns None on error."""
         mgr = self._broken_mgr()
         result = mgr.get_state(
-            ACCOUNT, REGION, "ec2_05", "arn"
+            ACCOUNT, REGION, "ec2_no_open_ssh", "arn"
         )
         assert result is None
 
@@ -637,7 +637,7 @@ class TestErrorBranches:
         """update_status returns False on error."""
         mgr = self._broken_mgr()
         result = mgr.update_status(
-            ACCOUNT, REGION, "ec2_05", "arn",
+            ACCOUNT, REGION, "ec2_no_open_ssh", "arn",
             "ok",
         )
         assert result is False
@@ -665,14 +665,14 @@ class TestErrorBranches:
     def test_query_by_check_error(self):
         """query_by_check returns [] on error."""
         mgr = self._broken_mgr()
-        result = mgr.query_by_check("ec2_05")
+        result = mgr.query_by_check("ec2_no_open_ssh")
         assert result == []
 
     def test_delete_state_error(self):
         """delete_state returns False on error."""
         mgr = self._broken_mgr()
         result = mgr.delete_state(
-            ACCOUNT, REGION, "ec2_05", "arn"
+            ACCOUNT, REGION, "ec2_no_open_ssh", "arn"
         )
         assert result is False
 

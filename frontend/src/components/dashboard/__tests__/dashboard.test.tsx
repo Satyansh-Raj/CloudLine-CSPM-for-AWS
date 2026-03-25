@@ -127,14 +127,14 @@ describe("RiskCards", () => {
             low: 4,
           },
           highest_risk: [
-            { check_id: "s3_01", risk_score: 95 },
-            { check_id: "iam_02", risk_score: 72 },
+            { check_id: "s3_block_public_acls", risk_score: 95 },
+            { check_id: "iam_pwd_min_length", risk_score: 72 },
           ],
         }}
       />,
     );
     expect(
-      screen.getByText("s3_01"),
+      screen.getByText("s3_block_public_acls"),
     ).toBeInTheDocument();
     expect(screen.getByText("95")).toBeInTheDocument();
   });

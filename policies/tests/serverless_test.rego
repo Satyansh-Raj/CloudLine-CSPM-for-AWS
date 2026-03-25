@@ -98,11 +98,11 @@ test_serverless_01_alarm if {
 		"ecr": _full_input.ecr,
 	}
 	some v in r
-	v.check_id == "serverless_01"
+	v.check_id == "serverless_lambda_xray"
 }
 
 test_serverless_01_compliant if {
-	_violations_for("serverless_01", _full_input) == 0
+	_violations_for("serverless_lambda_xray", _full_input) == 0
 }
 
 # =========================================================================
@@ -118,11 +118,11 @@ test_serverless_02_alarm if {
 		{"lambda_functions": [fn]},
 	)
 	some v in r
-	v.check_id == "serverless_02"
+	v.check_id == "serverless_lambda_kms_env"
 }
 
 test_serverless_02_compliant_has_kms if {
-	_violations_for("serverless_02", _full_input) == 0
+	_violations_for("serverless_lambda_kms_env", _full_input) == 0
 }
 
 test_serverless_02_compliant_no_vars if {
@@ -130,7 +130,7 @@ test_serverless_02_compliant_no_vars if {
 		object.remove(_good_lambda, ["kms_key_arn"]),
 		{"environment": {"variables": {}}},
 	)
-	_violations_for("serverless_02", object.union(
+	_violations_for("serverless_lambda_kms_env", object.union(
 		_full_input,
 		{"lambda_functions": [fn]},
 	)) == 0
@@ -146,7 +146,7 @@ test_serverless_03_alarm if {
 		{"lambda_functions": [fn]},
 	)
 	some v in r
-	v.check_id == "serverless_03"
+	v.check_id == "serverless_lambda_runtime"
 }
 
 test_serverless_03_alarm_nodejs if {
@@ -156,11 +156,11 @@ test_serverless_03_alarm_nodejs if {
 		{"lambda_functions": [fn]},
 	)
 	some v in r
-	v.check_id == "serverless_03"
+	v.check_id == "serverless_lambda_runtime"
 }
 
 test_serverless_03_compliant if {
-	_violations_for("serverless_03", _full_input) == 0
+	_violations_for("serverless_lambda_runtime", _full_input) == 0
 }
 
 # =========================================================================
@@ -177,11 +177,11 @@ test_serverless_04_alarm if {
 		{"lambda_functions": [fn]},
 	)
 	some v in r
-	v.check_id == "serverless_04"
+	v.check_id == "serverless_lambda_no_public_invoke"
 }
 
 test_serverless_04_compliant if {
-	_violations_for("serverless_04", _full_input) == 0
+	_violations_for("serverless_lambda_no_public_invoke", _full_input) == 0
 }
 
 test_serverless_04_compliant_deny if {
@@ -190,7 +190,7 @@ test_serverless_04_compliant_deny if {
 			{"Effect": "Deny", "Principal": "*", "Action": "lambda:InvokeFunction"},
 		]},
 	})
-	_violations_for("serverless_04", object.union(
+	_violations_for("serverless_lambda_no_public_invoke", object.union(
 		_full_input,
 		{"lambda_functions": [fn]},
 	)) == 0
@@ -208,11 +208,11 @@ test_serverless_05_alarm if {
 		{"lambda_functions": [fn]},
 	)
 	some v in r
-	v.check_id == "serverless_05"
+	v.check_id == "serverless_lambda_no_admin_role"
 }
 
 test_serverless_05_compliant if {
-	_violations_for("serverless_05", _full_input) == 0
+	_violations_for("serverless_lambda_no_admin_role", _full_input) == 0
 }
 
 # =========================================================================
@@ -232,11 +232,11 @@ test_serverless_06_alarm if {
 		{"ecs": object.union(_full_input.ecs, {"task_definitions": [td]})},
 	)
 	some v in r
-	v.check_id == "serverless_06"
+	v.check_id == "serverless_ecs_no_privileged"
 }
 
 test_serverless_06_compliant if {
-	_violations_for("serverless_06", _full_input) == 0
+	_violations_for("serverless_ecs_no_privileged", _full_input) == 0
 }
 
 # =========================================================================
@@ -256,11 +256,11 @@ test_serverless_07_alarm if {
 		{"ecs": object.union(_full_input.ecs, {"task_definitions": [td]})},
 	)
 	some v in r
-	v.check_id == "serverless_07"
+	v.check_id == "serverless_ecs_readonly_root"
 }
 
 test_serverless_07_compliant if {
-	_violations_for("serverless_07", _full_input) == 0
+	_violations_for("serverless_ecs_readonly_root", _full_input) == 0
 }
 
 # =========================================================================
@@ -280,11 +280,11 @@ test_serverless_08_alarm if {
 		{"ecs": object.union(_full_input.ecs, {"task_definitions": [td]})},
 	)
 	some v in r
-	v.check_id == "serverless_08"
+	v.check_id == "serverless_ecs_cloudwatch_logs"
 }
 
 test_serverless_08_compliant if {
-	_violations_for("serverless_08", _full_input) == 0
+	_violations_for("serverless_ecs_cloudwatch_logs", _full_input) == 0
 }
 
 # =========================================================================
@@ -297,11 +297,11 @@ test_serverless_09_alarm if {
 		{"ecs": object.union(_full_input.ecs, {"task_definitions": [td]})},
 	)
 	some v in r
-	v.check_id == "serverless_09"
+	v.check_id == "serverless_ecs_no_host_network"
 }
 
 test_serverless_09_compliant if {
-	_violations_for("serverless_09", _full_input) == 0
+	_violations_for("serverless_ecs_no_host_network", _full_input) == 0
 }
 
 # =========================================================================
@@ -316,11 +316,11 @@ test_serverless_10_alarm if {
 		{"ecs": object.union(_full_input.ecs, {"clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "serverless_10"
+	v.check_id == "serverless_ecs_container_insights"
 }
 
 test_serverless_10_compliant if {
-	_violations_for("serverless_10", _full_input) == 0
+	_violations_for("serverless_ecs_container_insights", _full_input) == 0
 }
 
 # =========================================================================
@@ -338,11 +338,11 @@ test_serverless_11_alarm if {
 		{"eks": object.union(_full_input.eks, {"clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "serverless_11"
+	v.check_id == "serverless_eks_private_endpoint"
 }
 
 test_serverless_11_compliant if {
-	_violations_for("serverless_11", _full_input) == 0
+	_violations_for("serverless_eks_private_endpoint", _full_input) == 0
 }
 
 test_serverless_11_compliant_restricted_cidr if {
@@ -352,7 +352,7 @@ test_serverless_11_compliant_restricted_cidr if {
 			"public_access_cidrs": ["10.0.0.0/8"],
 		},
 	})
-	_violations_for("serverless_11", object.union(
+	_violations_for("serverless_eks_private_endpoint", object.union(
 		_full_input,
 		{"eks": object.union(_full_input.eks, {"clusters": [cluster]})},
 	)) == 0
@@ -370,7 +370,7 @@ test_serverless_12_alarm if {
 		{"eks": object.union(_full_input.eks, {"clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "serverless_12"
+	v.check_id == "serverless_eks_secrets_encryption"
 }
 
 test_serverless_12_alarm_empty if {
@@ -382,11 +382,11 @@ test_serverless_12_alarm_empty if {
 		{"eks": object.union(_full_input.eks, {"clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "serverless_12"
+	v.check_id == "serverless_eks_secrets_encryption"
 }
 
 test_serverless_12_compliant if {
-	_violations_for("serverless_12", _full_input) == 0
+	_violations_for("serverless_eks_secrets_encryption", _full_input) == 0
 }
 
 # =========================================================================
@@ -401,11 +401,11 @@ test_serverless_13_alarm if {
 		{"eks": object.union(_full_input.eks, {"clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "serverless_13"
+	v.check_id == "serverless_eks_audit_logs"
 }
 
 test_serverless_13_compliant if {
-	_violations_for("serverless_13", _full_input) == 0
+	_violations_for("serverless_eks_audit_logs", _full_input) == 0
 }
 
 # =========================================================================
@@ -420,11 +420,11 @@ test_serverless_14_alarm if {
 		{"eks": object.union(_full_input.eks, {"node_groups": [ng]})},
 	)
 	some v in r
-	v.check_id == "serverless_14"
+	v.check_id == "serverless_eks_private_subnets"
 }
 
 test_serverless_14_compliant if {
-	_violations_for("serverless_14", _full_input) == 0
+	_violations_for("serverless_eks_private_subnets", _full_input) == 0
 }
 
 # =========================================================================
@@ -437,11 +437,11 @@ test_serverless_15_alarm if {
 		{"eks": object.union(_full_input.eks, {"clusters": [cluster]})},
 	)
 	some v in r
-	v.check_id == "serverless_15"
+	v.check_id == "serverless_eks_version_current"
 }
 
 test_serverless_15_compliant if {
-	_violations_for("serverless_15", _full_input) == 0
+	_violations_for("serverless_eks_version_current", _full_input) == 0
 }
 
 # =========================================================================
@@ -456,11 +456,11 @@ test_serverless_16_alarm if {
 		{"ecr": {"repositories": [repo]}},
 	)
 	some v in r
-	v.check_id == "serverless_16"
+	v.check_id == "serverless_ecr_image_scanning"
 }
 
 test_serverless_16_compliant if {
-	_violations_for("serverless_16", _full_input) == 0
+	_violations_for("serverless_ecr_image_scanning", _full_input) == 0
 }
 
 # =========================================================================
@@ -475,11 +475,11 @@ test_serverless_17_alarm if {
 		{"ecr": {"repositories": [repo]}},
 	)
 	some v in r
-	v.check_id == "serverless_17"
+	v.check_id == "serverless_ecr_private"
 }
 
 test_serverless_17_compliant if {
-	_violations_for("serverless_17", _full_input) == 0
+	_violations_for("serverless_ecr_private", _full_input) == 0
 }
 
 # =========================================================================
@@ -494,11 +494,11 @@ test_serverless_18_alarm if {
 		{"ecr": {"repositories": [repo]}},
 	)
 	some v in r
-	v.check_id == "serverless_18"
+	v.check_id == "serverless_ecr_tag_immutability"
 }
 
 test_serverless_18_compliant if {
-	_violations_for("serverless_18", _full_input) == 0
+	_violations_for("serverless_ecr_tag_immutability", _full_input) == 0
 }
 
 # =========================================================================
@@ -511,11 +511,11 @@ test_serverless_19_alarm if {
 		{"ecr": {"repositories": [repo]}},
 	)
 	some v in r
-	v.check_id == "serverless_19"
+	v.check_id == "serverless_ecr_lifecycle_policy"
 }
 
 test_serverless_19_compliant if {
-	_violations_for("serverless_19", _full_input) == 0
+	_violations_for("serverless_ecr_lifecycle_policy", _full_input) == 0
 }
 
 # =========================================================================
@@ -531,11 +531,11 @@ test_serverless_20_alarm if {
 		{"ecr": {"repositories": [repo]}},
 	)
 	some v in r
-	v.check_id == "serverless_20"
+	v.check_id == "serverless_ecr_kms_encryption"
 }
 
 test_serverless_20_compliant_kms if {
-	_violations_for("serverless_20", _full_input) == 0
+	_violations_for("serverless_ecr_kms_encryption", _full_input) == 0
 }
 
 test_serverless_20_compliant_not_sensitive if {
@@ -543,7 +543,7 @@ test_serverless_20_compliant_not_sensitive if {
 		"encryption_configuration": {"encryption_type": "AES256"},
 		"tags": {"data_classification": "public"},
 	})
-	_violations_for("serverless_20", object.union(
+	_violations_for("serverless_ecr_kms_encryption", object.union(
 		_full_input,
 		{"ecr": {"repositories": [repo]}},
 	)) == 0
@@ -559,7 +559,7 @@ test_error_lambda_missing if {
 		"ecr": _full_input.ecr,
 	}
 	some e in r
-	e.check_id == "serverless_00_lambda"
+	e.check_id == "serverless_lambda_error"
 }
 
 test_error_ecs_missing if {
@@ -569,7 +569,7 @@ test_error_ecs_missing if {
 		"ecr": _full_input.ecr,
 	}
 	some e in r
-	e.check_id == "serverless_00_ecs"
+	e.check_id == "serverless_ecs_error"
 }
 
 test_error_eks_missing if {
@@ -579,7 +579,7 @@ test_error_eks_missing if {
 		"ecr": _full_input.ecr,
 	}
 	some e in r
-	e.check_id == "serverless_00_eks"
+	e.check_id == "serverless_eks_error"
 }
 
 test_error_ecr_missing if {
@@ -589,5 +589,5 @@ test_error_ecr_missing if {
 		"eks": _full_input.eks,
 	}
 	some e in r
-	e.check_id == "serverless_00_ecr"
+	e.check_id == "serverless_ecr_error"
 }

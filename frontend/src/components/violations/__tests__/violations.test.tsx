@@ -9,7 +9,7 @@ import ViolationFilters from "../ViolationFilters";
 
 const mockViolations = [
   {
-    check_id: "s3_01",
+    check_id: "s3_block_public_acls",
     resource: "arn:aws:s3:::bucket-1",
     severity: "critical",
     status: "alarm",
@@ -25,7 +25,7 @@ const mockViolations = [
     },
   },
   {
-    check_id: "ec2_05",
+    check_id: "ec2_no_open_ssh",
     resource: "arn:aws:ec2:::i-123",
     severity: "critical",
     status: "alarm",
@@ -51,10 +51,10 @@ describe("ViolationsTable", () => {
       />,
     );
     expect(
-      screen.getByText("s3_01"),
+      screen.getByText("s3_block_public_acls"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("ec2_05"),
+      screen.getByText("ec2_no_open_ssh"),
     ).toBeInTheDocument();
   });
 
@@ -80,7 +80,7 @@ describe("ViolationsTable", () => {
       />,
     );
 
-    await user.click(screen.getByText("s3_01"));
+    await user.click(screen.getByText("s3_block_public_acls"));
     expect(onClick).toHaveBeenCalledWith(
       mockViolations[0],
     );

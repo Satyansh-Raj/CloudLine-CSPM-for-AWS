@@ -125,7 +125,7 @@ describe("scans API", () => {
 
 describe("violations API", () => {
   it("getViolations calls GET /v1/violations", async () => {
-    const mockData = [{ check_id: "s3_01" }];
+    const mockData = [{ check_id: "s3_block_public_acls" }];
     mockGet.mockResolvedValue({ data: mockData });
 
     const result = await getViolations();

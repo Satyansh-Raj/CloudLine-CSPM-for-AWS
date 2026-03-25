@@ -48,7 +48,7 @@ export const mockCompliance: ComplianceScore = {
 
 export const mockViolations: Violation[] = [
   {
-    check_id: "s3_01",
+    check_id: "s3_block_public_acls",
     status: "alarm",
     severity: "critical",
     reason: "S3 bucket has public access",
@@ -64,7 +64,7 @@ export const mockViolations: Violation[] = [
     remediation_id: "REM_s3_01",
   },
   {
-    check_id: "ec2_05",
+    check_id: "ec2_no_open_ssh",
     status: "alarm",
     severity: "high",
     reason: "Security group allows 0.0.0.0/0 on SSH",
@@ -85,7 +85,7 @@ export const mockDriftAlerts: DriftAlertsResponse = {
   alerts: [
     {
       type: "new_violation",
-      check_id: "s3_01",
+      check_id: "s3_block_public_acls",
       resource: "arn:aws:s3:::test",
       severity: "critical",
       risk_score: 92,
@@ -115,7 +115,7 @@ export const mockRiskSummary: RiskSummary = {
   highest_risk: [
     {
       resource_arn: "arn:aws:s3:::public-bucket",
-      check_id: "s3_01",
+      check_id: "s3_block_public_acls",
       risk_score: 92,
       severity: "critical",
       domain: "data_protection",
@@ -127,7 +127,7 @@ export const mockRiskScores: RiskScoresResponse = {
   scores: [
     {
       resource_arn: "arn:aws:s3:::public-bucket",
-      check_id: "s3_01",
+      check_id: "s3_block_public_acls",
       risk_score: 92,
       category: "critical",
       severity: "critical",

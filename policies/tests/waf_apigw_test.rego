@@ -150,11 +150,11 @@ test_waf_01_alarm if {
 		{"waf": object.union(_waf_input.waf, {"cloudfront_distributions": [dist]})},
 	)
 	some v in r
-	v.check_id == "waf_01"
+	v.check_id == "waf_cloudfront_association"
 }
 
 test_waf_01_compliant if {
-	_waf_for("waf_01", _waf_input) == 0
+	_waf_for("waf_cloudfront_association", _waf_input) == 0
 }
 
 # =========================================================================
@@ -167,11 +167,11 @@ test_waf_02_alarm if {
 		{"waf": object.union(_waf_input.waf, {"albs": [alb]})},
 	)
 	some v in r
-	v.check_id == "waf_02"
+	v.check_id == "waf_alb_association"
 }
 
 test_waf_02_compliant if {
-	_waf_for("waf_02", _waf_input) == 0
+	_waf_for("waf_alb_association", _waf_input) == 0
 }
 
 # =========================================================================
@@ -186,11 +186,11 @@ test_waf_03_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_03"
+	v.check_id == "waf_managed_rules"
 }
 
 test_waf_03_compliant if {
-	_waf_for("waf_03", _waf_input) == 0
+	_waf_for("waf_managed_rules", _waf_input) == 0
 }
 
 # =========================================================================
@@ -205,11 +205,11 @@ test_waf_04_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_04"
+	v.check_id == "waf_rate_based_rules"
 }
 
 test_waf_04_compliant if {
-	_waf_for("waf_04", _waf_input) == 0
+	_waf_for("waf_rate_based_rules", _waf_input) == 0
 }
 
 # =========================================================================
@@ -226,11 +226,11 @@ test_waf_05_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_05"
+	v.check_id == "waf_sqli_protection"
 }
 
 test_waf_05_compliant if {
-	_waf_for("waf_05", _waf_input) == 0
+	_waf_for("waf_sqli_protection", _waf_input) == 0
 }
 
 # =========================================================================
@@ -247,11 +247,11 @@ test_waf_06_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_06"
+	v.check_id == "waf_xss_protection"
 }
 
 test_waf_06_compliant if {
-	_waf_for("waf_06", _waf_input) == 0
+	_waf_for("waf_xss_protection", _waf_input) == 0
 }
 
 # =========================================================================
@@ -267,11 +267,11 @@ test_waf_07_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_07"
+	v.check_id == "waf_logging"
 }
 
 test_waf_07_compliant if {
-	_waf_for("waf_07", _waf_input) == 0
+	_waf_for("waf_logging", _waf_input) == 0
 }
 
 # =========================================================================
@@ -286,11 +286,11 @@ test_waf_08_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_08"
+	v.check_id == "waf_ip_reputation"
 }
 
 test_waf_08_compliant if {
-	_waf_for("waf_08", _waf_input) == 0
+	_waf_for("waf_ip_reputation", _waf_input) == 0
 }
 
 # =========================================================================
@@ -305,11 +305,11 @@ test_waf_09_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_09"
+	v.check_id == "waf_bot_control"
 }
 
 test_waf_09_compliant if {
-	_waf_for("waf_09", _waf_input) == 0
+	_waf_for("waf_bot_control", _waf_input) == 0
 }
 
 # =========================================================================
@@ -326,11 +326,11 @@ test_waf_10_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_10"
+	v.check_id == "waf_no_count_critical"
 }
 
 test_waf_10_compliant if {
-	_waf_for("waf_10", _waf_input) == 0
+	_waf_for("waf_no_count_critical", _waf_input) == 0
 }
 
 # =========================================================================
@@ -345,11 +345,11 @@ test_waf_11_alarm if {
 		)},
 	)
 	some v in r
-	v.check_id == "waf_11"
+	v.check_id == "waf_shield_advanced"
 }
 
 test_waf_11_compliant if {
-	_waf_for("waf_11", _waf_input) == 0
+	_waf_for("waf_shield_advanced", _waf_input) == 0
 }
 
 # =========================================================================
@@ -368,11 +368,11 @@ test_waf_12_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_12"
+	v.check_id == "waf_default_block_apis"
 }
 
 test_waf_12_compliant if {
-	_waf_for("waf_12", _waf_input) == 0
+	_waf_for("waf_default_block_apis", _waf_input) == 0
 }
 
 # =========================================================================
@@ -387,11 +387,11 @@ test_waf_13_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_13"
+	v.check_id == "waf_known_bad_inputs"
 }
 
 test_waf_13_compliant if {
-	_waf_for("waf_13", _waf_input) == 0
+	_waf_for("waf_known_bad_inputs", _waf_input) == 0
 }
 
 # =========================================================================
@@ -409,11 +409,11 @@ test_waf_14_alarm if {
 		{"waf": object.union(_waf_input.waf, {"web_acls": [acl]})},
 	)
 	some v in r
-	v.check_id == "waf_14"
+	v.check_id == "waf_log_redaction"
 }
 
 test_waf_14_compliant if {
-	_waf_for("waf_14", _waf_input) == 0
+	_waf_for("waf_log_redaction", _waf_input) == 0
 }
 
 # =========================================================================
@@ -422,7 +422,7 @@ test_waf_14_compliant if {
 test_waf_error_missing if {
 	r := waf.error with input as {}
 	some e in r
-	e.check_id == "waf_00"
+	e.check_id == "waf_error"
 }
 
 # =========================================================================
@@ -435,11 +435,11 @@ test_apigw_01_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"stages": [stage]})},
 	)
 	some v in r
-	v.check_id == "apigw_01"
+	v.check_id == "apigw_access_logging"
 }
 
 test_apigw_01_compliant if {
-	_apigw_for("apigw_01", _apigw_input) == 0
+	_apigw_for("apigw_access_logging", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -457,11 +457,11 @@ test_apigw_02_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"stages": [stage]})},
 	)
 	some v in r
-	v.check_id == "apigw_02"
+	v.check_id == "apigw_execution_logging"
 }
 
 test_apigw_02_compliant if {
-	_apigw_for("apigw_02", _apigw_input) == 0
+	_apigw_for("apigw_execution_logging", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -476,11 +476,11 @@ test_apigw_03_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"rest_apis": [api]})},
 	)
 	some v in r
-	v.check_id == "apigw_03"
+	v.check_id == "apigw_tls_12"
 }
 
 test_apigw_03_compliant if {
-	_apigw_for("apigw_03", _apigw_input) == 0
+	_apigw_for("apigw_tls_12", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -493,11 +493,11 @@ test_apigw_04_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"stages": [stage]})},
 	)
 	some v in r
-	v.check_id == "apigw_04"
+	v.check_id == "apigw_waf_webacl"
 }
 
 test_apigw_04_compliant if {
-	_apigw_for("apigw_04", _apigw_input) == 0
+	_apigw_for("apigw_waf_webacl", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -515,11 +515,11 @@ test_apigw_05_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"stages": [stage]})},
 	)
 	some v in r
-	v.check_id == "apigw_05"
+	v.check_id == "apigw_throttling"
 }
 
 test_apigw_05_compliant if {
-	_apigw_for("apigw_05", _apigw_input) == 0
+	_apigw_for("apigw_throttling", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -537,11 +537,11 @@ test_apigw_06_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"rest_apis": [api]})},
 	)
 	some v in r
-	v.check_id == "apigw_06"
+	v.check_id == "apigw_vpc_endpoint"
 }
 
 test_apigw_06_compliant if {
-	_apigw_for("apigw_06", _apigw_input) == 0
+	_apigw_for("apigw_vpc_endpoint", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -556,11 +556,11 @@ test_apigw_07_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"rest_apis": [api]})},
 	)
 	some v in r
-	v.check_id == "apigw_07"
+	v.check_id == "apigw_cors_wildcard"
 }
 
 test_apigw_07_compliant if {
-	_apigw_for("apigw_07", _apigw_input) == 0
+	_apigw_for("apigw_cors_wildcard", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -575,11 +575,11 @@ test_apigw_08_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"usage_plans": [plan]})},
 	)
 	some v in r
-	v.check_id == "apigw_08"
+	v.check_id == "apigw_api_keys_required"
 }
 
 test_apigw_08_compliant if {
-	_apigw_for("apigw_08", _apigw_input) == 0
+	_apigw_for("apigw_api_keys_required", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -592,11 +592,11 @@ test_apigw_09_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"rest_apis": [api]})},
 	)
 	some v in r
-	v.check_id == "apigw_09"
+	v.check_id == "apigw_request_validation"
 }
 
 test_apigw_09_compliant if {
-	_apigw_for("apigw_09", _apigw_input) == 0
+	_apigw_for("apigw_request_validation", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -609,11 +609,11 @@ test_apigw_10_alarm if {
 		{"apigateway": object.union(_apigw_input.apigateway, {"stages": [stage]})},
 	)
 	some v in r
-	v.check_id == "apigw_10"
+	v.check_id == "apigw_client_certificate"
 }
 
 test_apigw_10_compliant if {
-	_apigw_for("apigw_10", _apigw_input) == 0
+	_apigw_for("apigw_client_certificate", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -628,11 +628,11 @@ test_apigw_11_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_11"
+	v.check_id == "apigw_lb_https_listener"
 }
 
 test_apigw_11_compliant if {
-	_apigw_for("apigw_11", _apigw_input) == 0
+	_apigw_for("apigw_lb_https_listener", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -652,11 +652,11 @@ test_apigw_12_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_12"
+	v.check_id == "apigw_lb_tls_12"
 }
 
 test_apigw_12_compliant if {
-	_apigw_for("apigw_12", _apigw_input) == 0
+	_apigw_for("apigw_lb_tls_12", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -674,11 +674,11 @@ test_apigw_13_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_13"
+	v.check_id == "apigw_lb_access_logging"
 }
 
 test_apigw_13_compliant if {
-	_apigw_for("apigw_13", _apigw_input) == 0
+	_apigw_for("apigw_lb_access_logging", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -696,11 +696,11 @@ test_apigw_14_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_14"
+	v.check_id == "apigw_lb_deletion_protection"
 }
 
 test_apigw_14_compliant if {
-	_apigw_for("apigw_14", _apigw_input) == 0
+	_apigw_for("apigw_lb_deletion_protection", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -718,11 +718,11 @@ test_apigw_15_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_15"
+	v.check_id == "apigw_lb_http_redirect_https"
 }
 
 test_apigw_15_compliant if {
-	_apigw_for("apigw_15", _apigw_input) == 0
+	_apigw_for("apigw_lb_http_redirect_https", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -738,11 +738,11 @@ test_apigw_16_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_16"
+	v.check_id == "apigw_lb_internal_not_public"
 }
 
 test_apigw_16_compliant if {
-	_apigw_for("apigw_16", _apigw_input) == 0
+	_apigw_for("apigw_lb_internal_not_public", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -755,11 +755,11 @@ test_apigw_17_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_17"
+	v.check_id == "apigw_lb_waf_webacl"
 }
 
 test_apigw_17_compliant if {
-	_apigw_for("apigw_17", _apigw_input) == 0
+	_apigw_for("apigw_lb_waf_webacl", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -779,11 +779,11 @@ test_apigw_18_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_18"
+	v.check_id == "apigw_lb_cert_not_expired"
 }
 
 test_apigw_18_compliant if {
-	_apigw_for("apigw_18", _apigw_input) == 0
+	_apigw_for("apigw_lb_cert_not_expired", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -801,11 +801,11 @@ test_apigw_19_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_19"
+	v.check_id == "apigw_lb_drop_invalid_headers"
 }
 
 test_apigw_19_compliant if {
-	_apigw_for("apigw_19", _apigw_input) == 0
+	_apigw_for("apigw_lb_drop_invalid_headers", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -820,11 +820,11 @@ test_apigw_20_alarm if {
 		{"elb": {"load_balancers": [lb]}},
 	)
 	some v in r
-	v.check_id == "apigw_20"
+	v.check_id == "apigw_lb_multi_az"
 }
 
 test_apigw_20_compliant if {
-	_apigw_for("apigw_20", _apigw_input) == 0
+	_apigw_for("apigw_lb_multi_az", _apigw_input) == 0
 }
 
 # =========================================================================
@@ -835,7 +835,7 @@ test_apigw_error_apigateway_missing if {
 		"elb": _apigw_input.elb,
 	}
 	some e in r
-	e.check_id == "apigw_00_apigateway"
+	e.check_id == "apigw_apigateway_error"
 }
 
 test_apigw_error_elb_missing if {
@@ -843,5 +843,5 @@ test_apigw_error_elb_missing if {
 		"apigateway": _apigw_input.apigateway,
 	}
 	some e in r
-	e.check_id == "apigw_00_elb"
+	e.check_id == "apigw_elb_error"
 }

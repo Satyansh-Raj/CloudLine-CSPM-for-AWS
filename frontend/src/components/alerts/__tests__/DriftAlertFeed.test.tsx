@@ -11,7 +11,7 @@ import type { WsMessage } from "@/types";
 const mockMsg: WsMessage = {
   type: "violation_new",
   data: {
-    check_id: "s3_01",
+    check_id: "s3_block_public_acls",
     resource_arn: "arn:aws:s3:::bucket-1",
     previous_status: "ok",
     current_status: "alarm",
@@ -63,7 +63,7 @@ describe("DriftAlertFeed", () => {
     act(() => screen.getByText("trigger").click());
 
     expect(
-      screen.getByText("s3_01"),
+      screen.getByText("s3_block_public_acls"),
     ).toBeInTheDocument();
     expect(
       screen.queryByText("No alerts yet"),
@@ -90,7 +90,7 @@ describe("DriftAlertFeed", () => {
     renderFeed();
     act(() => screen.getByText("trigger").click());
 
-    const alertBtn = screen.getByText("s3_01")
+    const alertBtn = screen.getByText("s3_block_public_acls")
       .closest("button")!;
     act(() => alertBtn.click());
 

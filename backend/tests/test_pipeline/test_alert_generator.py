@@ -25,7 +25,7 @@ REGION = "us-east-1"
 
 def _make_alert(
     drift_type=DriftType.NEW_VIOLATION,
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     resource_arn="arn:aws:ec2:us-east-1:123:sg/sg-1",
     previous_status="ok",
     current_status="alarm",
@@ -186,7 +186,7 @@ class TestFormatMessage:
         msg = gen._format_message(alert)
 
         assert isinstance(msg, str)
-        assert "ec2_05" in msg
+        assert "ec2_no_open_ssh" in msg
         assert "arn:aws:ec2" in msg
         assert "ok" in msg
         assert "alarm" in msg
@@ -225,7 +225,7 @@ class TestFormatSubject:
         )
         subject = gen._format_subject(alert)
         assert subject.startswith("[ALERT]")
-        assert "ec2_05" in subject
+        assert "ec2_no_open_ssh" in subject
         assert "CRITICAL" in subject
 
     def test_resolution_subject(self):
@@ -292,7 +292,7 @@ class TestAttributes:
         attrs = gen._attributes(alert)
         assert (
             attrs["check_id"]["StringValue"]
-            == "ec2_05"
+            == "ec2_no_open_ssh"
         )
 
 

@@ -73,110 +73,110 @@ _without_alarm(metric) := inp if {
 # cloudwatch_01 — Alarm for root account usage
 # =========================================================================
 test_cloudwatch_01_alarm if {
-	_violations_for("cloudwatch_01", _without_alarm("root_account_usage")) == 1
+	_violations_for("cloudwatch_root_usage_alarm", _without_alarm("root_account_usage")) == 1
 }
 
 test_cloudwatch_01_pass if {
-	_violations_for("cloudwatch_01", _good_input) == 0
+	_violations_for("cloudwatch_root_usage_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_02 — Alarm for unauthorized API calls
 # =========================================================================
 test_cloudwatch_02_alarm if {
-	_violations_for("cloudwatch_02", _without_alarm("unauthorized_api_calls")) == 1
+	_violations_for("cloudwatch_unauthorized_api_alarm", _without_alarm("unauthorized_api_calls")) == 1
 }
 
 test_cloudwatch_02_pass if {
-	_violations_for("cloudwatch_02", _good_input) == 0
+	_violations_for("cloudwatch_unauthorized_api_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_03 — Alarm for console login without MFA
 # =========================================================================
 test_cloudwatch_03_alarm if {
-	_violations_for("cloudwatch_03", _without_alarm("console_login_no_mfa")) == 1
+	_violations_for("cloudwatch_no_mfa_login_alarm", _without_alarm("console_login_no_mfa")) == 1
 }
 
 test_cloudwatch_03_pass if {
-	_violations_for("cloudwatch_03", _good_input) == 0
+	_violations_for("cloudwatch_no_mfa_login_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_04 — Alarm for IAM policy changes
 # =========================================================================
 test_cloudwatch_04_alarm if {
-	_violations_for("cloudwatch_04", _without_alarm("iam_policy_changes")) == 1
+	_violations_for("cloudwatch_iam_policy_alarm", _without_alarm("iam_policy_changes")) == 1
 }
 
 test_cloudwatch_04_pass if {
-	_violations_for("cloudwatch_04", _good_input) == 0
+	_violations_for("cloudwatch_iam_policy_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_05 — Alarm for CloudTrail configuration changes
 # =========================================================================
 test_cloudwatch_05_alarm if {
-	_violations_for("cloudwatch_05", _without_alarm("cloudtrail_config_changes")) == 1
+	_violations_for("cloudwatch_cloudtrail_alarm", _without_alarm("cloudtrail_config_changes")) == 1
 }
 
 test_cloudwatch_05_pass if {
-	_violations_for("cloudwatch_05", _good_input) == 0
+	_violations_for("cloudwatch_cloudtrail_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_06 — Alarm for S3 bucket policy changes
 # =========================================================================
 test_cloudwatch_06_alarm if {
-	_violations_for("cloudwatch_06", _without_alarm("s3_bucket_policy_changes")) == 1
+	_violations_for("cloudwatch_s3_policy_alarm", _without_alarm("s3_bucket_policy_changes")) == 1
 }
 
 test_cloudwatch_06_pass if {
-	_violations_for("cloudwatch_06", _good_input) == 0
+	_violations_for("cloudwatch_s3_policy_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_07 — Alarm for VPC changes
 # =========================================================================
 test_cloudwatch_07_alarm if {
-	_violations_for("cloudwatch_07", _without_alarm("vpc_changes")) == 1
+	_violations_for("cloudwatch_vpc_changes_alarm", _without_alarm("vpc_changes")) == 1
 }
 
 test_cloudwatch_07_pass if {
-	_violations_for("cloudwatch_07", _good_input) == 0
+	_violations_for("cloudwatch_vpc_changes_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_08 — Alarm for security group changes
 # =========================================================================
 test_cloudwatch_08_alarm if {
-	_violations_for("cloudwatch_08", _without_alarm("security_group_changes")) == 1
+	_violations_for("cloudwatch_sg_changes_alarm", _without_alarm("security_group_changes")) == 1
 }
 
 test_cloudwatch_08_pass if {
-	_violations_for("cloudwatch_08", _good_input) == 0
+	_violations_for("cloudwatch_sg_changes_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_09 — Alarm for NACL changes
 # =========================================================================
 test_cloudwatch_09_alarm if {
-	_violations_for("cloudwatch_09", _without_alarm("nacl_changes")) == 1
+	_violations_for("cloudwatch_nacl_changes_alarm", _without_alarm("nacl_changes")) == 1
 }
 
 test_cloudwatch_09_pass if {
-	_violations_for("cloudwatch_09", _good_input) == 0
+	_violations_for("cloudwatch_nacl_changes_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_10 — Alarm for Internet Gateway changes
 # =========================================================================
 test_cloudwatch_10_alarm if {
-	_violations_for("cloudwatch_10", _without_alarm("internet_gateway_changes")) == 1
+	_violations_for("cloudwatch_igw_changes_alarm", _without_alarm("internet_gateway_changes")) == 1
 }
 
 test_cloudwatch_10_pass if {
-	_violations_for("cloudwatch_10", _good_input) == 0
+	_violations_for("cloudwatch_igw_changes_alarm", _good_input) == 0
 }
 
 # =========================================================================
@@ -184,11 +184,11 @@ test_cloudwatch_10_pass if {
 # =========================================================================
 test_cloudwatch_11_alarm if {
 	inp := json.patch(_good_input, [{"op": "remove", "path": "/cloudwatch/log_groups/0/retention_in_days"}])
-	_violations_for("cloudwatch_11", inp) == 1
+	_violations_for("cloudwatch_log_retention", inp) == 1
 }
 
 test_cloudwatch_11_pass if {
-	_violations_for("cloudwatch_11", _good_input) == 0
+	_violations_for("cloudwatch_log_retention", _good_input) == 0
 }
 
 # =========================================================================
@@ -196,11 +196,11 @@ test_cloudwatch_11_pass if {
 # =========================================================================
 test_cloudwatch_12_alarm if {
 	inp := json.patch(_good_input, [{"op": "remove", "path": "/cloudwatch/log_groups/0/kms_key_id"}])
-	_violations_for("cloudwatch_12", inp) == 1
+	_violations_for("cloudwatch_log_kms_encryption", inp) == 1
 }
 
 test_cloudwatch_12_pass_has_kms if {
-	_violations_for("cloudwatch_12", _good_input) == 0
+	_violations_for("cloudwatch_log_kms_encryption", _good_input) == 0
 }
 
 test_cloudwatch_12_pass_not_sensitive if {
@@ -208,7 +208,7 @@ test_cloudwatch_12_pass_not_sensitive if {
 		{"op": "remove", "path": "/cloudwatch/log_groups/0/kms_key_id"},
 		{"op": "replace", "path": "/cloudwatch/log_groups/0/tags/data_classification", "value": "public"},
 	])
-	_violations_for("cloudwatch_12", inp) == 0
+	_violations_for("cloudwatch_log_kms_encryption", inp) == 0
 }
 
 # =========================================================================
@@ -223,11 +223,11 @@ test_cloudwatch_13_alarm if {
 		"state_value": "OK",
 	}
 	inp := json.patch(_good_input, [{"op": "add", "path": "/cloudwatch/alarms/-", "value": bad_alarm}])
-	_violations_for("cloudwatch_13", inp) == 1
+	_violations_for("cloudwatch_alarm_sns_action", inp) == 1
 }
 
 test_cloudwatch_13_pass if {
-	_violations_for("cloudwatch_13", _good_input) == 0
+	_violations_for("cloudwatch_alarm_sns_action", _good_input) == 0
 }
 
 # =========================================================================
@@ -235,55 +235,55 @@ test_cloudwatch_13_pass if {
 # =========================================================================
 test_cloudwatch_14_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/cloudwatch/alarms/0/state_value", "value": "INSUFFICIENT_DATA"}])
-	_violations_for("cloudwatch_14", inp) == 1
+	_violations_for("cloudwatch_no_insufficient_data", inp) == 1
 }
 
 test_cloudwatch_14_pass if {
-	_violations_for("cloudwatch_14", _good_input) == 0
+	_violations_for("cloudwatch_no_insufficient_data", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_15 — Alarm for failed console sign-in attempts
 # =========================================================================
 test_cloudwatch_15_alarm if {
-	_violations_for("cloudwatch_15", _without_alarm("failed_console_logins")) == 1
+	_violations_for("cloudwatch_failed_login_alarm", _without_alarm("failed_console_logins")) == 1
 }
 
 test_cloudwatch_15_pass if {
-	_violations_for("cloudwatch_15", _good_input) == 0
+	_violations_for("cloudwatch_failed_login_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_16 — Alarm for CMK deletion or disable events
 # =========================================================================
 test_cloudwatch_16_alarm if {
-	_violations_for("cloudwatch_16", _without_alarm("kms_key_deletion_disable")) == 1
+	_violations_for("cloudwatch_cmk_deletion_alarm", _without_alarm("kms_key_deletion_disable")) == 1
 }
 
 test_cloudwatch_16_pass if {
-	_violations_for("cloudwatch_16", _good_input) == 0
+	_violations_for("cloudwatch_cmk_deletion_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_17 — Alarm for AWS Config changes
 # =========================================================================
 test_cloudwatch_17_alarm if {
-	_violations_for("cloudwatch_17", _without_alarm("config_changes")) == 1
+	_violations_for("cloudwatch_config_changes_alarm", _without_alarm("config_changes")) == 1
 }
 
 test_cloudwatch_17_pass if {
-	_violations_for("cloudwatch_17", _good_input) == 0
+	_violations_for("cloudwatch_config_changes_alarm", _good_input) == 0
 }
 
 # =========================================================================
 # cloudwatch_18 — Alarm for AWS Organizations changes
 # =========================================================================
 test_cloudwatch_18_alarm if {
-	_violations_for("cloudwatch_18", _without_alarm("organizations_changes")) == 1
+	_violations_for("cloudwatch_org_changes_alarm", _without_alarm("organizations_changes")) == 1
 }
 
 test_cloudwatch_18_pass if {
-	_violations_for("cloudwatch_18", _good_input) == 0
+	_violations_for("cloudwatch_org_changes_alarm", _good_input) == 0
 }
 
 # =========================================================================
@@ -291,27 +291,27 @@ test_cloudwatch_18_pass if {
 # =========================================================================
 test_cloudwatch_19_alarm if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/cloudwatch/log_groups/0/retention_in_days", "value": 30}])
-	_violations_for("cloudwatch_19", inp) == 1
+	_violations_for("cloudwatch_log_retention_90d", inp) == 1
 }
 
 test_cloudwatch_19_pass if {
-	_violations_for("cloudwatch_19", _good_input) == 0
+	_violations_for("cloudwatch_log_retention_90d", _good_input) == 0
 }
 
 test_cloudwatch_19_pass_exactly_90 if {
 	inp := json.patch(_good_input, [{"op": "replace", "path": "/cloudwatch/log_groups/0/retention_in_days", "value": 90}])
-	_violations_for("cloudwatch_19", inp) == 0
+	_violations_for("cloudwatch_log_retention_90d", inp) == 0
 }
 
 # =========================================================================
 # cloudwatch_20 — Alarm for Route Table changes
 # =========================================================================
 test_cloudwatch_20_alarm if {
-	_violations_for("cloudwatch_20", _without_alarm("route_table_changes")) == 1
+	_violations_for("cloudwatch_route_table_alarm", _without_alarm("route_table_changes")) == 1
 }
 
 test_cloudwatch_20_pass if {
-	_violations_for("cloudwatch_20", _good_input) == 0
+	_violations_for("cloudwatch_route_table_alarm", _good_input) == 0
 }
 
 # =========================================================================
@@ -319,11 +319,11 @@ test_cloudwatch_20_pass if {
 # =========================================================================
 test_error_missing_cloudwatch if {
 	inp := {"region": "us-east-1", "account_id": "123456789012"}
-	_errors_for("cloudwatch_00", inp) == 1
+	_errors_for("cloudwatch_error", inp) == 1
 }
 
 test_error_not_raised_when_data_present if {
-	_errors_for("cloudwatch_00", _good_input) == 0
+	_errors_for("cloudwatch_error", _good_input) == 0
 }
 
 # =========================================================================
@@ -331,5 +331,5 @@ test_error_not_raised_when_data_present if {
 # =========================================================================
 test_alarm_empty_actions_does_not_satisfy_pattern if {
 	bad := json.patch(_good_input, [{"op": "replace", "path": "/cloudwatch/alarms/0/alarm_actions", "value": []}])
-	_violations_for("cloudwatch_01", bad) == 1
+	_violations_for("cloudwatch_root_usage_alarm", bad) == 1
 }

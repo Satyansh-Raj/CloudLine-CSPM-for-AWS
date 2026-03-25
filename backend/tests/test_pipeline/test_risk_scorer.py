@@ -19,7 +19,7 @@ from app.pipeline.risk_scorer import (
 
 def _make_violation(
     severity="high",
-    check_id="ec2_05",
+    check_id="ec2_no_open_ssh",
     status="alarm",
     domain="network",
     compliance=None,

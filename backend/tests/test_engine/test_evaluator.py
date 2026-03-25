@@ -19,7 +19,7 @@ class TestPolicyEvaluator:
         self.mock_opa.evaluate_all.return_value = {
             "iam": {
                 "violations": [{
-                    "check_id": "iam_01",
+                    "check_id": "iam_root_mfa",
                     "status": "alarm",
                     "severity": "critical",
                     "reason": "Root MFA off",
@@ -33,7 +33,7 @@ class TestPolicyEvaluator:
         }
         results = self.evaluator.evaluate_all({})
         assert len(results) == 1
-        assert results[0].check_id == "iam_01"
+        assert results[0].check_id == "iam_root_mfa"
         assert results[0].status == "alarm"
 
     def test_evaluate_all_mixed(self):
@@ -41,7 +41,7 @@ class TestPolicyEvaluator:
         self.mock_opa.evaluate_all.return_value = {
             "iam": {
                 "violations": [{
-                    "check_id": "iam_01",
+                    "check_id": "iam_root_mfa",
                     "status": "alarm",
                     "severity": "critical",
                     "reason": "bad",
@@ -50,7 +50,7 @@ class TestPolicyEvaluator:
                     "compliance": {},
                 }],
                 "compliant": [{
-                    "check_id": "iam_02",
+                    "check_id": "iam_pwd_min_length",
                     "status": "ok",
                     "severity": "high",
                     "reason": "good",
@@ -87,7 +87,7 @@ class TestPolicyEvaluator:
     def test_evaluate_check(self):
         """Test single check evaluation."""
         self.mock_opa.evaluate.return_value = [{
-            "check_id": "s3_01",
+            "check_id": "s3_block_public_acls",
             "status": "alarm",
             "severity": "critical",
             "reason": "S3 public",
@@ -99,7 +99,7 @@ class TestPolicyEvaluator:
             {}, "data_protection.s3"
         )
         assert len(results) == 1
-        assert results[0].check_id == "s3_01"
+        assert results[0].check_id == "s3_block_public_acls"
 
     def test_evaluate_check_empty(self):
         """Test single check with no results."""

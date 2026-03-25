@@ -21,12 +21,17 @@ from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.routers import (
+    accounts,
     compliance,
     drift,
+    executive,
     iam_graph,
+    inventory,
+    jira,
     policies,
     risk,
     scans,
+    security_graph,
     violations,
     websocket,
 )
@@ -154,6 +159,9 @@ async def security_headers(
     return response
 
 app.include_router(
+    accounts.router, prefix="/api/v1"
+)
+app.include_router(
     scans.router, prefix="/api/v1"
 )
 app.include_router(
@@ -161,6 +169,9 @@ app.include_router(
 )
 app.include_router(
     compliance.router, prefix="/api/v1"
+)
+app.include_router(
+    executive.router, prefix="/api/v1"
 )
 app.include_router(
     drift.router, prefix="/api/v1"
@@ -173,6 +184,15 @@ app.include_router(
 )
 app.include_router(
     iam_graph.router, prefix="/api/v1"
+)
+app.include_router(
+    inventory.router, prefix="/api/v1"
+)
+app.include_router(
+    security_graph.router, prefix="/api/v1"
+)
+app.include_router(
+    jira.router, prefix="/api/v1"
 )
 app.include_router(websocket.router)
 
@@ -212,9 +232,19 @@ if _frontend_dist.is_dir():
     )
 
     @app.get("/{full_path:path}")
-    async def spa_fallback(full_path: str):
+    async def spa_fallback(
+        full_path: str, request: Request
+    ):
         """Serve index.html for any non-API route (SPA)."""
+        if full_path.startswith("api/"):
+            return Response(
+                content='{"detail":"Not Found"}',
+                status_code=404,
+                media_type="application/json",
+            )
         file = _frontend_dist / full_path
         if file.is_file():
             return FileResponse(file)
-        return FileResponse(_frontend_dist / "index.html")
+        return FileResponse(
+            _frontend_dist / "index.html"
+        )

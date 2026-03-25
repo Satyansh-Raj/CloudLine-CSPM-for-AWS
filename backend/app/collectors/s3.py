@@ -73,6 +73,9 @@ class S3Collector(BaseCollector):
                 "logging": self._get_logging(
                     client, bucket_name
                 ),
+                "tags": self._get_tags(
+                    client, bucket_name
+                ),
             }
         except Exception as e:
             logger.error(
@@ -174,6 +177,20 @@ class S3Collector(BaseCollector):
             )
         except Exception:
             return False
+
+    def _get_tags(
+        self, client, bucket_name: str
+    ) -> dict:
+        try:
+            resp = client.get_bucket_tagging(
+                Bucket=bucket_name
+            )
+            return {
+                t["Key"]: t["Value"]
+                for t in resp.get("TagSet", [])
+            }
+        except Exception:
+            return {}
 
     def _get_logging(
         self, client, bucket_name: str

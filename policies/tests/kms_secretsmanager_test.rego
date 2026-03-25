@@ -101,11 +101,11 @@ test_kms_01_alarm if {
 	key := object.union(_good_key, {"key_rotation_enabled": false})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_01"
+	v.check_id == "kms_key_rotation"
 }
 
 test_kms_01_compliant if {
-	_kms_violations_for("kms_01", _kms_input) == 0
+	_kms_violations_for("kms_key_rotation", _kms_input) == 0
 }
 
 test_kms_01_skip_aws_managed if {
@@ -113,7 +113,7 @@ test_kms_01_skip_aws_managed if {
 		"key_manager": "AWS",
 		"key_rotation_enabled": false,
 	})
-	_kms_violations_for("kms_01", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_key_rotation", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -129,11 +129,11 @@ test_kms_02_alarm if {
 	})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_02"
+	v.check_id == "kms_no_public_principal"
 }
 
 test_kms_02_compliant if {
-	_kms_violations_for("kms_02", _kms_input) == 0
+	_kms_violations_for("kms_no_public_principal", _kms_input) == 0
 }
 
 test_kms_02_compliant_with_condition if {
@@ -145,7 +145,7 @@ test_kms_02_compliant_with_condition if {
 			"Condition": {"StringEquals": {"aws:PrincipalOrgID": "o-abc"}},
 		}]},
 	})
-	_kms_violations_for("kms_02", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_no_public_principal", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -158,11 +158,11 @@ test_kms_03_alarm if {
 	})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_03"
+	v.check_id == "kms_pending_deletion_approval"
 }
 
 test_kms_03_compliant_not_pending if {
-	_kms_violations_for("kms_03", _kms_input) == 0
+	_kms_violations_for("kms_pending_deletion_approval", _kms_input) == 0
 }
 
 test_kms_03_compliant_approved if {
@@ -170,7 +170,7 @@ test_kms_03_compliant_approved if {
 		"key_state": "PendingDeletion",
 		"tags": object.union(_good_key.tags, {"deletion_approved": "true"}),
 	})
-	_kms_violations_for("kms_03", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_pending_deletion_approval", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -195,11 +195,11 @@ test_kms_04_alarm if {
 	})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_04"
+	v.check_id == "kms_separate_admin_users"
 }
 
 test_kms_04_compliant if {
-	_kms_violations_for("kms_04", _kms_input) == 0
+	_kms_violations_for("kms_separate_admin_users", _kms_input) == 0
 }
 
 # =========================================================================
@@ -209,11 +209,11 @@ test_kms_05_alarm if {
 	key := object.union(_good_key, {"description": ""})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_05"
+	v.check_id == "kms_key_description"
 }
 
 test_kms_05_compliant if {
-	_kms_violations_for("kms_05", _kms_input) == 0
+	_kms_violations_for("kms_key_description", _kms_input) == 0
 }
 
 # =========================================================================
@@ -223,11 +223,11 @@ test_kms_06_alarm if {
 	key := object.union(_good_key, {"multi_region": true})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_06"
+	v.check_id == "kms_multi_region_required"
 }
 
 test_kms_06_compliant_not_multi if {
-	_kms_violations_for("kms_06", _kms_input) == 0
+	_kms_violations_for("kms_multi_region_required", _kms_input) == 0
 }
 
 test_kms_06_compliant_justified if {
@@ -235,7 +235,7 @@ test_kms_06_compliant_justified if {
 		"multi_region": true,
 		"tags": object.union(_good_key.tags, {"multi_region_justified": "true"}),
 	})
-	_kms_violations_for("kms_06", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_multi_region_required", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -254,11 +254,11 @@ test_kms_07_alarm if {
 		"account_id": "123456789012",
 	}
 	some v in r
-	v.check_id == "kms_07"
+	v.check_id == "kms_no_unknown_cross_account"
 }
 
 test_kms_07_compliant if {
-	_kms_violations_for("kms_07", _kms_input) == 0
+	_kms_violations_for("kms_no_unknown_cross_account", _kms_input) == 0
 }
 
 test_kms_07_compliant_approved_tag if {
@@ -270,7 +270,7 @@ test_kms_07_compliant_approved_tag if {
 		}]},
 		"tags": object.union(_good_key.tags, {"cross_account_approved": "true"}),
 	})
-	_kms_violations_for("kms_07", {
+	_kms_violations_for("kms_no_unknown_cross_account", {
 		"kms": {"keys": [key]},
 		"account_id": "123456789012",
 	}) == 0
@@ -286,11 +286,11 @@ test_kms_08_alarm if {
 	)
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_08"
+	v.check_id == "kms_owner_purpose_tags"
 }
 
 test_kms_08_compliant if {
-	_kms_violations_for("kms_08", _kms_input) == 0
+	_kms_violations_for("kms_owner_purpose_tags", _kms_input) == 0
 }
 
 # =========================================================================
@@ -303,11 +303,11 @@ test_kms_09_alarm if {
 	})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_09"
+	v.check_id == "kms_disabled_keys_cleanup"
 }
 
 test_kms_09_compliant_enabled if {
-	_kms_violations_for("kms_09", _kms_input) == 0
+	_kms_violations_for("kms_disabled_keys_cleanup", _kms_input) == 0
 }
 
 test_kms_09_compliant_under_90 if {
@@ -315,7 +315,7 @@ test_kms_09_compliant_under_90 if {
 		"key_state": "Disabled",
 		"days_since_disabled": 30,
 	})
-	_kms_violations_for("kms_09", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_disabled_keys_cleanup", {"kms": {"keys": [key]}}) == 0
 }
 
 test_kms_09_compliant_reviewed if {
@@ -324,7 +324,7 @@ test_kms_09_compliant_reviewed if {
 		"days_since_disabled": 120,
 		"tags": object.union(_good_key.tags, {"deletion_reviewed": "true"}),
 	})
-	_kms_violations_for("kms_09", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_disabled_keys_cleanup", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -343,11 +343,11 @@ test_kms_10_alarm if {
 		"account_id": "123456789012",
 	}
 	some v in r
-	v.check_id == "kms_10"
+	v.check_id == "kms_no_root_wildcard"
 }
 
 test_kms_10_compliant if {
-	_kms_violations_for("kms_10", _kms_input) == 0
+	_kms_violations_for("kms_no_root_wildcard", _kms_input) == 0
 }
 
 test_kms_10_compliant_with_condition if {
@@ -359,7 +359,7 @@ test_kms_10_compliant_with_condition if {
 			"Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}},
 		}]},
 	})
-	_kms_violations_for("kms_10", {
+	_kms_violations_for("kms_no_root_wildcard", {
 		"kms": {"keys": [key]},
 		"account_id": "123456789012",
 	}) == 0
@@ -376,11 +376,11 @@ test_kms_11_alarm if {
 		"kms": {"keys": [], "aliases": [alias]},
 	}
 	some v in r
-	v.check_id == "kms_11"
+	v.check_id == "kms_no_aws_alias_prefix"
 }
 
 test_kms_11_compliant if {
-	_kms_violations_for("kms_11", _kms_input) == 0
+	_kms_violations_for("kms_no_aws_alias_prefix", _kms_input) == 0
 }
 
 test_kms_11_compliant_aws_managed if {
@@ -388,7 +388,7 @@ test_kms_11_compliant_aws_managed if {
 		"alias_name": "alias/aws/s3",
 		"key_manager": "AWS",
 	})
-	_kms_violations_for("kms_11", {
+	_kms_violations_for("kms_no_aws_alias_prefix", {
 		"kms": {"keys": [], "aliases": [alias]},
 	}) == 0
 }
@@ -404,11 +404,11 @@ test_kms_12_alarm if {
 	})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_12"
+	v.check_id == "kms_s3_rotation"
 }
 
 test_kms_12_compliant if {
-	_kms_violations_for("kms_12", _kms_input) == 0
+	_kms_violations_for("kms_s3_rotation", _kms_input) == 0
 }
 
 # =========================================================================
@@ -418,11 +418,11 @@ test_kms_13_alarm if {
 	key := object.remove(_good_key, ["deletion_alarm_configured"])
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_13"
+	v.check_id == "kms_deletion_alarm"
 }
 
 test_kms_13_compliant if {
-	_kms_violations_for("kms_13", _kms_input) == 0
+	_kms_violations_for("kms_deletion_alarm", _kms_input) == 0
 }
 
 # =========================================================================
@@ -432,11 +432,11 @@ test_kms_14_alarm if {
 	key := object.union(_good_key, {"origin": "EXTERNAL"})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_14"
+	v.check_id == "kms_external_material_approval"
 }
 
 test_kms_14_compliant_aws_kms if {
-	_kms_violations_for("kms_14", _kms_input) == 0
+	_kms_violations_for("kms_external_material_approval", _kms_input) == 0
 }
 
 test_kms_14_compliant_approved if {
@@ -444,7 +444,7 @@ test_kms_14_compliant_approved if {
 		"origin": "EXTERNAL",
 		"tags": object.union(_good_key.tags, {"external_key_approved": "true"}),
 	})
-	_kms_violations_for("kms_14", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_external_material_approval", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -459,11 +459,11 @@ test_kms_15_alarm if {
 	})
 	r := kms.violations with input as {"kms": {"keys": [key]}}
 	some v in r
-	v.check_id == "kms_15"
+	v.check_id == "kms_decrypt_grant_approved"
 }
 
 test_kms_15_compliant_no_grants if {
-	_kms_violations_for("kms_15", _kms_input) == 0
+	_kms_violations_for("kms_decrypt_grant_approved", _kms_input) == 0
 }
 
 test_kms_15_compliant_has_retiring if {
@@ -474,7 +474,7 @@ test_kms_15_compliant_has_retiring if {
 			"retiring_principal": "arn:aws:iam::123456789012:role/admin",
 		}],
 	})
-	_kms_violations_for("kms_15", {"kms": {"keys": [key]}}) == 0
+	_kms_violations_for("kms_decrypt_grant_approved", {"kms": {"keys": [key]}}) == 0
 }
 
 # =========================================================================
@@ -483,7 +483,7 @@ test_kms_15_compliant_has_retiring if {
 test_kms_error_missing if {
 	r := kms.error with input as {}
 	some e in r
-	e.check_id == "kms_00"
+	e.check_id == "kms_error"
 }
 
 # =========================================================================
@@ -495,11 +495,11 @@ test_sm_01_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_01"
+	v.check_id == "secretsmanager_auto_rotation"
 }
 
 test_sm_01_compliant if {
-	_sm_violations_for("secretsmanager_01", _sm_input) == 0
+	_sm_violations_for("secretsmanager_auto_rotation", _sm_input) == 0
 }
 
 # =========================================================================
@@ -513,18 +513,18 @@ test_sm_02_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_02"
+	v.check_id == "secretsmanager_rotation_interval"
 }
 
 test_sm_02_compliant if {
-	_sm_violations_for("secretsmanager_02", _sm_input) == 0
+	_sm_violations_for("secretsmanager_rotation_interval", _sm_input) == 0
 }
 
 test_sm_02_compliant_boundary if {
 	secret := object.union(_good_secret, {
 		"rotation_rules": {"automatically_after_days": 90},
 	})
-	_sm_violations_for("secretsmanager_02", {
+	_sm_violations_for("secretsmanager_rotation_interval", {
 		"secrets_manager": {"secrets": [secret]},
 	}) == 0
 }
@@ -544,11 +544,11 @@ test_sm_03_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_03"
+	v.check_id == "secretsmanager_no_public_access"
 }
 
 test_sm_03_compliant if {
-	_sm_violations_for("secretsmanager_03", _sm_input) == 0
+	_sm_violations_for("secretsmanager_no_public_access", _sm_input) == 0
 }
 
 test_sm_03_compliant_with_condition if {
@@ -560,7 +560,7 @@ test_sm_03_compliant_with_condition if {
 			"Condition": {"StringEquals": {"aws:PrincipalOrgID": "o-abc"}},
 		}]},
 	})
-	_sm_violations_for("secretsmanager_03", {
+	_sm_violations_for("secretsmanager_no_public_access", {
 		"secrets_manager": {"secrets": [secret]},
 	}) == 0
 }
@@ -576,11 +576,11 @@ test_sm_04_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_04"
+	v.check_id == "secretsmanager_kms_encryption"
 }
 
 test_sm_04_compliant if {
-	_sm_violations_for("secretsmanager_04", _sm_input) == 0
+	_sm_violations_for("secretsmanager_kms_encryption", _sm_input) == 0
 }
 
 test_sm_04_compliant_not_sensitive if {
@@ -590,7 +590,7 @@ test_sm_04_compliant_not_sensitive if {
 			"data_classification": "public",
 		}),
 	})
-	_sm_violations_for("secretsmanager_04", {
+	_sm_violations_for("secretsmanager_kms_encryption", {
 		"secrets_manager": {"secrets": [secret]},
 	}) == 0
 }
@@ -606,11 +606,11 @@ test_sm_05_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_05"
+	v.check_id == "secretsmanager_unused_cleanup"
 }
 
 test_sm_05_compliant if {
-	_sm_violations_for("secretsmanager_05", _sm_input) == 0
+	_sm_violations_for("secretsmanager_unused_cleanup", _sm_input) == 0
 }
 
 # =========================================================================
@@ -629,11 +629,11 @@ test_sm_06_alarm if {
 		"account_id": "123456789012",
 	}
 	some v in r
-	v.check_id == "secretsmanager_06"
+	v.check_id == "secretsmanager_cross_account_org"
 }
 
 test_sm_06_compliant if {
-	_sm_violations_for("secretsmanager_06", _sm_input) == 0
+	_sm_violations_for("secretsmanager_cross_account_org", _sm_input) == 0
 }
 
 # =========================================================================
@@ -648,11 +648,11 @@ test_sm_07_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_07"
+	v.check_id == "secretsmanager_deletion_approval"
 }
 
 test_sm_07_compliant_not_deleted if {
-	_sm_violations_for("secretsmanager_07", _sm_input) == 0
+	_sm_violations_for("secretsmanager_deletion_approval", _sm_input) == 0
 }
 
 test_sm_07_compliant_approved if {
@@ -660,7 +660,7 @@ test_sm_07_compliant_approved if {
 		"deleted_date": "2026-03-01T00:00:00Z",
 		"tags": object.union(_good_secret.tags, {"deletion_approved": "true"}),
 	})
-	_sm_violations_for("secretsmanager_07", {
+	_sm_violations_for("secretsmanager_deletion_approval", {
 		"secrets_manager": {"secrets": [secret]},
 	}) == 0
 }
@@ -680,11 +680,11 @@ test_sm_08_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_08"
+	v.check_id == "secretsmanager_owner_purpose_tags"
 }
 
 test_sm_08_compliant if {
-	_sm_violations_for("secretsmanager_08", _sm_input) == 0
+	_sm_violations_for("secretsmanager_owner_purpose_tags", _sm_input) == 0
 }
 
 # =========================================================================
@@ -698,7 +698,7 @@ test_sm_09_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_09"
+	v.check_id == "secretsmanager_name_not_revealing"
 }
 
 test_sm_09_alarm_apikey if {
@@ -709,11 +709,11 @@ test_sm_09_alarm_apikey if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_09"
+	v.check_id == "secretsmanager_name_not_revealing"
 }
 
 test_sm_09_compliant if {
-	_sm_violations_for("secretsmanager_09", _sm_input) == 0
+	_sm_violations_for("secretsmanager_name_not_revealing", _sm_input) == 0
 }
 
 # =========================================================================
@@ -727,11 +727,11 @@ test_sm_10_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_10"
+	v.check_id == "secretsmanager_rotation_validated"
 }
 
 test_sm_10_compliant if {
-	_sm_violations_for("secretsmanager_10", _sm_input) == 0
+	_sm_violations_for("secretsmanager_rotation_validated", _sm_input) == 0
 }
 
 # =========================================================================
@@ -743,11 +743,11 @@ test_sm_11_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_11"
+	v.check_id == "secretsmanager_description_required"
 }
 
 test_sm_11_compliant if {
-	_sm_violations_for("secretsmanager_11", _sm_input) == 0
+	_sm_violations_for("secretsmanager_description_required", _sm_input) == 0
 }
 
 # =========================================================================
@@ -761,11 +761,11 @@ test_sm_12_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_12"
+	v.check_id == "secretsmanager_multi_region"
 }
 
 test_sm_12_compliant if {
-	_sm_violations_for("secretsmanager_12", _sm_input) == 0
+	_sm_violations_for("secretsmanager_multi_region", _sm_input) == 0
 }
 
 test_sm_12_compliant_low_criticality if {
@@ -775,7 +775,7 @@ test_sm_12_compliant_low_criticality if {
 			"data_criticality": "low",
 		}),
 	})
-	_sm_violations_for("secretsmanager_12", {
+	_sm_violations_for("secretsmanager_multi_region", {
 		"secrets_manager": {"secrets": [secret]},
 	}) == 0
 }
@@ -796,11 +796,11 @@ test_sm_13_alarm if {
 		"secrets_manager": {"secrets": [secret]},
 	}
 	some v in r
-	v.check_id == "secretsmanager_13"
+	v.check_id == "secretsmanager_no_wildcard_principal"
 }
 
 test_sm_13_compliant if {
-	_sm_violations_for("secretsmanager_13", _sm_input) == 0
+	_sm_violations_for("secretsmanager_no_wildcard_principal", _sm_input) == 0
 }
 
 # =========================================================================
@@ -809,5 +809,5 @@ test_sm_13_compliant if {
 test_sm_error_missing if {
 	r := secretsmanager.error with input as {}
 	some e in r
-	e.check_id == "secretsmanager_00"
+	e.check_id == "secretsmanager_error"
 }

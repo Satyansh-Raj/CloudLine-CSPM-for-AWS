@@ -42,14 +42,28 @@ class LambdaCollector(BaseCollector):
             )
             for page in paginator.paginate():
                 for fn in page["Functions"]:
-                    functions.append(
-                        self._build_function(fn)
+                    func = self._build_function(fn)
+                    func["tags"] = self._get_tags(
+                        client,
+                        fn.get("FunctionArn", ""),
                     )
+                    functions.append(func)
         except Exception as e:
             logger.error(
                 "Lambda list_functions: %s", e
             )
         return functions
+
+    def _get_tags(
+        self, client, arn: str
+    ) -> dict:
+        if not arn:
+            return {}
+        try:
+            resp = client.list_tags(Resource=arn)
+            return resp.get("Tags", {})
+        except Exception:
+            return {}
 
     def _build_function(self, fn: dict) -> dict:
         vpc_config = fn.get("VpcConfig", {})

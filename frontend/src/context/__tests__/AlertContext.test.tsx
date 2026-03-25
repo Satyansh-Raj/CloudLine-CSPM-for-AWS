@@ -6,7 +6,7 @@ import type { WsMessage } from "@/types";
 const mockMsg: WsMessage = {
   type: "violation_new",
   data: {
-    check_id: "s3_01",
+    check_id: "s3_block_public_acls",
     resource_arn: "arn:aws:s3:::test-bucket",
     previous_status: "ok",
     current_status: "alarm",
@@ -90,7 +90,7 @@ describe("AlertContext", () => {
       screen.getByTestId("unread"),
     ).toHaveTextContent("1");
     expect(
-      screen.getByText("s3_01"),
+      screen.getByText("s3_block_public_acls"),
     ).toBeInTheDocument();
   });
 

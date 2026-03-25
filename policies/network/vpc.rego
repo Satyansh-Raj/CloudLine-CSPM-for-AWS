@@ -4,13 +4,13 @@ import future.keywords.if
 import future.keywords.in
 
 # ---------------------------------------------------------------------------
-# Rule vpc_01 — VPC Flow Logs must be enabled for all VPCs
+# Rule vpc_flow_logs — VPC Flow Logs must be enabled for all VPCs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	not vpc.flow_logs_enabled
 	result := {
-		"check_id": "vpc_01",
+		"check_id": "vpc_flow_logs",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -20,24 +20,19 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["3.9"],
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.3"],
-		},
 		"remediation_id": "REM_vpc_01",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_02 — Default VPC must not have any resources attached
+# Rule vpc_default_no_resources — Default VPC must not have any resources attached
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	vpc.is_default == true
 	vpc.resource_count > 0
 	result := {
-		"check_id": "vpc_02",
+		"check_id": "vpc_default_no_resources",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -47,23 +42,19 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.3"],
-			"nist_800_53": ["SC-7"],
-		},
 		"remediation_id": "REM_vpc_02",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_03 — Default security group must block all inbound traffic
+# Rule vpc_default_sg_no_inbound — Default security group must block all inbound traffic
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some sg in input.vpc.security_groups
 	sg.group_name == "default"
 	count(sg.ip_permissions) > 0
 	result := {
-		"check_id": "vpc_03",
+		"check_id": "vpc_default_sg_no_inbound",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -73,17 +64,12 @@ violations contains result if {
 		"resource": sg.group_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.4"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_03",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_04 — Default security group must block all outbound traffic
+# Rule vpc_default_sg_no_outbound — Default security group must block all outbound traffic
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some sg in input.vpc.security_groups
@@ -91,7 +77,7 @@ violations contains result if {
 	some rule in sg.ip_permissions_egress
 	rule.ip_protocol == "-1"
 	result := {
-		"check_id": "vpc_04",
+		"check_id": "vpc_default_sg_no_outbound",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -101,16 +87,12 @@ violations contains result if {
 		"resource": sg.group_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.4"],
-			"nist_800_53": ["SC-7"],
-		},
 		"remediation_id": "REM_vpc_04",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_05 — NACLs must not allow all inbound traffic from 0.0.0.0/0
+# Rule vpc_nacl_no_all_inbound — NACLs must not allow all inbound traffic from 0.0.0.0/0
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some nacl in input.vpc.nacls
@@ -120,7 +102,7 @@ violations contains result if {
 	entry.protocol == "-1"
 	entry.cidr_block == "0.0.0.0/0"
 	result := {
-		"check_id": "vpc_05",
+		"check_id": "vpc_nacl_no_all_inbound",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -130,23 +112,18 @@ violations contains result if {
 		"resource": nacl.network_acl_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.1"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_05",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_06 — DNS resolution must be enabled in all VPCs
+# Rule vpc_dns_resolution — DNS resolution must be enabled in all VPCs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	vpc.enable_dns_support == false
 	result := {
-		"check_id": "vpc_06",
+		"check_id": "vpc_dns_resolution",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -156,21 +133,18 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-20"],
-		},
 		"remediation_id": "REM_vpc_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_07 — DNS hostnames must be enabled for all VPCs
+# Rule vpc_dns_hostnames — DNS hostnames must be enabled for all VPCs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	vpc.enable_dns_hostnames == false
 	result := {
-		"check_id": "vpc_07",
+		"check_id": "vpc_dns_hostnames",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -180,22 +154,19 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-20"],
-		},
 		"remediation_id": "REM_vpc_06",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_08 — Private subnets must not auto-assign public IPs
+# Rule vpc_private_no_public_ip — Private subnets must not auto-assign public IPs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some subnet in input.vpc.subnets
 	subnet.subnet_type == "private"
 	subnet.map_public_ip_on_launch == true
 	result := {
-		"check_id": "vpc_08",
+		"check_id": "vpc_private_no_public_ip",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -205,16 +176,12 @@ violations contains result if {
 		"resource": subnet.subnet_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.1"],
-			"nist_800_53": ["SC-7"],
-		},
 		"remediation_id": "REM_vpc_08",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_09 — Private subnets must not route directly to Internet Gateway
+# Rule vpc_private_no_igw_route — Private subnets must not route directly to Internet Gateway
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some rt in input.vpc.route_tables
@@ -223,7 +190,7 @@ violations contains result if {
 	route.destination_cidr_block == "0.0.0.0/0"
 	startswith(route.gateway_id, "igw-")
 	result := {
-		"check_id": "vpc_09",
+		"check_id": "vpc_private_no_igw_route",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -233,24 +200,19 @@ violations contains result if {
 		"resource": rt.route_table_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.1"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_09",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_10 — VPC must have at least 2 availability zones for HA
+# Rule vpc_multi_az — VPC must have at least 2 availability zones for HA
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	vpc.availability_zone_count < 2
 	vpc.tags.environment == "production"
 	result := {
-		"check_id": "vpc_10",
+		"check_id": "vpc_multi_az",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -260,15 +222,12 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["CP-7"],
-		},
 		"remediation_id": "REM_vpc_10",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_11 — Security groups must not allow all inbound ports from 0.0.0.0/0
+# Rule vpc_sg_no_all_ports — Security groups must not allow all inbound ports from 0.0.0.0/0
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some sg in input.vpc.security_groups
@@ -278,7 +237,7 @@ violations contains result if {
 	some cidr in rule.ip_ranges
 	cidr.cidr_ip == "0.0.0.0/0"
 	result := {
-		"check_id": "vpc_11",
+		"check_id": "vpc_sg_no_all_ports",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -288,24 +247,19 @@ violations contains result if {
 		"resource": sg.group_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.2"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_11",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_12 — VPC peering connections must restrict CIDR to internal ranges
+# Rule vpc_peering_internal_cidr — VPC peering connections must restrict CIDR to internal ranges
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some peering in input.vpc.peering_connections
 	peering.status.code == "active"
 	peering.requester_cidr_block == "0.0.0.0/0"
 	result := {
-		"check_id": "vpc_12",
+		"check_id": "vpc_peering_internal_cidr",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -315,23 +269,19 @@ violations contains result if {
 		"resource": peering.vpc_peering_connection_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_12",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_13 — VPC endpoints must be used for S3 and DynamoDB access
+# Rule vpc_endpoints_s3_dynamodb — VPC endpoints must be used for S3 and DynamoDB access
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	not vpc.has_s3_endpoint
 	vpc.tags.environment == "production"
 	result := {
-		"check_id": "vpc_13",
+		"check_id": "vpc_endpoints_s3_dynamodb",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -341,22 +291,18 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_13",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_14 — VPC CIDR must not be /8 (overly broad)
+# Rule vpc_cidr_not_slash8 — VPC CIDR must not be /8 (overly broad)
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	endswith(vpc.cidr_block, "/8")
 	result := {
-		"check_id": "vpc_14",
+		"check_id": "vpc_cidr_not_slash8",
 		"status": "alarm",
 		"severity": "low",
 		"reason": sprintf(
@@ -366,15 +312,12 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-		},
 		"remediation_id": "REM_vpc_14",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_15 — NACLs must not allow unrestricted inbound on admin ports
+# Rule vpc_nacl_no_admin_ports — NACLs must not allow unrestricted inbound on admin ports
 # ---------------------------------------------------------------------------
 admin_ports := {22, 3389, 5432, 3306, 1433, 6379, 27017}
 
@@ -388,7 +331,7 @@ violations contains result if {
 	entry.port_range.to >= port
 	entry.cidr_block == "0.0.0.0/0"
 	result := {
-		"check_id": "vpc_15",
+		"check_id": "vpc_nacl_no_admin_ports",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -398,24 +341,19 @@ violations contains result if {
 		"resource": nacl.network_acl_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.1"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_15",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_16 — Transit Gateway must not allow unrestricted route propagation
+# Rule vpc_tgw_restrict_propagation — Transit Gateway must not allow unrestricted route propagation
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some tgw in input.vpc.transit_gateways
 	tgw.default_route_table_propagation == "enable"
 	tgw.tags.environment == "production"
 	result := {
-		"check_id": "vpc_16",
+		"check_id": "vpc_tgw_restrict_propagation",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -425,15 +363,12 @@ violations contains result if {
 		"resource": tgw.transit_gateway_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-		},
 		"remediation_id": "REM_vpc_16",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_17 — VPC must use private NAT Gateway for outbound (not IGW directly)
+# Rule vpc_private_nat_gateway — VPC must use private NAT Gateway for outbound (not IGW directly)
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
@@ -441,7 +376,7 @@ violations contains result if {
 	vpc.has_private_subnets == true
 	vpc.has_nat_gateway == false
 	result := {
-		"check_id": "vpc_17",
+		"check_id": "vpc_private_nat_gateway",
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
@@ -451,15 +386,12 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-		},
 		"remediation_id": "REM_vpc_17",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_18 — Security groups must not use 0.0.0.0/0 for database ports
+# Rule vpc_sg_no_db_ports_open — Security groups must not use 0.0.0.0/0 for database ports
 # ---------------------------------------------------------------------------
 db_ports := {3306, 5432, 1433, 27017, 6379, 9200}
 
@@ -472,7 +404,7 @@ violations contains result if {
 	some cidr in rule.ip_ranges
 	cidr.cidr_ip == "0.0.0.0/0"
 	result := {
-		"check_id": "vpc_18",
+		"check_id": "vpc_sg_no_db_ports_open",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -482,24 +414,19 @@ violations contains result if {
 		"resource": sg.group_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["5.2"],
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-		},
 		"remediation_id": "REM_vpc_18",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_19 — Internet Gateway must not be attached to sensitive VPCs
+# Rule vpc_no_igw_sensitive — Internet Gateway must not be attached to sensitive VPCs
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some vpc in input.vpc.vpcs
 	vpc.tags.data_classification == "restricted"
 	vpc.has_internet_gateway == true
 	result := {
-		"check_id": "vpc_19",
+		"check_id": "vpc_no_igw_sensitive",
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
@@ -509,23 +436,18 @@ violations contains result if {
 		"resource": vpc.vpc_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"nist_800_53": ["SC-7"],
-			"pci_dss": ["1.3.1"],
-			"hipaa": ["164.312(e)(2)(i)"],
-		},
 		"remediation_id": "REM_vpc_19",
 	}
 }
 
 # ---------------------------------------------------------------------------
-# Rule vpc_20 — Flow Logs must capture REJECT traffic (not ACCEPT-only)
+# Rule vpc_flow_logs_reject — Flow Logs must capture REJECT traffic (not ACCEPT-only)
 # ---------------------------------------------------------------------------
 violations contains result if {
 	some log in input.vpc.flow_logs
 	log.traffic_type == "ACCEPT"
 	result := {
-		"check_id": "vpc_20",
+		"check_id": "vpc_flow_logs_reject",
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
@@ -535,11 +457,6 @@ violations contains result if {
 		"resource": log.flow_log_id,
 		"domain": "network",
 		"service": "vpc",
-		"compliance": {
-			"cis_aws": ["3.9"],
-			"nist_800_53": ["AU-12"],
-			"pci_dss": ["10.3"],
-		},
 		"remediation_id": "REM_vpc_01",
 	}
 }
@@ -550,7 +467,7 @@ violations contains result if {
 error contains result if {
 	not input.vpc
 	result := {
-		"check_id": "vpc_00",
+		"check_id": "vpc_error",
 		"status": "error",
 		"severity": "critical",
 		"reason": "VPC data missing from input — collector may have failed",

@@ -7,3 +7,8 @@ export { default as ExecutiveSummaryPage } from "./ExecutiveSummaryPage";
 export { default as PlaceholderPage } from "./PlaceholderPage";
 export { default as PoliciesPage } from "./PoliciesPage";
 export { default as IamGraphPage } from "./IamGraphPage";
+export { default as InventoryPage } from "./InventoryPage";
+export { default as CategoryResourcesPage } from "./CategoryResourcesPage";
+export { default as ResourceDetailPage } from "./ResourceDetailPage";
+export { default as CompliancePage } from "./CompliancePage";
+export { default as SecurityGraphPage } from "./SecurityGraphPage";

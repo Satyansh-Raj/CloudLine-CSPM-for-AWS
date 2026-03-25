@@ -1,0 +1,369 @@
+"""Inventory REST API — resource listing, filtering,
+and summary endpoints."""
+
+import logging
+from collections import Counter
+
+import boto3
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
+
+from app.dependencies import (
+    get_boto3_session,
+    get_resource_store,
+    get_settings,
+)
+from app.pipeline.resource_store import ResourceStore
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(
+    tags=["inventory"],
+)
+
+
+_cached_regions: list[str] | None = None
+
+
+def _discover_regions(
+    session: boto3.Session,
+) -> list[str]:
+    """Discover all enabled AWS regions via EC2 API.
+
+    Result is cached after the first successful call.
+    Returns empty list on failure (caller should fall
+    back to settings.aws_regions).
+    """
+    global _cached_regions
+    if _cached_regions is not None:
+        return _cached_regions
+    try:
+        ec2 = session.client("ec2")
+        resp = ec2.describe_regions(
+            AllRegions=False,
+        )
+        regions = sorted(
+            r["RegionName"]
+            for r in resp.get("Regions", [])
+        )
+        if regions:
+            _cached_regions = regions
+            return regions
+    except Exception as exc:
+        logger.warning(
+            "Region discovery failed, using config "
+            "fallback: %s",
+            exc,
+        )
+    return []
+
+
+def reset_region_cache() -> None:
+    """Clear the cached region list (for testing)."""
+    global _cached_regions
+    _cached_regions = None
+
+
+def _resource_to_dict(r) -> dict:
+    """Convert a ResourceRecord to API response."""
+    return {
+        "resource_id": r.resource_id,
+        "resource_name": r.resource_name,
+        "resource_type": r.resource_type,
+        "technology_category": r.technology_category,
+        "service": r.service,
+        "region": r.region,
+        "account_id": r.account_id,
+        "exposure": r.exposure,
+        "environment": r.environment,
+        "owner": r.owner,
+        "tags": r.tags,
+        "is_active": r.is_active,
+        "last_seen": r.last_seen,
+        "violation_count": r.violation_count,
+        "critical_violations": r.critical_violations,
+        "high_violations": r.high_violations,
+        "risk_score": r.risk_score,
+        "connected_to": r.connected_to,
+        "managed_by": r.managed_by,
+        "belongs_to": r.belongs_to,
+        "created_at": r.created_at,
+        # Data classification fields (Batch 6)
+        "data_sensitivity": r.data_sensitivity,
+        "data_types": r.data_types,
+        "compliance_gaps": r.compliance_gaps,
+    }
+
+
+@router.get("/inventory/regions")
+def list_regions(
+    session=Depends(get_boto3_session),
+    settings=Depends(get_settings),
+) -> dict:
+    """Return all enabled AWS regions.
+
+    Uses EC2 describe_regions() for dynamic discovery,
+    falling back to settings.aws_regions on error.
+    """
+    discovered = _discover_regions(session)
+    regions = discovered or settings.aws_regions
+    return {
+        "regions": regions,
+        "default": settings.aws_regions[0],
+    }
+
+
+@router.get("/inventory")
+def list_inventory(
+    category: str | None = Query(
+        None,
+        description="Filter by technology_category",
+    ),
+    exposure: str | None = Query(
+        None,
+        description="Filter by exposure level",
+    ),
+    service: str | None = Query(
+        None,
+        description="Filter by AWS service",
+    ),
+    search: str | None = Query(
+        None,
+        description="Search by name or ID",
+    ),
+    limit: int = Query(
+        200,
+        ge=1,
+        le=5000,
+        description="Max results",
+    ),
+    region: str | None = Query(
+        None,
+        description="Filter by AWS region",
+    ),
+    store: ResourceStore = Depends(
+        get_resource_store
+    ),
+    settings=Depends(get_settings),
+) -> list[dict]:
+    """List resources with optional filters.
+
+    Filter priority: category > exposure > service >
+    account (default). Search is applied in-memory
+    after the primary query.
+    """
+    effective_region = (
+        region if region else settings.aws_region
+    )
+    if category:
+        resources = store.query_by_category(
+            category, limit=limit
+        )
+    elif exposure:
+        resources = store.query_by_exposure(
+            exposure, limit=limit
+        )
+    elif service:
+        resources = store.query_by_service(
+            service, limit=limit
+        )
+    else:
+        resources = store.query_by_account(
+            settings.aws_account_id,
+            effective_region,
+            limit=limit,
+        )
+
+    # Region filter for GSI paths (category/exposure/
+    # service) which cannot filter by PK in DynamoDB.
+    if region and resources:
+        resources = [
+            r for r in resources
+            if r.region == region
+        ]
+
+    if search:
+        q = search.lower()
+        resources = [
+            r for r in resources
+            if q in r.resource_name.lower()
+            or q in r.resource_id.lower()
+        ]
+
+    return [_resource_to_dict(r) for r in resources]
+
+
+@router.get("/inventory/summary")
+def inventory_summary(
+    region: str | None = Query(
+        None,
+        description="Filter by AWS region",
+    ),
+    store: ResourceStore = Depends(
+        get_resource_store
+    ),
+    settings=Depends(get_settings),
+) -> dict:
+    """Aggregated inventory statistics."""
+    effective_region = (
+        region if region else settings.aws_region
+    )
+    resources = store.query_by_account(
+        settings.aws_account_id,
+        effective_region,
+        limit=5000,
+    )
+
+    by_category = Counter(
+        r.technology_category for r in resources
+    )
+    by_exposure = Counter(
+        r.exposure for r in resources
+    )
+    by_service = Counter(
+        r.service for r in resources
+    )
+
+    return {
+        "total": len(resources),
+        "by_category": dict(by_category),
+        "by_exposure": dict(by_exposure),
+        "by_service": dict(by_service),
+    }
+
+
+@router.get("/inventory/detail")
+def get_inventory_detail(
+    resource_type: str = Query(
+        ..., description="Resource type"
+    ),
+    resource_id: str = Query(
+        ..., description="Resource ARN"
+    ),
+    store: ResourceStore = Depends(
+        get_resource_store
+    ),
+    settings=Depends(get_settings),
+):
+    """Get a single resource by type and ID."""
+    resource = store.get_resource(
+        settings.aws_account_id,
+        settings.aws_region,
+        resource_type,
+        resource_id,
+    )
+    if not resource:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Resource not found"},
+        )
+    return _resource_to_dict(resource)
+
+
+@router.get("/inventory/data-classification")
+def get_data_classification(
+    resource_type: str = Query(
+        ..., description="Resource type"
+    ),
+    resource_id: str = Query(
+        ..., description="Resource ARN"
+    ),
+    store: ResourceStore = Depends(
+        get_resource_store
+    ),
+    settings=Depends(get_settings),
+):
+    """Get data classification for a single resource.
+
+    Returns the data_types, sensitivity, frameworks,
+    compliance_requirements, and compliance_gaps for
+    the requested resource.
+
+    Returns 404 if the resource is not found.
+    """
+    resource = store.get_resource(
+        settings.aws_account_id,
+        settings.aws_region,
+        resource_type,
+        resource_id,
+    )
+    if not resource:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Resource not found"},
+        )
+    return {
+        "resource_id": resource.resource_id,
+        "resource_type": resource.resource_type,
+        "data_types": resource.data_types,
+        "sensitivity": resource.data_sensitivity,
+        "compliance_gaps": resource.compliance_gaps,
+    }
+
+
+@router.get("/inventory/data-summary")
+def get_data_summary(
+    store: ResourceStore = Depends(
+        get_resource_store
+    ),
+    settings=Depends(get_settings),
+) -> dict:
+    """Aggregated data-classification statistics.
+
+    Returns:
+        by_type: count of resources per data type
+            label (a resource counts once per type it
+            carries).
+        by_sensitivity: count per sensitivity level.
+        by_framework: count of resources per compliance
+            framework (derived from ComplianceMapper).
+    """
+    from app.inventory.compliance_mapper import (
+        ComplianceMapper,
+    )
+
+    resources = store.query_by_account(
+        settings.aws_account_id,
+        settings.aws_region,
+        limit=5000,
+    )
+    mapper = ComplianceMapper()
+
+    by_type: Counter = Counter()
+    by_sensitivity: Counter = Counter()
+    by_framework: Counter = Counter()
+
+    for res in resources:
+        # Count each data_type label this resource has
+        for dt in res.data_types:
+            by_type[dt] += 1
+
+        if res.data_sensitivity not in (
+            "unknown",
+            "",
+        ):
+            by_sensitivity[res.data_sensitivity] += 1
+
+        # Derive frameworks from the resource's types
+        # via the mapper (avoids re-storing framework
+        # data on each record).
+        from app.inventory.data_classifier import (
+            DataClassification,
+        )
+
+        if res.data_types:
+            classification = DataClassification(
+                sensitivity=res.data_sensitivity,
+                data_types=res.data_types,
+                confidence="high",
+                source="tag",
+            )
+            result = mapper.map(classification)
+            for fw in result.frameworks:
+                by_framework[fw] += 1
+
+    return {
+        "by_type": dict(by_type),
+        "by_sensitivity": dict(by_sensitivity),
+        "by_framework": dict(by_framework),
+    }
