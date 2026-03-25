@@ -134,7 +134,13 @@ export default function ResolvedDetailPage() {
       ) : (
         <>
           {/* Header card */}
-          <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-6 py-5 shadow-sm">
+          <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-6 py-5 shadow-sm relative">
+            <img
+              src="/resolved.png"
+              alt="Resolved"
+              className="absolute -top-[0.85rem] right-[5.25rem] w-36 h-36 object-contain"
+              style={{ transform: "rotate(-30deg)" }}
+            />
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <SeverityBadge severity={violation.severity} />
               <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400">
