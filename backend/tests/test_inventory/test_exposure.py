@@ -709,3 +709,64 @@ class TestClassifyDispatch:
             cls.classify("ec2_instance", "i-ghost")
             == "unknown"
         )
+
+
+# --------------------------------------------------
+# Batch 8: Exposure dispatch for all new types
+# --------------------------------------------------
+
+
+class TestNewTypeDispatchReturnsUnknown:
+    """New resource types added in Batches 1-7 compute
+    exposure inline in the classifier, NOT via
+    ExposureClassifier.classify(). Verify the dispatch
+    returns 'unknown' for all non-dispatched types so
+    the inline logic in classifier.py takes effect."""
+
+    _NEW_TYPES = [
+        "subnet",
+        "internet_gateway",
+        "nat_gateway",
+        "network_acl",
+        "network_firewall",
+        "waf_web_acl",
+        "load_balancer",
+        "cloudfront_distribution",
+        "route53_hosted_zone",
+        "auto_scaling_group",
+        "ebs_snapshot",
+        "rds_snapshot",
+        "aurora_cluster",
+        "dynamodb_table",
+        "api_gateway",
+        "ecr_repository",
+        "ecs_cluster",
+        "ecs_task_definition",
+        "eks_cluster",
+        "iam_user",
+        "iam_group",
+        "iam_role",
+        "iam_policy",
+        "cloudtrail",
+        "guardduty",
+        "cloudwatch_alarm",
+        "ebs_volume",
+        "security_group",
+        "vpc",
+        "kms_key",
+        "secret",
+    ]
+
+    def test_all_non_dispatched_types_return_unknown(
+        self,
+    ):
+        """Types without dedicated classify_TYPE method
+        in ExposureClassifier return 'unknown'."""
+        data = _input()
+        cls = ExposureClassifier(data)
+        for rtype in self._NEW_TYPES:
+            result = cls.classify(rtype, "fake-id")
+            assert result == "unknown", (
+                f"{rtype}: expected unknown, "
+                f"got {result}"
+            )

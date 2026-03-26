@@ -6,7 +6,14 @@ from datetime import datetime, timezone
 
 import boto3
 
+from app.collectors.apigateway import (
+    APIGatewayCollector,
+)
+from app.collectors.cdn import CDNCollector
+from app.collectors.container import ContainerCollector
+from app.collectors.dynamodb import DynamoDBCollector
 from app.collectors.ec2 import EC2Collector
+from app.collectors.elb import ELBCollector
 from app.collectors.iam import IAMCollector
 from app.collectors.kms import KMSCollector
 from app.collectors.lambda_collector import (
@@ -37,6 +44,11 @@ REGIONAL_COLLECTORS = {
     "lambda": LambdaCollector,
     "logging": LoggingCollector,
     "kms": KMSCollector,
+    "elb": ELBCollector,
+    "cdn": CDNCollector,
+    "dynamodb": DynamoDBCollector,
+    "apigateway": APIGatewayCollector,
+    "containers": ContainerCollector,
 }
 
 # Full map preserved for backward compatibility.

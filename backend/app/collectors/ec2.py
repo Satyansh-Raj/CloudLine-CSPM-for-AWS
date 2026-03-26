@@ -36,6 +36,9 @@ class EC2Collector(BaseCollector):
 
     def collect(self) -> tuple[str, dict]:
         ec2 = self.session.client("ec2")
+        asg_client = self.session.client(
+            "autoscaling"
+        )
         return "ec2", {
             "instances": self._get_instances(ec2),
             "security_groups": (
@@ -43,6 +46,14 @@ class EC2Collector(BaseCollector):
             ),
             "ebs_volumes": self._get_ebs_volumes(
                 ec2
+            ),
+            "auto_scaling_groups": (
+                self._get_auto_scaling_groups(
+                    asg_client
+                )
+            ),
+            "ebs_snapshots": (
+                self._get_ebs_snapshots(ec2)
             ),
         }
 
@@ -65,6 +76,11 @@ class EC2Collector(BaseCollector):
                 ec2, [resource_id]
             )
             return vols[0] if vols else {}
+        if resource_id.startswith("snap-"):
+            snaps = self._get_ebs_snapshots(
+                ec2, [resource_id]
+            )
+            return snaps[0] if snaps else {}
         return {}
 
     def _get_instances(
@@ -308,3 +324,144 @@ class EC2Collector(BaseCollector):
                 "EC2 describe_volumes: %s", e
             )
         return volumes
+
+    def _get_auto_scaling_groups(
+        self, asg_client
+    ) -> list[dict]:
+        groups = []
+        try:
+            paginator = asg_client.get_paginator(
+                "describe_auto_scaling_groups"
+            )
+            for page in paginator.paginate():
+                for g in page[
+                    "AutoScalingGroups"
+                ]:
+                    tags = {
+                        t["Key"]: t["Value"]
+                        for t in g.get("Tags", [])
+                    }
+                    groups.append(
+                        {
+                            "asg_name": g[
+                                "AutoScalingGroupName"
+                            ],
+                            "arn": g.get(
+                                "AutoScalingGroupARN",
+                                "",
+                            ),
+                            "min_size": g.get(
+                                "MinSize", 0
+                            ),
+                            "max_size": g.get(
+                                "MaxSize", 0
+                            ),
+                            "desired_capacity": (
+                                g.get(
+                                    "DesiredCapacity",
+                                    0,
+                                )
+                            ),
+                            "launch_template": (
+                                g.get(
+                                    "LaunchTemplate",
+                                    {},
+                                ).get(
+                                    "LaunchTemplateName",
+                                    "",
+                                )
+                            ),
+                            "vpc_zone_ids": (
+                                g.get(
+                                    "VPCZoneIdentifier",
+                                    "",
+                                ).split(",")
+                                if g.get(
+                                    "VPCZoneIdentifier"
+                                )
+                                else []
+                            ),
+                            "tags": tags,
+                        }
+                    )
+        except Exception as e:
+            logger.error(
+                "ASG describe: %s", e
+            )
+        return groups
+
+    def _get_ebs_snapshots(
+        self,
+        ec2,
+        snapshot_ids: list | None = None,
+    ) -> list[dict]:
+        snapshots = []
+        try:
+            kwargs = {"OwnerIds": ["self"]}
+            if snapshot_ids:
+                kwargs["SnapshotIds"] = snapshot_ids
+            paginator = ec2.get_paginator(
+                "describe_snapshots"
+            )
+            for page in paginator.paginate(
+                **kwargs
+            ):
+                for snap in page["Snapshots"]:
+                    sid = snap["SnapshotId"]
+                    region = self._region
+                    account = (
+                        self._get_account_id()
+                    )
+                    arn = (
+                        f"arn:aws:ec2:{region}"
+                        f":{account}"
+                        f":snapshot/{sid}"
+                    )
+                    snap_tags = {
+                        t["Key"]: t["Value"]
+                        for t in snap.get(
+                            "Tags", []
+                        )
+                    }
+                    # Check if public
+                    is_public = False
+                    try:
+                        attr = (
+                            ec2
+                            .describe_snapshot_attribute(
+                                SnapshotId=sid,
+                                Attribute=(
+                                    "createVolumePermission"
+                                ),
+                            )
+                        )
+                        perms = attr.get(
+                            "CreateVolumePermissions",
+                            [],
+                        )
+                        is_public = any(
+                            p.get("Group") == "all"
+                            for p in perms
+                        )
+                    except Exception:
+                        pass
+                    snapshots.append(
+                        {
+                            "snapshot_id": sid,
+                            "arn": arn,
+                            "volume_id": snap.get(
+                                "VolumeId", ""
+                            ),
+                            "encrypted": snap.get(
+                                "Encrypted",
+                                False,
+                            ),
+                            "is_public": is_public,
+                            "tags": snap_tags,
+                        }
+                    )
+        except Exception as e:
+            logger.error(
+                "EC2 describe_snapshots: %s", e
+            )
+        return snapshots

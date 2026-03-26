@@ -9,8 +9,6 @@ import { getCheckName } from "@/constants/checkNames";
 import { getComplianceMapping } from "@/constants/complianceMappings";
 import IssueHistoryChart from "@/components/IssueHistoryChart";
 import { fromResolvedResource } from "@/utils/violationUrl";
-import { useAccount } from "@/hooks/useAccount";
-import { useRegion } from "@/hooks/useRegion";
 import type { Violation, StatusHistoryEntry } from "@/types";
 
 /* ---- local helpers ---- */
@@ -63,12 +61,6 @@ export default function ResolvedDetailPage() {
     (v) => v.check_id === checkId && v.resource === resource,
   );
   const violation: Violation | undefined = freshViolation ?? stateViolation;
-
-  const { selectedAccount } = useAccount();
-  const { selectedRegion } = useRegion();
-
-  const accountId = violation?.account_id ?? selectedAccount ?? "";
-  const region = violation?.region ?? selectedRegion ?? "";
 
   const comp = violation
     ? violation.compliance && Object.keys(violation.compliance).length > 0
@@ -138,7 +130,7 @@ export default function ResolvedDetailPage() {
             <img
               src="/resolved.png"
               alt="Resolved"
-              className="absolute -top-[0.85rem] right-[5.25rem] w-36 h-36 object-contain"
+              className="absolute -top-[0.85rem] right-[5.75rem] w-36 h-36 object-contain"
               style={{ transform: "rotate(-30deg)" }}
             />
             <div className="flex items-center gap-2 flex-wrap mb-2">

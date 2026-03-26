@@ -21,7 +21,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "apigw_access_logging": {
       "cis_aws": [
@@ -35,7 +37,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "apigw_execution_logging": {
       "nist_800_53": [
@@ -47,7 +51,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "apigw_tls_12": {
       "nist_800_53": [
@@ -59,7 +65,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "apigw_waf_webacl": {
       "nist_800_53": [
@@ -71,7 +79,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A05:2025"
+      ]
     },
     "apigw_throttling": {
       "nist_800_53": [
@@ -81,7 +91,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "apigw_vpc_endpoint": {
       "nist_800_53": [
@@ -93,14 +105,16 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "apigw_cors_wildcard": {
       "nist_800_53": [
         "SI-10"
       ],
       "owasp": [
-        "A05:2021"
+        "A02:2025"
       ],
       "cis_aws": [],
       "pci_dss": [],
@@ -115,7 +129,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "apigw_request_validation": {
       "nist_800_53": [
@@ -127,7 +143,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A05:2025"
+      ]
     },
     "apigw_client_certificate": {
       "nist_800_53": [
@@ -139,7 +157,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "apigw_lb_https_listener": {
       "cis_aws": [
@@ -153,7 +173,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "apigw_lb_tls_12": {
       "cis_aws": [
@@ -181,7 +203,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "apigw_lb_deletion_protection": {
       "nist_800_53": [
@@ -191,7 +215,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025",
+        "A10:2025"
+      ]
     },
     "apigw_lb_http_redirect_https": {
       "nist_800_53": [
@@ -203,7 +230,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "apigw_lb_internal_not_public": {
       "nist_800_53": [
@@ -215,7 +244,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "apigw_lb_waf_webacl": {
       "nist_800_53": [
@@ -227,7 +258,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A05:2025"
+      ]
     },
     "apigw_lb_cert_not_expired": {
       "nist_800_53": [
@@ -239,7 +272,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A03:2025"
+      ]
     },
     "apigw_lb_drop_invalid_headers": {
       "nist_800_53": [
@@ -251,7 +286,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "apigw_lb_multi_az": {
       "nist_800_53": [
@@ -261,7 +298,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025"
+      ]
     },
     "awssec_guardduty_enabled": {
       "cis_aws": [
@@ -275,7 +314,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_guardduty_detector": {
       "cis_aws": [
@@ -289,7 +330,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_guardduty_s3_protection": {
       "nist_800_53": [
@@ -301,7 +344,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_guardduty_malware_ec2": {
       "nist_800_53": [
@@ -313,7 +358,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_guardduty_no_suppress_crit": {
       "nist_800_53": [
@@ -325,7 +372,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_guardduty_publish_frequency": {
       "nist_800_53": [
@@ -335,7 +384,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_guardduty_sns_high": {
       "nist_800_53": [
@@ -347,7 +398,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_securityhub_enabled": {
       "nist_800_53": [
@@ -359,7 +412,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_securityhub_cis_standard": {
       "cis_aws": [
@@ -371,7 +426,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_securityhub_fsbp_standard": {
       "nist_800_53": [
@@ -381,7 +438,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "awssec_securityhub_no_suppress_crit": {
       "nist_800_53": [
@@ -437,7 +496,10 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A03:2025",
+        "A09:2025"
+      ]
     },
     "awssec_inspector_lambda_scanning": {
       "nist_800_53": [
@@ -449,7 +511,10 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A03:2025",
+        "A09:2025"
+      ]
     },
     "awssec_inspector_critical_cve_30d": {
       "nist_800_53": [
@@ -495,7 +560,10 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A03:2025",
+        "A09:2025"
+      ]
     },
     "cloudtrail_enabled": {
       "cis_aws": [
@@ -509,7 +577,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudtrail_multi_region": {
       "cis_aws": [
@@ -523,7 +593,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudtrail_log_validation": {
       "cis_aws": [
@@ -537,7 +609,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A08:2025",
+        "A09:2025"
+      ]
     },
     "cloudtrail_s3_private": {
       "cis_aws": [
@@ -551,7 +626,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudtrail_cloudwatch_logs": {
       "cis_aws": [
@@ -565,7 +642,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudtrail_kms_encryption": {
       "cis_aws": [
@@ -579,7 +658,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A09:2025"
+      ]
     },
     "cloudtrail_sns_notification": {
       "nist_800_53": [
@@ -653,7 +735,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudtrail_global_events": {
       "cis_aws": [
@@ -665,7 +749,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudtrail_retention_365": {
       "nist_800_53": [
@@ -705,7 +791,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_unauthorized_api_alarm": {
       "cis_aws": [
@@ -719,7 +807,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_no_mfa_login_alarm": {
       "cis_aws": [
@@ -733,7 +823,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_iam_policy_alarm": {
       "cis_aws": [
@@ -747,7 +839,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_cloudtrail_alarm": {
       "cis_aws": [
@@ -761,7 +855,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_s3_policy_alarm": {
       "cis_aws": [
@@ -773,7 +869,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_vpc_changes_alarm": {
       "cis_aws": [
@@ -835,7 +933,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_log_kms_encryption": {
       "nist_800_53": [
@@ -883,7 +983,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_cmk_deletion_alarm": {
       "cis_aws": [
@@ -895,7 +997,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cloudwatch_config_changes_alarm": {
       "cis_aws": [
@@ -943,7 +1047,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A09:2025"
+      ]
     },
     "cognito_mfa_required": {
       "nist_800_53": [
@@ -957,7 +1063,10 @@
       ],
       "cis_aws": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025",
+        "A07:2025"
+      ]
     },
     "cognito_pwd_min_length": {
       "nist_800_53": [
@@ -969,7 +1078,10 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A07:2025"
+      ]
     },
     "cognito_pwd_uppercase": {
       "nist_800_53": [
@@ -979,7 +1091,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A07:2025"
+      ]
     },
     "cognito_pwd_lowercase": {
       "nist_800_53": [
@@ -989,7 +1104,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A07:2025"
+      ]
     },
     "cognito_pwd_numbers": {
       "nist_800_53": [
@@ -999,7 +1117,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A07:2025"
+      ]
     },
     "cognito_pwd_symbols": {
       "nist_800_53": [
@@ -1009,7 +1130,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A07:2025"
+      ]
     },
     "cognito_advanced_security": {
       "nist_800_53": [
@@ -1021,7 +1145,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "cognito_temp_pwd_validity": {
       "nist_800_53": [
@@ -1151,7 +1277,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "config_recorder_active": {
       "cis_aws": [
@@ -1165,7 +1293,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "config_delivery_channel": {
       "cis_aws": [
@@ -1177,7 +1307,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "config_s3_private": {
       "cis_aws": [
@@ -1191,7 +1323,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "config_rules_deployed": {
       "nist_800_53": [
@@ -1203,7 +1337,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "config_sns_notification": {
       "nist_800_53": [
@@ -1291,7 +1427,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "db_rds_encryption": {
       "cis_aws": [
@@ -1307,7 +1445,9 @@
         "164.312(a)(2)(iv)"
       ],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "db_rds_backup_retention": {
       "cis_aws": [
@@ -1321,7 +1461,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025"
+      ]
     },
     "db_rds_multi_az": {
       "nist_800_53": [
@@ -1331,7 +1473,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025"
+      ]
     },
     "db_rds_deletion_protection": {
       "nist_800_53": [
@@ -1341,7 +1485,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025",
+        "A10:2025"
+      ]
     },
     "db_rds_iam_auth": {
       "cis_aws": [
@@ -1431,7 +1578,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025"
+      ]
     },
     "db_dynamodb_deletion_protection": {
       "nist_800_53": [
@@ -1441,7 +1590,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025",
+        "A10:2025"
+      ]
     },
     "db_dynamodb_no_public_policy": {
       "nist_800_53": [
@@ -1537,7 +1689,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025",
+        "A04:2025"
+      ]
     },
     "ec2_no_public_ip": {
       "cis_aws": [
@@ -1551,7 +1706,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "ec2_no_default_vpc": {
       "cis_aws": [
@@ -1563,7 +1720,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025",
+        "A02:2025"
+      ]
     },
     "ec2_detailed_monitoring": {
       "nist_800_53": [
@@ -1575,7 +1735,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025"
+      ]
     },
     "ec2_no_open_ssh": {
       "cis_aws": [
@@ -1589,7 +1751,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "ec2_no_open_rdp": {
       "cis_aws": [
@@ -1603,7 +1767,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "ec2_no_all_inbound": {
       "cis_aws": [
@@ -1789,7 +1955,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025",
+        "A07:2025"
+      ]
     },
     "iam_pwd_min_length": {
       "cis_aws": [
@@ -1803,7 +1972,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_pwd_uppercase": {
       "cis_aws": [
@@ -1815,7 +1986,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_pwd_lowercase": {
       "cis_aws": [
@@ -1827,7 +2000,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_pwd_numbers": {
       "cis_aws": [
@@ -1839,7 +2014,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_pwd_symbols": {
       "cis_aws": [
@@ -1851,7 +2028,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_pwd_reuse": {
       "cis_aws": [
@@ -1865,7 +2044,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_pwd_max_age": {
       "cis_aws": [
@@ -1879,7 +2060,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A07:2025"
+      ]
     },
     "iam_user_mfa": {
       "cis_aws": [
@@ -1893,7 +2076,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025",
+        "A07:2025"
+      ]
     },
     "iam_root_access_keys": {
       "cis_aws": [
@@ -2037,7 +2223,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "kms_key_rotation": {
       "cis_aws": [
@@ -2051,7 +2239,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "kms_no_public_principal": {
       "nist_800_53": [
@@ -2063,7 +2253,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "kms_pending_deletion_approval": {
       "nist_800_53": [
@@ -2075,7 +2267,11 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025",
+        "A08:2025",
+        "A10:2025"
+      ]
     },
     "kms_separate_admin_users": {
       "nist_800_53": [
@@ -2087,7 +2283,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "kms_key_description": {
       "nist_800_53": [
@@ -2097,7 +2295,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "kms_multi_region_required": {
       "nist_800_53": [
@@ -2219,7 +2419,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "s3_ignore_public_acls": {
       "cis_aws": [
@@ -2233,7 +2435,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "s3_block_public_policy": {
       "cis_aws": [
@@ -2247,7 +2451,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "s3_restrict_public_buckets": {
       "cis_aws": [
@@ -2261,7 +2467,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "s3_encryption": {
       "cis_aws": [
@@ -2277,7 +2485,9 @@
         "164.312(a)(2)(iv)"
       ],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "s3_versioning": {
       "cis_aws": [
@@ -2291,7 +2501,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025",
+        "A08:2025"
+      ]
     },
     "s3_mfa_delete": {
       "cis_aws": [
@@ -2331,7 +2544,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "s3_no_public_read_acl": {
       "cis_aws": [
@@ -2369,7 +2584,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "s3_object_lock": {
       "nist_800_53": [
@@ -2383,14 +2600,16 @@
       ],
       "cis_aws": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A08:2025"
+      ]
     },
     "s3_cors_wildcard": {
       "nist_800_53": [
         "SI-10"
       ],
       "owasp": [
-        "A05:2021"
+        "A02:2025"
       ],
       "cis_aws": [],
       "pci_dss": [],
@@ -2409,7 +2628,9 @@
       ],
       "cis_aws": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "s3_no_public_principal": {
       "cis_aws": [
@@ -2505,7 +2726,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "secretsmanager_kms_encryption": {
       "nist_800_53": [
@@ -2517,7 +2740,9 @@
       "cis_aws": [],
       "pci_dss": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "secretsmanager_unused_cleanup": {
       "nist_800_53": [
@@ -2527,7 +2752,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A10:2025"
+      ]
     },
     "secretsmanager_cross_account_org": {
       "nist_800_53": [
@@ -2635,7 +2862,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "serverless_lambda_runtime": {
       "nist_800_53": [
@@ -2647,7 +2876,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A03:2025"
+      ]
     },
     "serverless_lambda_no_public_invoke": {
       "nist_800_53": [
@@ -2659,7 +2890,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "serverless_lambda_no_admin_role": {
       "cis_aws": [
@@ -2673,7 +2906,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "serverless_ecs_no_privileged": {
       "nist_800_53": [
@@ -2731,7 +2966,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025",
+        "A09:2025"
+      ]
     },
     "serverless_eks_private_endpoint": {
       "cis_aws": [
@@ -2797,7 +3035,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A03:2025"
+      ]
     },
     "serverless_ecr_image_scanning": {
       "nist_800_53": [
@@ -2843,7 +3083,10 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025",
+        "A03:2025"
+      ]
     },
     "serverless_ecr_kms_encryption": {
       "nist_800_53": [
@@ -2871,7 +3114,9 @@
         "164.312(a)(2)(iv)"
       ],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "storage_ebs_default_encryption": {
       "cis_aws": [
@@ -2885,7 +3130,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "storage_ebs_snapshot_private": {
       "cis_aws": [
@@ -2899,7 +3146,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "storage_ebs_snapshot_encrypted": {
       "cis_aws": [
@@ -2913,7 +3162,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A04:2025"
+      ]
     },
     "storage_ebs_unattached_review": {
       "nist_800_53": [
@@ -2923,7 +3174,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "storage_ebs_snapshot_approved_accts": {
       "nist_800_53": [
@@ -2945,7 +3198,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025"
+      ]
     },
     "storage_ebs_no_magnetic": {
       "nist_800_53": [
@@ -3107,7 +3362,10 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A06:2025",
+        "A09:2025"
+      ]
     },
     "vpc_default_no_resources": {
       "cis_aws": [
@@ -3119,7 +3377,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A02:2025"
+      ]
     },
     "vpc_default_sg_no_inbound": {
       "cis_aws": [
@@ -3133,7 +3393,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "vpc_default_sg_no_outbound": {
       "cis_aws": [
@@ -3145,7 +3407,9 @@
       "pci_dss": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "vpc_nacl_no_all_inbound": {
       "cis_aws": [
@@ -3159,7 +3423,9 @@
       ],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "vpc_dns_resolution": {
       "nist_800_53": [
@@ -3351,7 +3617,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A05:2025"
+      ]
     },
     "waf_alb_association": {
       "nist_800_53": [
@@ -3363,7 +3631,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A05:2025"
+      ]
     },
     "waf_managed_rules": {
       "nist_800_53": [
@@ -3375,7 +3645,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A05:2025"
+      ]
     },
     "waf_rate_based_rules": {
       "nist_800_53": [
@@ -3387,7 +3659,9 @@
       "cis_aws": [],
       "hipaa": [],
       "soc2": [],
-      "owasp": []
+      "owasp": [
+        "A01:2025"
+      ]
     },
     "waf_sqli_protection": {
       "nist_800_53": [
@@ -3397,7 +3671,7 @@
         "6.2.4"
       ],
       "owasp": [
-        "A03:2021"
+        "A05:2025"
       ],
       "cis_aws": [],
       "hipaa": [],
@@ -3411,7 +3685,7 @@
         "6.2.4"
       ],
       "owasp": [
-        "A03:2021"
+        "A05:2025"
       ],
       "cis_aws": [],
       "hipaa": [],

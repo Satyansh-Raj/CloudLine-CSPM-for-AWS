@@ -106,14 +106,11 @@ function HistoryTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: { value: number }[];
+  payload?: { value: number; dataKey?: string }[];
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
-  const stateVal = payload.find(
-    (p: { dataKey?: string }) =>
-      (p as { dataKey?: string }).dataKey === "state",
-  );
+  const stateVal = payload.find((p) => p.dataKey === "state");
   const val = stateVal?.value ?? payload[0].value;
   const status = val === 1 ? "Alarm" : "Resolved";
   return (

@@ -223,3 +223,130 @@ class TestEC2Collector:
         collector = EC2Collector(mock_session)
         _, data = collector.collect()
         assert data["instances"] == []
+
+
+class TestEC2CollectorASGSnapshots:
+    """Tests for ASG and EBS snapshot collection."""
+
+    def test_collect_has_asg_key(
+        self, mock_session
+    ):
+        collector = EC2Collector(mock_session)
+        _, data = collector.collect()
+        assert "auto_scaling_groups" in data
+
+    def test_collect_has_ebs_snapshots_key(
+        self, mock_session
+    ):
+        collector = EC2Collector(mock_session)
+        _, data = collector.collect()
+        assert "ebs_snapshots" in data
+
+    def test_asg_collection(self, mock_session):
+        asg = mock_session.client("autoscaling")
+        asg.create_launch_configuration(
+            LaunchConfigurationName="lc-test",
+            ImageId="ami-12345678",
+            InstanceType="t2.micro",
+        )
+        asg.create_auto_scaling_group(
+            AutoScalingGroupName="test-asg",
+            LaunchConfigurationName="lc-test",
+            MinSize=1,
+            MaxSize=3,
+            DesiredCapacity=2,
+            AvailabilityZones=["us-east-1a"],
+        )
+        collector = EC2Collector(mock_session)
+        _, data = collector.collect()
+        names = [
+            g["asg_name"]
+            for g in data["auto_scaling_groups"]
+        ]
+        assert "test-asg" in names
+
+    def test_asg_fields(self, mock_session):
+        asg = mock_session.client("autoscaling")
+        asg.create_launch_configuration(
+            LaunchConfigurationName="lc-2",
+            ImageId="ami-12345678",
+            InstanceType="t2.micro",
+        )
+        asg.create_auto_scaling_group(
+            AutoScalingGroupName="api-asg",
+            LaunchConfigurationName="lc-2",
+            MinSize=2,
+            MaxSize=5,
+            DesiredCapacity=3,
+            AvailabilityZones=["us-east-1a"],
+        )
+        collector = EC2Collector(mock_session)
+        _, data = collector.collect()
+        grp = next(
+            g
+            for g in data["auto_scaling_groups"]
+            if g["asg_name"] == "api-asg"
+        )
+        assert grp["min_size"] == 2
+        assert grp["max_size"] == 5
+        assert grp["desired_capacity"] == 3
+        assert "arn" in grp
+
+    def test_snapshot_collection(
+        self, mock_session
+    ):
+        ec2 = mock_session.client("ec2")
+        vol = ec2.create_volume(
+            AvailabilityZone="us-east-1a",
+            Size=10,
+        )
+        ec2.create_snapshot(
+            VolumeId=vol["VolumeId"],
+            Description="test snap",
+        )
+        collector = EC2Collector(mock_session)
+        _, data = collector.collect()
+        assert len(data["ebs_snapshots"]) >= 1
+
+    def test_snapshot_fields(
+        self, mock_session
+    ):
+        ec2 = mock_session.client("ec2")
+        vol = ec2.create_volume(
+            AvailabilityZone="us-east-1a",
+            Size=10,
+        )
+        snap = ec2.create_snapshot(
+            VolumeId=vol["VolumeId"],
+        )
+        collector = EC2Collector(mock_session)
+        _, data = collector.collect()
+        s = next(
+            s
+            for s in data["ebs_snapshots"]
+            if s["snapshot_id"]
+            == snap["SnapshotId"]
+        )
+        assert s["volume_id"] == vol["VolumeId"]
+        assert "arn" in s
+        assert "encrypted" in s
+        assert "is_public" in s
+
+    def test_collect_resource_snapshot(
+        self, mock_session
+    ):
+        ec2 = mock_session.client("ec2")
+        vol = ec2.create_volume(
+            AvailabilityZone="us-east-1a",
+            Size=10,
+        )
+        snap = ec2.create_snapshot(
+            VolumeId=vol["VolumeId"],
+        )
+        collector = EC2Collector(mock_session)
+        result = collector.collect_resource(
+            snap["SnapshotId"]
+        )
+        assert result["snapshot_id"] == (
+            snap["SnapshotId"]
+        )

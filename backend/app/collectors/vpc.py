@@ -16,6 +16,13 @@ class VPCCollector(BaseCollector):
             "vpcs": self._get_vpcs(ec2),
             "flow_logs": self._get_flow_logs(ec2),
             "nacls": self._get_nacls(ec2),
+            "subnets": self._get_subnets(ec2),
+            "internet_gateways": (
+                self._get_internet_gateways(ec2)
+            ),
+            "nat_gateways": (
+                self._get_nat_gateways(ec2)
+            ),
         }
 
     def collect_resource(
@@ -157,3 +164,115 @@ class VPCCollector(BaseCollector):
                 "VPC describe_network_acls: %s", e
             )
         return nacls
+
+    def _get_subnets(self, ec2) -> list[dict]:
+        subnets = []
+        try:
+            resp = ec2.describe_subnets()
+            for s in resp.get("Subnets", []):
+                tags = {
+                    t["Key"]: t["Value"]
+                    for t in s.get("Tags", [])
+                }
+                subnets.append(
+                    {
+                        "subnet_id": s["SubnetId"],
+                        "arn": s.get(
+                            "SubnetArn", ""
+                        ),
+                        "vpc_id": s.get(
+                            "VpcId", ""
+                        ),
+                        "cidr_block": s.get(
+                            "CidrBlock", ""
+                        ),
+                        "availability_zone": s.get(
+                            "AvailabilityZone", ""
+                        ),
+                        "map_public_ip_on_launch": (
+                            s.get(
+                                "MapPublicIpOnLaunch",
+                                False,
+                            )
+                        ),
+                        "tags": tags,
+                    }
+                )
+        except Exception as e:
+            logger.error(
+                "VPC describe_subnets: %s", e
+            )
+        return subnets
+
+    def _get_internet_gateways(
+        self, ec2
+    ) -> list[dict]:
+        igws = []
+        try:
+            resp = ec2.describe_internet_gateways()
+            for igw in resp.get(
+                "InternetGateways", []
+            ):
+                attached = [
+                    a["VpcId"]
+                    for a in igw.get(
+                        "Attachments", []
+                    )
+                    if a.get("State") == "available"
+                ]
+                tags = {
+                    t["Key"]: t["Value"]
+                    for t in igw.get("Tags", [])
+                }
+                igws.append(
+                    {
+                        "igw_id": igw[
+                            "InternetGatewayId"
+                        ],
+                        "arn": "",
+                        "attached_vpcs": attached,
+                        "tags": tags,
+                    }
+                )
+        except Exception as e:
+            logger.error(
+                "VPC describe_igws: %s", e
+            )
+        return igws
+
+    def _get_nat_gateways(
+        self, ec2
+    ) -> list[dict]:
+        nats = []
+        try:
+            resp = ec2.describe_nat_gateways()
+            for n in resp.get(
+                "NatGateways", []
+            ):
+                tags = {
+                    t["Key"]: t["Value"]
+                    for t in n.get("Tags", [])
+                }
+                nats.append(
+                    {
+                        "nat_gateway_id": n[
+                            "NatGatewayId"
+                        ],
+                        "arn": "",
+                        "vpc_id": n.get(
+                            "VpcId", ""
+                        ),
+                        "subnet_id": n.get(
+                            "SubnetId", ""
+                        ),
+                        "state": n.get(
+                            "State", "available"
+                        ),
+                        "tags": tags,
+                    }
+                )
+        except Exception as e:
+            logger.error(
+                "VPC describe_nat_gateways: %s", e
+            )
+        return nats

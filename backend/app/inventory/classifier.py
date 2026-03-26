@@ -177,6 +177,179 @@ class ResourceClassifier:
         for sec in input_data.secrets_manager.secrets:
             records.append(self._secret(sec, now))
 
+        # IAM users
+        for user in input_data.iam.users:
+            records.append(
+                self._iam_user(user, now)
+            )
+
+        # IAM groups
+        for grp in input_data.iam.groups:
+            records.append(
+                self._iam_group(grp, now)
+            )
+
+        # IAM roles
+        for role in input_data.iam.roles:
+            records.append(
+                self._iam_role(role, now)
+            )
+
+        # IAM policies
+        for pol in input_data.iam.policies:
+            records.append(
+                self._iam_policy(pol, now)
+            )
+
+        # CloudTrail trails
+        for trail in (
+            input_data.logging.cloudtrail_trails
+        ):
+            records.append(
+                self._cloudtrail(trail, now)
+            )
+
+        # GuardDuty detectors
+        for det in (
+            input_data.logging.guardduty_detectors
+        ):
+            records.append(
+                self._guardduty(det, now)
+            )
+
+        # CloudWatch alarms
+        for alarm in (
+            input_data.logging.cloudwatch_alarms
+        ):
+            records.append(
+                self._cloudwatch_alarm(alarm, now)
+            )
+
+        # Network ACLs
+        for nacl in input_data.vpc.nacls:
+            records.append(
+                self._network_acl(nacl, now)
+            )
+
+        # Subnets
+        for sub in input_data.vpc.subnets:
+            records.append(
+                self._subnet(sub, now)
+            )
+
+        # Internet Gateways
+        for igw in input_data.vpc.internet_gateways:
+            records.append(
+                self._internet_gateway(igw, now)
+            )
+
+        # NAT Gateways
+        for nat in input_data.vpc.nat_gateways:
+            records.append(
+                self._nat_gateway(nat, now)
+            )
+
+        # Network Firewalls
+        for nf in input_data.vpc.network_firewalls:
+            records.append(
+                self._network_firewall(nf, now)
+            )
+
+        # WAF Web ACLs
+        for waf in input_data.vpc.waf_web_acls:
+            records.append(
+                self._waf_web_acl(waf, now)
+            )
+
+        # Aurora clusters
+        for ac in input_data.rds.aurora_clusters:
+            records.append(
+                self._aurora_cluster(ac, now)
+            )
+
+        # RDS snapshots
+        for snap in input_data.rds.snapshots:
+            records.append(
+                self._rds_snapshot(snap, now)
+            )
+
+        # DynamoDB tables
+        for tbl in input_data.dynamodb.tables:
+            records.append(
+                self._dynamodb_table(tbl, now)
+            )
+
+        # Load Balancers
+        for lb in input_data.elb.load_balancers:
+            records.append(
+                self._load_balancer(lb, now)
+            )
+
+        # CloudFront distributions
+        for dist in input_data.cdn.distributions:
+            records.append(
+                self._cloudfront(dist, now)
+            )
+
+        # Route53 hosted zones
+        for zone in input_data.cdn.hosted_zones:
+            records.append(
+                self._route53(zone, now)
+            )
+
+        # Auto Scaling Groups
+        for asg in (
+            input_data.ec2.auto_scaling_groups
+        ):
+            records.append(
+                self._auto_scaling_group(asg, now)
+            )
+
+        # EBS Snapshots
+        for snap in input_data.ec2.ebs_snapshots:
+            records.append(
+                self._ebs_snapshot(snap, now)
+            )
+
+        # API Gateways
+        for api in input_data.apigateway.apis:
+            records.append(
+                self._api_gateway(api, now)
+            )
+
+        # ECR Repositories
+        for repo in (
+            input_data.containers.ecr_repositories
+        ):
+            records.append(
+                self._ecr_repository(repo, now)
+            )
+
+        # ECS Clusters
+        for cluster in (
+            input_data.containers.ecs_clusters
+        ):
+            records.append(
+                self._ecs_cluster(cluster, now)
+            )
+
+        # ECS Task Definitions
+        for td in (
+            input_data.containers
+            .ecs_task_definitions
+        ):
+            records.append(
+                self._ecs_task_definition(td, now)
+            )
+
+        # EKS Clusters
+        for eks in (
+            input_data.containers.eks_clusters
+        ):
+            records.append(
+                self._eks_cluster(eks, now)
+            )
+
         return records
 
     def enrich_with_data_classification(
@@ -448,4 +621,314 @@ class ResourceClassifier:
             sec.name,
             now,
             exposure="private",
+        )
+
+    def _iam_user(self, user, now):
+        return self._make_record(
+            "iam_user",
+            user.arn,
+            user.name,
+            now,
+            exposure="private",
+        )
+
+    def _iam_group(self, grp, now):
+        return self._make_record(
+            "iam_group",
+            grp.arn,
+            grp.group_name,
+            now,
+            exposure="private",
+        )
+
+    def _iam_role(self, role, now):
+        return self._make_record(
+            "iam_role",
+            role.arn,
+            role.role_name,
+            now,
+            tags=role.tags,
+            exposure="private",
+        )
+
+    def _iam_policy(self, pol, now):
+        return self._make_record(
+            "iam_policy",
+            pol.arn,
+            pol.policy_name,
+            now,
+            exposure="private",
+        )
+
+    def _cloudtrail(self, trail, now):
+        return self._make_record(
+            "cloudtrail",
+            trail.arn,
+            trail.name,
+            now,
+            exposure="private",
+        )
+
+    def _guardduty(self, det, now):
+        arn = (
+            f"arn:aws:guardduty:{self.region}"
+            f":{self.account_id}"
+            f":detector/{det.detector_id}"
+        )
+        return self._make_record(
+            "guardduty",
+            arn,
+            det.detector_id,
+            now,
+            exposure="private",
+        )
+
+    def _cloudwatch_alarm(self, alarm, now):
+        arn = (
+            f"arn:aws:cloudwatch:{self.region}"
+            f":{self.account_id}"
+            f":alarm:{alarm.alarm_name}"
+        )
+        return self._make_record(
+            "cloudwatch_alarm",
+            arn,
+            alarm.alarm_name,
+            now,
+            exposure="private",
+        )
+
+    def _network_acl(self, nacl, now):
+        arn = (
+            f"arn:aws:ec2:{self.region}"
+            f":{self.account_id}"
+            f":network-acl/{nacl.nacl_id}"
+        )
+        return self._make_record(
+            "network_acl",
+            arn,
+            nacl.nacl_id,
+            now,
+            exposure="private",
+            belongs_to=nacl.vpc_id or None,
+        )
+
+    def _subnet(self, sub, now):
+        exposure = (
+            "internet"
+            if sub.map_public_ip_on_launch
+            else "private"
+        )
+        return self._make_record(
+            "subnet",
+            sub.arn,
+            sub.subnet_id,
+            now,
+            tags=sub.tags,
+            exposure=exposure,
+            belongs_to=sub.vpc_id or None,
+        )
+
+    def _internet_gateway(self, igw, now):
+        return self._make_record(
+            "internet_gateway",
+            igw.arn,
+            igw.igw_id,
+            now,
+            tags=igw.tags,
+            exposure="internet",
+            connected_to=igw.attached_vpcs,
+        )
+
+    def _nat_gateway(self, nat, now):
+        return self._make_record(
+            "nat_gateway",
+            nat.arn,
+            nat.nat_gateway_id,
+            now,
+            tags=nat.tags,
+            exposure="private",
+            belongs_to=nat.vpc_id or None,
+        )
+
+    def _network_firewall(self, nf, now):
+        return self._make_record(
+            "network_firewall",
+            nf.arn,
+            nf.firewall_name,
+            now,
+            tags=nf.tags,
+            exposure="private",
+            belongs_to=nf.vpc_id or None,
+        )
+
+    def _waf_web_acl(self, waf, now):
+        return self._make_record(
+            "waf_web_acl",
+            waf.arn,
+            waf.name,
+            now,
+            tags=waf.tags,
+            exposure="private",
+        )
+
+    def _aurora_cluster(self, ac, now):
+        return self._make_record(
+            "aurora_cluster",
+            ac.arn,
+            ac.cluster_id,
+            now,
+            tags=ac.tags,
+            exposure="private",
+        )
+
+    def _dynamodb_table(self, tbl, now):
+        return self._make_record(
+            "dynamodb_table",
+            tbl.arn,
+            tbl.table_name,
+            now,
+            tags=tbl.tags,
+            exposure="private",
+        )
+
+    def _rds_snapshot(self, snap, now):
+        exposure = (
+            "internet" if snap.is_public
+            else "private"
+        )
+        return self._make_record(
+            "rds_snapshot",
+            snap.arn,
+            snap.snapshot_id,
+            now,
+            tags=snap.tags,
+            exposure=exposure,
+        )
+
+    def _load_balancer(self, lb, now):
+        exposure = (
+            "internet"
+            if lb.scheme == "internet-facing"
+            else "private"
+        )
+        return self._make_record(
+            "load_balancer",
+            lb.arn,
+            lb.lb_name,
+            now,
+            tags=lb.tags,
+            exposure=exposure,
+            belongs_to=lb.vpc_id or None,
+        )
+
+    def _cloudfront(self, dist, now):
+        return self._make_record(
+            "cloudfront_distribution",
+            dist.arn,
+            dist.distribution_id,
+            now,
+            tags=dist.tags,
+            exposure="internet",
+        )
+
+    def _route53(self, zone, now):
+        arn = (
+            f"arn:aws:route53:::hostedzone"
+            f"/{zone.hosted_zone_id}"
+        )
+        exposure = (
+            "private"
+            if zone.is_private
+            else "internet"
+        )
+        return self._make_record(
+            "route53_hosted_zone",
+            arn,
+            zone.name,
+            now,
+            exposure=exposure,
+        )
+
+    def _auto_scaling_group(self, asg, now):
+        return self._make_record(
+            "auto_scaling_group",
+            asg.arn,
+            asg.asg_name,
+            now,
+            tags=asg.tags,
+            exposure="private",
+        )
+
+    def _ebs_snapshot(self, snap, now):
+        exposure = (
+            "internet" if snap.is_public
+            else "private"
+        )
+        return self._make_record(
+            "ebs_snapshot",
+            snap.arn,
+            snap.snapshot_id,
+            now,
+            tags=snap.tags,
+            exposure=exposure,
+        )
+
+    def _api_gateway(self, api, now):
+        exposure = (
+            "private"
+            if api.endpoint_type == "PRIVATE"
+            else "internet"
+        )
+        return self._make_record(
+            "api_gateway",
+            api.arn,
+            api.name,
+            now,
+            tags=api.tags,
+            exposure=exposure,
+        )
+
+    def _ecr_repository(self, repo, now):
+        return self._make_record(
+            "ecr_repository",
+            repo.arn,
+            repo.repository_name,
+            now,
+            tags=repo.tags,
+            exposure="private",
+        )
+
+    def _ecs_cluster(self, cluster, now):
+        return self._make_record(
+            "ecs_cluster",
+            cluster.arn,
+            cluster.cluster_name,
+            now,
+            tags=cluster.tags,
+            exposure="private",
+        )
+
+    def _ecs_task_definition(self, td, now):
+        return self._make_record(
+            "ecs_task_definition",
+            td.arn,
+            td.family,
+            now,
+            tags=td.tags,
+            exposure="private",
+        )
+
+    def _eks_cluster(self, eks, now):
+        exposure = (
+            "internet"
+            if eks.endpoint_public_access
+            else "private"
+        )
+        return self._make_record(
+            "eks_cluster",
+            eks.arn,
+            eks.cluster_name,
+            now,
+            tags=eks.tags,
+            exposure=exposure,
         )

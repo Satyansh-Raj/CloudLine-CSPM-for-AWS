@@ -79,7 +79,7 @@ class TestOrchestrator:
         assert result["collection_mode"] == "full"
         assert "collection_timestamp" in result
 
-        # All service keys present
+        # All service keys present (original 8)
         assert "iam" in result
         assert "s3" in result
         assert "ec2" in result
@@ -90,6 +90,12 @@ class TestOrchestrator:
         assert "kms" in result
         assert "secrets_manager" in result
         assert "backup" in result
+        # New 5 collectors (Batch 3-7)
+        assert "elb" in result
+        assert "cdn" in result
+        assert "dynamodb" in result
+        assert "apigateway" in result
+        assert "containers" in result
 
     def test_collect_full_iam_data(
         self, full_setup
@@ -181,8 +187,17 @@ class TestOrchestrator:
             "lambda",
             "logging",
             "kms",
+            "elb",
+            "cdn",
+            "dynamodb",
+            "apigateway",
+            "containers",
         }
         assert set(COLLECTOR_MAP.keys()) == expected
+
+    def test_collector_map_has_13_entries(self):
+        """13 collectors: 1 global + 12 regional."""
+        assert len(COLLECTOR_MAP) == 13
 
     def test_timestamp_format(self, full_setup):
         orch = CollectionOrchestrator(

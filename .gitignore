@@ -53,6 +53,9 @@ frontend/build/
 *.tfplan
 terraform/terraform.tfvars
 
+# ── Source artwork (originals, 131 MB) ───────────
+Icons/
+
 # ── Build artifacts ──────────────────────────────
 deployment.zip
 dist/

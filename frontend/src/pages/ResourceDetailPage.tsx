@@ -126,7 +126,7 @@ export default function ResourceDetailPage() {
   const tagEntries = Object.entries(resource.tags ?? {});
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className="space-y-5">
       {/* Back link */}
       <Link
         to={`/inventory/${resource.technology_category}`}

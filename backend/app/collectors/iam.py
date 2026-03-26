@@ -136,6 +136,9 @@ class IAMCollector(BaseCollector):
                 client
             ),
             "users": self._get_users(client),
+            "groups": self._get_groups(client),
+            "roles": self._get_roles(client),
+            "policies": self._get_policies(client),
             "access_analyzer": self._get_access_analyzer(),
         }
 
@@ -303,6 +306,130 @@ class IAMCollector(BaseCollector):
             "last_activity_days_ago": last_activity_days,
             "attached_policies": policies,
         }
+
+    def _get_groups(self, client) -> list[dict]:
+        """Collect IAM groups."""
+        groups = []
+        try:
+            paginator = client.get_paginator(
+                "list_groups"
+            )
+            for page in paginator.paginate():
+                for g in page["Groups"]:
+                    attached = (
+                        client
+                        .list_attached_group_policies(
+                            GroupName=g["GroupName"]
+                        )
+                    )
+                    policies = [
+                        {
+                            "policy_name": p[
+                                "PolicyName"
+                            ],
+                            "policy_arn": p[
+                                "PolicyArn"
+                            ],
+                        }
+                        for p in attached[
+                            "AttachedPolicies"
+                        ]
+                    ]
+                    groups.append(
+                        {
+                            "group_name": g[
+                                "GroupName"
+                            ],
+                            "arn": g["Arn"],
+                            "group_id": g["GroupId"],
+                            "attached_policies": (
+                                policies
+                            ),
+                        }
+                    )
+        except Exception as e:
+            logger.error(
+                "IAM list_groups: %s", e
+            )
+        return groups
+
+    def _get_roles(self, client) -> list[dict]:
+        """Collect IAM roles."""
+        roles = []
+        try:
+            paginator = client.get_paginator(
+                "list_roles"
+            )
+            for page in paginator.paginate():
+                for r in page["Roles"]:
+                    tags = {}
+                    try:
+                        tag_resp = client.list_role_tags(
+                            RoleName=r["RoleName"]
+                        )
+                        tags = {
+                            t["Key"]: t["Value"]
+                            for t in tag_resp.get(
+                                "Tags", []
+                            )
+                        }
+                    except Exception:
+                        pass
+                    roles.append(
+                        {
+                            "role_name": r[
+                                "RoleName"
+                            ],
+                            "arn": r["Arn"],
+                            "role_id": r["RoleId"],
+                            "assume_role_policy": (
+                                r.get(
+                                    "AssumeRolePolicyDocument",
+                                    {},
+                                )
+                            ),
+                            "tags": tags,
+                        }
+                    )
+        except Exception as e:
+            logger.error(
+                "IAM list_roles: %s", e
+            )
+        return roles
+
+    def _get_policies(self, client) -> list[dict]:
+        """Collect customer-managed IAM policies."""
+        policies = []
+        try:
+            paginator = client.get_paginator(
+                "list_policies"
+            )
+            for page in paginator.paginate(
+                Scope="Local"
+            ):
+                for p in page["Policies"]:
+                    policies.append(
+                        {
+                            "policy_name": p[
+                                "PolicyName"
+                            ],
+                            "arn": p["Arn"],
+                            "policy_id": p[
+                                "PolicyId"
+                            ],
+                            "attachment_count": p.get(
+                                "AttachmentCount", 0
+                            ),
+                            "is_attachable": p.get(
+                                "IsAttachable", True
+                            ),
+                        }
+                    )
+        except Exception as e:
+            logger.error(
+                "IAM list_policies: %s", e
+            )
+        return policies
 
     # --- Graph-enriched collection ---
 

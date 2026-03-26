@@ -94,6 +94,14 @@ function CategoryIcon({ category }: { category: string }) {
           <path d="M12 7v5l4 2" {...lc} />
         </svg>
       );
+    case "containers":
+      return (
+        <svg {...svgProps}>
+          <rect x="2" y="14" width="9" height="8" rx="1" {...lc} />
+          <rect x="13" y="14" width="9" height="8" rx="1" {...lc} />
+          <rect x="7" y="5" width="10" height="8" rx="1" {...lc} />
+        </svg>
+      );
     default:
       return (
         <svg {...svgProps}>
@@ -113,6 +121,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   encryption: "border-pink-200 dark:border-pink-800/40",
   monitoring: "border-indigo-200 dark:border-indigo-800/40",
   backup: "border-teal-200 dark:border-teal-800/40",
+  containers: "border-slate-200 dark:border-slate-800/40",
 };
 
 const CATEGORY_BG: Record<string, string> = {
@@ -141,6 +150,8 @@ const CATEGORY_BG: Record<string, string> = {
     " dark:text-indigo-300",
   backup:
     "bg-teal-50 text-teal-700" + " dark:bg-teal-900/20 dark:text-teal-300",
+  containers:
+    "bg-slate-50 text-slate-700" + " dark:bg-slate-900/20 dark:text-slate-300",
 };
 
 interface CategoryGroup {

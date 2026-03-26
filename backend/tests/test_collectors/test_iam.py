@@ -162,3 +162,137 @@ class TestIAMCollector:
         assert "mfa_enabled" in summary
         assert "users" in summary
         assert isinstance(summary["users"], int)
+
+    def test_collect_has_groups(self, iam_setup):
+        collector = IAMCollector(iam_setup)
+        _, data = collector.collect()
+        assert "groups" in data
+        assert isinstance(data["groups"], list)
+
+    def test_collect_has_roles(self, iam_setup):
+        collector = IAMCollector(iam_setup)
+        _, data = collector.collect()
+        assert "roles" in data
+        assert isinstance(data["roles"], list)
+
+    def test_collect_has_policies(self, iam_setup):
+        collector = IAMCollector(iam_setup)
+        _, data = collector.collect()
+        assert "policies" in data
+        assert isinstance(data["policies"], list)
+
+
+class TestIAMCollectorGroupsRolesPolicies:
+    """Test extended IAM collection for groups,
+    roles, and customer-managed policies."""
+
+    @pytest.fixture
+    def iam_extended(self, mock_session):
+        client = mock_session.client("iam")
+
+        # Create group
+        client.create_group(
+            GroupName="developers"
+        )
+
+        # Create role
+        client.create_role(
+            RoleName="LambdaExec",
+            AssumeRolePolicyDocument=json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": (
+                                    "lambda.amazonaws.com"
+                                )
+                            },
+                            "Action": "sts:AssumeRole",
+                        }
+                    ],
+                }
+            ),
+            Tags=[
+                {
+                    "Key": "Environment",
+                    "Value": "prod",
+                }
+            ],
+        )
+
+        # Create customer-managed policy
+        client.create_policy(
+            PolicyName="CustomReadOnly",
+            PolicyDocument=json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "s3:GetObject",
+                            "Resource": "*",
+                        }
+                    ],
+                }
+            ),
+        )
+        return mock_session
+
+    def test_group_collected(self, iam_extended):
+        collector = IAMCollector(iam_extended)
+        _, data = collector.collect()
+        names = [
+            g["group_name"] for g in data["groups"]
+        ]
+        assert "developers" in names
+
+    def test_group_has_arn(self, iam_extended):
+        collector = IAMCollector(iam_extended)
+        _, data = collector.collect()
+        grp = next(
+            g
+            for g in data["groups"]
+            if g["group_name"] == "developers"
+        )
+        assert "arn" in grp
+        assert "developers" in grp["arn"]
+
+    def test_role_collected(self, iam_extended):
+        collector = IAMCollector(iam_extended)
+        _, data = collector.collect()
+        names = [
+            r["role_name"] for r in data["roles"]
+        ]
+        assert "LambdaExec" in names
+
+    def test_role_has_tags(self, iam_extended):
+        collector = IAMCollector(iam_extended)
+        _, data = collector.collect()
+        role = next(
+            r
+            for r in data["roles"]
+            if r["role_name"] == "LambdaExec"
+        )
+        assert role["tags"].get("Environment") == "prod"
+
+    def test_policy_collected(self, iam_extended):
+        collector = IAMCollector(iam_extended)
+        _, data = collector.collect()
+        names = [
+            p["policy_name"]
+            for p in data["policies"]
+        ]
+        assert "CustomReadOnly" in names
+
+    def test_policy_has_arn(self, iam_extended):
+        collector = IAMCollector(iam_extended)
+        _, data = collector.collect()
+        pol = next(
+            p
+            for p in data["policies"]
+            if p["policy_name"] == "CustomReadOnly"
+        )
+        assert "arn" in pol
+        assert "CustomReadOnly" in pol["arn"]

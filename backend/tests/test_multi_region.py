@@ -344,17 +344,21 @@ class TestGlobalRegionalConstants:
         expected = {
             "s3", "ec2", "vpc", "rds",
             "lambda", "logging", "kms",
+            "elb", "cdn", "dynamodb",
+            "apigateway", "containers",
         }
         assert set(REGIONAL_COLLECTORS.keys()) == expected
 
-    def test_collector_map_still_has_all_eight(self):
-        """COLLECTOR_MAP is unchanged (backward compat)."""
+    def test_collector_map_has_all_thirteen(self):
+        """COLLECTOR_MAP has all 13 collectors."""
         from app.collectors.orchestrator import (
             COLLECTOR_MAP,
         )
         expected = {
             "iam", "s3", "ec2", "vpc",
             "rds", "lambda", "logging", "kms",
+            "elb", "cdn", "dynamodb",
+            "apigateway", "containers",
         }
         assert set(COLLECTOR_MAP.keys()) == expected
 

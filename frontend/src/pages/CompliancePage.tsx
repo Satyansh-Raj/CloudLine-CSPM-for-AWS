@@ -1,19 +1,9 @@
 import { useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useCompliance } from "@/hooks/useCompliance";
-import {
-  useComplianceFramework,
-} from "@/hooks/useComplianceFramework";
+import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
-import type {
-  FrameworkSummary,
-  ControlStatus,
-} from "@/types/compliance";
+import type { FrameworkSummary, ControlStatus } from "@/types/compliance";
 
 /* ---- constants ---- */
 
@@ -23,7 +13,7 @@ const FRAMEWORK_LABELS: Record<string, string> = {
   pci_dss: "PCI DSS",
   hipaa: "HIPAA",
   soc2: "SOC 2",
-  owasp: "OWASP",
+  owasp: "OWASP Top 10",
 };
 
 const ALL_FRAMEWORKS = [
@@ -82,9 +72,7 @@ function FrameworkCard({
   ];
   // Edge: if both zero, show a grey full ring
   const isZero = compliant === 0 && non_compliant === 0;
-  const safePieData = isZero
-    ? [{ name: "empty", value: 1 }]
-    : pieData;
+  const safePieData = isZero ? [{ name: "empty", value: 1 }] : pieData;
 
   return (
     <button
@@ -92,74 +80,74 @@ function FrameworkCard({
       data-testid={`framework-card-${id}`}
       onClick={onClick}
       className={`
-        flex flex-col gap-3 w-full text-left
+        aspect-square w-full
+        flex flex-col items-center justify-center
+        gap-2 text-center
         bg-white dark:bg-[#111]
-        border rounded-2xl p-5 shadow-sm
-        transition-all duration-150
+        border rounded-2xl p-3 shadow-sm
+        transition-all duration-200 overflow-hidden
+        hover:border-gray-200
+        dark:hover:border-white/10
         ${
           selected
             ? "border-blue-400 dark:border-blue-500 ring-2 ring-blue-500/20"
-            : "border-gray-100 dark:border-white/5 hover:shadow-md"
+            : "border-gray-100 dark:border-white/5 hover:shadow-lg"
         }
       `}
     >
-      {/* Header row */}
-      <div className="flex items-center gap-2">
+      {/* Header */}
+      <div className="flex items-center gap-1">
         <span className="text-blue-500 dark:text-blue-400">
           <ShieldIcon />
         </span>
-        <span className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight">
+        <span className="text-xs font-semibold text-gray-900 dark:text-white tracking-tight">
           {label}
         </span>
       </div>
 
       {/* Donut chart */}
-      <div className="flex items-center gap-4">
-        <div className="w-20 h-20 shrink-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={safePieData}
-                dataKey="value"
-                cx="50%"
-                cy="50%"
-                innerRadius="55%"
-                outerRadius="80%"
-                strokeWidth={0}
-              >
-                {isZero ? (
-                  <Cell fill="#e5e7eb" />
-                ) : (
-                  pieData.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={
-                        entry.name === "compliant"
-                          ? COLOR_COMPLIANT
-                          : COLOR_NON_COMPLIANT
-                      }
-                    />
-                  ))
-                )}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+      <div className="w-16 h-16 shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={safePieData}
+              dataKey="value"
+              cx="50%"
+              cy="50%"
+              innerRadius="55%"
+              outerRadius="80%"
+              strokeWidth={0}
+            >
+              {isZero ? (
+                <Cell fill="#e5e7eb" />
+              ) : (
+                pieData.map((entry) => (
+                  <Cell
+                    key={entry.name}
+                    fill={
+                      entry.name === "compliant"
+                        ? COLOR_COMPLIANT
+                        : COLOR_NON_COMPLIANT
+                    }
+                  />
+                ))
+              )}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
 
-        {/* Score + counts */}
-        <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-2xl font-bold text-gray-900 dark:text-white leading-none">
-            {score_percent.toFixed(1)}%
-          </span>
-          <div className="flex flex-col gap-0.5 text-xs">
-            <span className="text-green-600 dark:text-green-400">
-              {compliant} compliant
-            </span>
-            <span className="text-red-500 dark:text-red-400">
-              {non_compliant} failed
-            </span>
-          </div>
-        </div>
+      {/* Score + counts */}
+      <span className="text-lg font-bold text-gray-900 dark:text-white leading-none">
+        {score_percent.toFixed(1)}%
+      </span>
+      <div className="flex flex-col gap-0.5 text-[10px]">
+        <span className="text-green-600 dark:text-green-400">
+          {compliant} compliant
+        </span>
+        <span className="text-red-500 dark:text-red-400">
+          {non_compliant} failed
+        </span>
       </div>
     </button>
   );
@@ -260,9 +248,7 @@ function DrillDown({ framework }: DrillDownProps) {
                     </span>
                   </td>
                   <td className="py-2.5 text-xs text-gray-500 dark:text-gray-500">
-                    {ctrl.violations.length > 0
-                      ? ctrl.violations.length
-                      : "—"}
+                    {ctrl.violations.length > 0 ? ctrl.violations.length : "—"}
                   </td>
                 </tr>
               ))}
@@ -278,11 +264,11 @@ function DrillDown({ framework }: DrillDownProps) {
 
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 animate-pulse">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="h-40 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5"
+          className="aspect-square bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5"
         />
       ))}
     </div>
@@ -295,13 +281,12 @@ export default function CompliancePage() {
   const { data, isLoading, error } = useCompliance();
   const { selectedRegion, regions, setSelectedRegion } = useRegion();
 
-  const [selectedFramework, setSelectedFramework] = useState<string>(
-    "",
-  );
+  const [selectedFramework, setSelectedFramework] = useState<string>("");
 
-  const byFramework = (data as { by_framework?: Record<string, FrameworkSummary> })?.by_framework;
-  const hasFrameworks =
-    byFramework && Object.keys(byFramework).length > 0;
+  const byFramework = (
+    data as { by_framework?: Record<string, FrameworkSummary> }
+  )?.by_framework;
+  const hasFrameworks = byFramework && Object.keys(byFramework).length > 0;
 
   function handleCardClick(fw: string) {
     setSelectedFramework((prev) => (prev === fw ? "" : fw));
@@ -360,15 +345,15 @@ export default function CompliancePage() {
           </span>
           <p className="text-sm text-gray-400 dark:text-gray-600">
             No compliance data yet.{" "}
-            <span className="font-medium">Run a scan first</span> to
-            populate framework scores.
+            <span className="font-medium">Run a scan first</span> to populate
+            framework scores.
           </p>
         </div>
       )}
 
       {/* Framework cards grid */}
       {!isLoading && !error && hasFrameworks && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {ALL_FRAMEWORKS.filter((fw) => byFramework[fw]).map((fw) => (
             <FrameworkCard
               key={fw}
@@ -383,9 +368,7 @@ export default function CompliancePage() {
       )}
 
       {/* Drill-down */}
-      {selectedFramework !== "" && (
-        <DrillDown framework={selectedFramework} />
-      )}
+      {selectedFramework !== "" && <DrillDown framework={selectedFramework} />}
     </div>
   );
 }
