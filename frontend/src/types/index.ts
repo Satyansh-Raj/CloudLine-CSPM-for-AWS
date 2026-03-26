@@ -84,5 +84,3 @@ export type {
   TrendData,
   ExecutiveSummary,
 } from "./executive";
-
-export type { GraphNode, GraphEdge, SecurityGraph } from "./securityGraph";

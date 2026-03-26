@@ -211,7 +211,7 @@ describe("CompliancePage", () => {
     expect(screen.getByText("PCI DSS")).toBeInTheDocument();
     expect(screen.getByText("HIPAA")).toBeInTheDocument();
     expect(screen.getByText("SOC 2")).toBeInTheDocument();
-    expect(screen.getByText("OWASP")).toBeInTheDocument();
+    expect(screen.getByText("OWASP Top 10")).toBeInTheDocument();
   });
 
   it("each card shows score percentage", () => {

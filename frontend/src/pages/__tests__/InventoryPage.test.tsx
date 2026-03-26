@@ -135,7 +135,7 @@ describe("InventoryPage", () => {
     expect(screen.getByText(/no resources found/i)).toBeInTheDocument();
   });
 
-  it("renders SVG icons in category cards", () => {
+  it("renders icons in category cards", () => {
     mockSummary.data = {
       total: 5,
       by_category: { storage: 5 },
@@ -143,7 +143,7 @@ describe("InventoryPage", () => {
       by_service: {},
     };
     const { container } = renderPage();
-    const svgs = container.querySelectorAll("svg");
-    expect(svgs.length).toBeGreaterThanOrEqual(1);
+    const imgs = container.querySelectorAll("img");
+    expect(imgs.length).toBeGreaterThanOrEqual(1);
   });
 });

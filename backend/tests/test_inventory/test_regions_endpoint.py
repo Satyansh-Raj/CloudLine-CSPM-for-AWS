@@ -50,6 +50,15 @@ def _mock_store(resources=None):
     store = MagicMock()
     all_res = resources if resources is not None else []
     store.query_by_account.return_value = all_res
+    store.summary_by_account.return_value = [
+        {
+            "technology_category": r.technology_category,
+            "exposure": r.exposure,
+            "service": r.service,
+            "is_active": r.is_active,
+        }
+        for r in all_res
+    ]
     store.query_by_category.return_value = all_res
     store.query_by_exposure.return_value = all_res
     store.query_by_service.return_value = all_res
@@ -288,6 +297,7 @@ class TestInventorySummaryWithRegion:
     """GET /api/v1/inventory/summary with region param."""
 
     def setup_method(self):
+        reset_region_cache()
         self._store = _mock_store(
             [
                 _make_resource(
@@ -302,12 +312,23 @@ class TestInventorySummaryWithRegion:
             ],
             aws_account_id=ACCOUNT,
         )
+        # Mock session whose EC2 raises so
+        # _discover_regions falls back to config.
+        self._session = MagicMock()
+        ec2 = MagicMock()
+        ec2.describe_regions.side_effect = Exception(
+            "mock"
+        )
+        self._session.client.return_value = ec2
         app.dependency_overrides[
             get_resource_store
         ] = lambda: self._store
         app.dependency_overrides[
             get_settings
         ] = lambda: self._settings
+        app.dependency_overrides[
+            get_boto3_session
+        ] = lambda: self._session
 
     def teardown_method(self):
         app.dependency_overrides.pop(
@@ -316,6 +337,10 @@ class TestInventorySummaryWithRegion:
         app.dependency_overrides.pop(
             get_settings, None
         )
+        app.dependency_overrides.pop(
+            get_boto3_session, None
+        )
+        reset_region_cache()
 
     def test_inventory_summary_with_region(self):
         """region param is accepted without error."""
@@ -327,26 +352,29 @@ class TestInventorySummaryWithRegion:
         assert resp.status_code == 200
 
     def test_summary_region_param_calls_store(self):
-        """Providing region passes it to query_by_account."""
+        """Providing region passes it to
+        summary_by_account with regions list."""
         client = TestClient(app)
         client.get(
             "/api/v1/inventory/summary"
             f"?region={REGION_SECONDARY}"
         )
-        self._store.query_by_account.assert_called_once_with(
+        self._store.summary_by_account.assert_called_once_with(
             ACCOUNT,
-            REGION_SECONDARY,
-            limit=5000,
+            regions=[REGION_SECONDARY],
         )
 
-    def test_summary_no_region_uses_default(self):
-        """Omitting region falls back to settings.aws_region."""
+    def test_summary_no_region_uses_all(self):
+        """Omitting region queries all configured
+        regions."""
         client = TestClient(app)
         client.get("/api/v1/inventory/summary")
-        self._store.query_by_account.assert_called_once_with(
+        self._store.summary_by_account.assert_called_once_with(
             ACCOUNT,
-            REGION_PRIMARY,
-            limit=5000,
+            regions=[
+                REGION_PRIMARY,
+                REGION_SECONDARY,
+            ],
         )
 
     def test_summary_returns_valid_structure(self):

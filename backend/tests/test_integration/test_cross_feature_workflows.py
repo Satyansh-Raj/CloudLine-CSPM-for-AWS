@@ -7,7 +7,6 @@ across all major CloudLine subsystems:
   → ComplianceMappingRegistry  (real JSON config)
   → ResourceClassifier.enrich_with_violations
   → StateManager  (moto DynamoDB)
-  → SecurityGraphBuilder  (attack-path inference)
   → StateManager.update_status  (alarm → ok)
 """
 
@@ -26,8 +25,6 @@ from app.compliance.mappings import (
     get_registry,
 )
 from app.engine.evaluator import PolicyEvaluator
-from app.graph.builder import SecurityGraphBuilder
-from app.graph.models import SecurityGraph
 from app.inventory.classifier import ResourceClassifier
 from app.models.resource import ResourceRecord
 from app.models.violation import (
@@ -48,9 +45,7 @@ CONFIG_PATH = str(
     / "check_compliance_mapping.json"
 )
 
-
 # ── DynamoDB table helper ────────────────────────
-
 
 def _create_violation_table(session):
     """Create the violation-state DynamoDB table."""
@@ -152,9 +147,7 @@ def _create_violation_table(session):
         BillingMode="PAY_PER_REQUEST",
     )
 
-
 # ── OPA mock payloads ───────────────────────────
-
 
 def _s3_violations_payload():
     """Simulate OPA returning S3 violations."""
@@ -224,9 +217,7 @@ def _s3_violations_payload():
         },
     }
 
-
 # ── resource factory ─────────────────────────────
-
 
 def _make_resource(
     resource_id,
@@ -252,9 +243,7 @@ def _make_resource(
         tags=tags or {},
     )
 
-
 # ── ViolationState factory ───────────────────────
-
 
 def _violation_to_state(v: Violation):
     """Convert an evaluator Violation to a
@@ -279,11 +268,9 @@ def _violation_to_state(v: Violation):
         last_evaluated=now,
     )
 
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Test class: Full Vulnerable Resource Lifecycle
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 
 class TestVulnerableResourceLifecycle:
     """End-to-end: OPA → Compliance → DynamoDB →
@@ -561,319 +548,6 @@ class TestVulnerableResourceLifecycle:
         assert resources[0].violation_count == 0
         assert resources[0].risk_score == 0
 
-    # ── Phase 4: SecurityGraph + Attack Paths ────
-
-    def test_security_graph_detects_attack_path(self):
-        """Resources with high/critical violations
-        connected via IN_VPC produce attack paths."""
-        ec2_arn = (
-            f"arn:aws:ec2:{REGION}:{ACCOUNT}"
-            ":instance/i-vuln"
-        )
-        vpc_id = "vpc-shared-123"
-
-        resources = [
-            _make_resource(
-                ec2_arn,
-                "vuln-instance",
-                "ec2_instance",
-                "ec2",
-                tags={"vpc_id": vpc_id},
-            ),
-        ]
-
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"ec2_no_open_ssh#{ec2_arn}",
-                check_id="ec2_no_open_ssh",
-                status="alarm",
-                severity="critical",
-                domain="network",
-                resource_arn=ec2_arn,
-                reason="Open SSH",
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, violations
-        ).build()
-
-        assert isinstance(graph, SecurityGraph)
-        # EC2 node + phantom VPC node
-        assert graph.total_nodes == 2
-        assert graph.total_edges == 1
-        # IN_VPC edge with critical source → attack
-        assert graph.attack_paths == 1
-
-        ap_edge = [
-            e for e in graph.edges if e.attack_path
-        ]
-        assert len(ap_edge) == 1
-        assert ap_edge[0].relationship == "IN_VPC"
-
-    def test_graph_no_attack_path_for_low_severity(
-        self,
-    ):
-        """Low-severity violations don't trigger
-        attack path flags."""
-        s3_arn = "arn:aws:s3:::my-bucket"
-        kms_id = "arn:aws:kms:ap-south-1:123:key/k-1"
-
-        resources = [
-            _make_resource(
-                s3_arn,
-                "my-bucket",
-                "s3_bucket",
-                "s3",
-                tags={"kms_key_arn": kms_id},
-            ),
-        ]
-
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"s3_versioning#{s3_arn}",
-                check_id="s3_versioning",
-                status="alarm",
-                severity="low",
-                domain="data_protection",
-                resource_arn=s3_arn,
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, violations
-        ).build()
-
-        assert graph.total_edges == 1
-        assert graph.attack_paths == 0
-
-    def test_graph_multiple_edges_and_phantoms(self):
-        """Multiple tag references create phantom
-        nodes and appropriate edges."""
-        ec2_arn = (
-            f"arn:aws:ec2:{REGION}:{ACCOUNT}"
-            ":instance/i-multi"
-        )
-
-        resources = [
-            _make_resource(
-                ec2_arn,
-                "multi-conn",
-                "ec2_instance",
-                "ec2",
-                tags={
-                    "vpc_id": "vpc-abc",
-                    "sg_id": "sg-def",
-                    "role_arn": (
-                        "arn:aws:iam::123:role/r"
-                    ),
-                },
-            ),
-        ]
-
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"ec2_no_open_ssh#{ec2_arn}",
-                check_id="ec2_no_open_ssh",
-                status="alarm",
-                severity="high",
-                domain="network",
-                resource_arn=ec2_arn,
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, violations
-        ).build()
-
-        # 1 real + 3 phantoms
-        assert graph.total_nodes == 4
-        # vpc, sg, role edges
-        assert graph.total_edges == 3
-
-        rels = {e.relationship for e in graph.edges}
-        assert "IN_VPC" in rels
-        assert "PROTECTED_BY" in rels
-        assert "HAS_ROLE" in rels
-
-        # All 3 are connectivity rels with high-sev
-        assert graph.attack_paths == 3
-
-    # ── Phase 5: State Transition (alarm → ok) ───
-
-    def test_full_lifecycle_alarm_to_ok(self):
-        """Complete lifecycle: evaluate → persist →
-        graph → resolve → verify resolved_at set."""
-        # Step 1: Evaluate
-        opa = MagicMock()
-        opa.evaluate_all.return_value = (
-            _s3_violations_payload()
-        )
-        evaluator = PolicyEvaluator(opa)
-        results = evaluator.evaluate_all({})
-        assert len(results) == 3
-
-        # Step 2: Persist alarm violations
-        states = []
-        for v in results:
-            if v.status == "alarm":
-                state = _violation_to_state(v)
-                self.state_mgr.put_state(state)
-                states.append(state)
-
-        # Step 3: Verify in DynamoDB
-        for s in states:
-            rec = self.state_mgr.get_state(
-                ACCOUNT,
-                REGION,
-                s.check_id,
-                s.resource_arn,
-            )
-            assert rec is not None
-            assert rec.status == "alarm"
-            assert rec.resolved_at is None
-
-        # Step 4: Build graph — should have attack
-        # path for critical EC2 violation
-        ec2_arn = (
-            f"arn:aws:ec2:ap-south-1:{ACCOUNT}"
-            ":security-group/sg-abc123"
-        )
-        resources = [
-            _make_resource(
-                "arn:aws:s3:::my-app-data",
-                "my-app-data",
-                "s3_bucket",
-                "s3",
-            ),
-            _make_resource(
-                ec2_arn,
-                "sg-abc123",
-                "security_group",
-                "ec2",
-                tags={"vpc_id": "vpc-prod"},
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, states
-        ).build()
-        assert graph.attack_paths >= 1
-
-        # Step 5: Resolve the critical violation
-        ok = self.state_mgr.update_status(
-            ACCOUNT,
-            REGION,
-            "ec2_no_open_ssh",
-            ec2_arn,
-            new_status="ok",
-            reason="SSH rule removed",
-        )
-        assert ok is True
-
-        # Step 6: Verify resolved state
-        rec = self.state_mgr.get_state(
-            ACCOUNT,
-            REGION,
-            "ec2_no_open_ssh",
-            ec2_arn,
-        )
-        assert rec is not None
-        assert rec.status == "ok"
-        assert rec.previous_status == "alarm"
-        assert rec.resolved_at is not None
-
-    def test_resolved_violation_excluded_from_graph(
-        self,
-    ):
-        """After resolution, only alarm violations
-        feed the graph builder."""
-        arn = "arn:aws:s3:::resolved-bucket"
-
-        # Alarm state
-        alarm = ViolationState(
-            pk=f"{ACCOUNT}#{REGION}",
-            sk=f"s3_block_public_acls#{arn}",
-            check_id="s3_block_public_acls",
-            status="alarm",
-            severity="high",
-            domain="data_protection",
-            resource_arn=arn,
-            last_evaluated="2026-03-20T10:00:00Z",
-            first_detected="2026-03-20T10:00:00Z",
-        )
-        self.state_mgr.put_state(alarm)
-
-        # Transition to ok
-        self.state_mgr.update_status(
-            ACCOUNT,
-            REGION,
-            "s3_block_public_acls",
-            arn,
-            new_status="ok",
-            reason="Public access blocked",
-        )
-
-        # Read back — now ok
-        rec = self.state_mgr.get_state(
-            ACCOUNT,
-            REGION,
-            "s3_block_public_acls",
-            arn,
-        )
-        assert rec.status == "ok"
-
-        # Build graph with only ok violations
-        resources = [
-            _make_resource(
-                arn,
-                "resolved-bucket",
-                "s3_bucket",
-                "s3",
-                tags={"kms_key_arn": "arn:kms:k1"},
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, [rec]
-        ).build()
-
-        # Node severity should reflect ok (low rank)
-        node = next(
-            n for n in graph.nodes if n.id == arn
-        )
-        assert node.violation_count == 1
-        # Even though there's 1 violation, it's
-        # severity "high" but the edge requires
-        # connectivity + high/critical for attack path
-        # ENCRYPTED_BY is in _CONNECTIVITY_RELS? No.
-        # So no attack path.
-        assert graph.attack_paths == 0
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Test class: Multi-Region Cross-Feature Flow
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-class TestMultiRegionCrossFeature:
-    """Verify features work across multiple regions."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self, aws_credentials):
-        with mock_aws():
-            session = boto3.Session(
-                region_name="us-east-1"
-            )
-            _create_violation_table(session)
-            self.state_mgr = StateManager(
-                session, TABLE_NAME
-            )
-            yield
-
     def test_violations_in_different_regions(self):
         """Violations in us-east-1 and ap-south-1
         are stored under separate partition keys."""
@@ -914,158 +588,6 @@ class TestMultiRegionCrossFeature:
         assert r2 is not None
         assert r1.pk != r2.pk
 
-    def test_graph_scoped_to_region_resources(self):
-        """Graph only includes resources and
-        violations from the same region."""
-        r1 = _make_resource(
-            "arn:aws:s3:::east-bucket",
-            "east-bucket",
-            "s3_bucket",
-            "s3",
-        )
-        r1.region = "us-east-1"
-
-        r2 = _make_resource(
-            "arn:aws:s3:::west-bucket",
-            "west-bucket",
-            "s3_bucket",
-            "s3",
-        )
-        r2.region = "us-west-2"
-
-        # Violation only on east bucket
-        vs = [
-            ViolationState(
-                pk=f"{ACCOUNT}#us-east-1",
-                sk=(
-                    "s3_block_public_acls"
-                    "#arn:aws:s3:::east-bucket"
-                ),
-                check_id="s3_block_public_acls",
-                status="alarm",
-                severity="high",
-                domain="data_protection",
-                resource_arn=(
-                    "arn:aws:s3:::east-bucket"
-                ),
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            [r1, r2], vs
-        ).build()
-
-        # Both resources become nodes
-        assert graph.total_nodes == 2
-
-        # Only east-bucket has violations
-        east = next(
-            n
-            for n in graph.nodes
-            if n.id == "arn:aws:s3:::east-bucket"
-        )
-        west = next(
-            n
-            for n in graph.nodes
-            if n.id == "arn:aws:s3:::west-bucket"
-        )
-        assert east.violation_count == 1
-        assert west.violation_count == 0
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Test class: Compliance ↔ Graph Integration
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-class TestComplianceGraphIntegration:
-    """Validate compliance data flows through the
-    full stack to the graph."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self, aws_credentials):
-        with mock_aws():
-            session = boto3.Session(
-                region_name="us-east-1"
-            )
-            _create_violation_table(session)
-            self.state_mgr = StateManager(
-                session, TABLE_NAME
-            )
-            yield
-
-    def test_compliance_tags_in_graph_violations(
-        self,
-    ):
-        """Compliance mappings attached by the
-        evaluator are preserved in DynamoDB and
-        visible when queried for graph building."""
-        opa = MagicMock()
-        opa.evaluate_all.return_value = {
-            "data_protection.s3": {
-                "violations": [
-                    {
-                        "check_id": (
-                            "s3_block_public_acls"
-                        ),
-                        "status": "alarm",
-                        "severity": "high",
-                        "reason": "No public block",
-                        "resource": (
-                            "arn:aws:s3:::comp-bkt"
-                        ),
-                        "domain": "data_protection",
-                        "compliance": {},
-                        "remediation_id": (
-                            "s3_block_public_acls"
-                        ),
-                    },
-                ],
-                "compliant": [],
-            }
-        }
-
-        evaluator = PolicyEvaluator(opa)
-        results = evaluator.evaluate_all({})
-
-        v = results[0]
-        assert len(v.compliance.cis_aws) > 0
-
-        # Persist with compliance
-        state = _violation_to_state(v)
-        self.state_mgr.put_state(state)
-
-        # Read back and verify compliance
-        rec = self.state_mgr.get_state(
-            ACCOUNT,
-            REGION,
-            "s3_block_public_acls",
-            "arn:aws:s3:::comp-bkt",
-        )
-        assert "cis_aws" in rec.compliance
-
-        # Use in graph builder
-        resources = [
-            _make_resource(
-                "arn:aws:s3:::comp-bkt",
-                "comp-bkt",
-                "s3_bucket",
-                "s3",
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, [rec]
-        ).build()
-
-        node = next(
-            n
-            for n in graph.nodes
-            if n.id == "arn:aws:s3:::comp-bkt"
-        )
-        assert node.violation_count == 1
-        assert node.max_severity == "high"
-
     def test_multiple_frameworks_enriched(self):
         """Check IDs that map to multiple frameworks
         get all controls attached."""
@@ -1087,11 +609,9 @@ class TestComplianceGraphIntegration:
         assert len(c.nist_800_53) >= 1
         assert len(c.pci_dss) >= 1
 
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Test class: State Regression Tracking
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 
 class TestStateRegressionTracking:
     """Verify alarm → ok → alarm (regression) is
@@ -1213,11 +733,9 @@ class TestStateRegressionTracking:
         assert a.status == "ok"
         assert b.status == "alarm"
 
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Test class: Edge Cases
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 
 class TestCrossFeatureEdgeCases:
     """Boundary conditions across feature
@@ -1234,64 +752,6 @@ class TestCrossFeatureEdgeCases:
                 session, TABLE_NAME
             )
             yield
-
-    def test_zero_violations_graph(self):
-        """Graph with no violations has zero attack
-        paths and correct node count."""
-        resources = [
-            _make_resource(
-                "arn:aws:s3:::clean",
-                "clean",
-                "s3_bucket",
-                "s3",
-            ),
-        ]
-
-        graph = SecurityGraphBuilder(
-            resources, []
-        ).build()
-
-        assert graph.total_nodes == 1
-        assert graph.total_edges == 0
-        assert graph.attack_paths == 0
-        assert graph.nodes[0].violation_count == 0
-        assert graph.nodes[0].max_severity == "none"
-
-    def test_empty_resources_empty_graph(self):
-        """No resources → empty graph."""
-        graph = SecurityGraphBuilder(
-            [], []
-        ).build()
-        assert graph.total_nodes == 0
-        assert graph.total_edges == 0
-
-    def test_violation_without_resource_in_graph(
-        self,
-    ):
-        """Violations referencing resources not in
-        inventory don't crash the graph builder."""
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=(
-                    "ec2_no_open_ssh"
-                    "#arn:aws:ec2:...:sg/orphan"
-                ),
-                check_id="ec2_no_open_ssh",
-                status="alarm",
-                severity="critical",
-                domain="network",
-                resource_arn=(
-                    "arn:aws:ec2:...:sg/orphan"
-                ),
-            ),
-        ]
-
-        # No resources in inventory
-        graph = SecurityGraphBuilder(
-            [], violations
-        ).build()
-        assert graph.total_nodes == 0
 
     def test_evaluator_handles_empty_opa_response(
         self,
@@ -1353,45 +813,6 @@ class TestCrossFeatureEdgeCases:
         # Should still have empty compliance
         c = violations[0].compliance
         assert isinstance(c.cis_aws, list)
-
-    def test_graph_severity_ranking_correct(self):
-        """Nodes show the highest severity among
-        their violations."""
-        arn = "arn:aws:ec2:ap-south-1:123:i/i-sev"
-        resources = [
-            _make_resource(
-                arn,
-                "sev-instance",
-                "ec2_instance",
-                "ec2",
-            ),
-        ]
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"check_low#{arn}",
-                check_id="check_low",
-                status="alarm",
-                severity="low",
-                domain="network",
-                resource_arn=arn,
-            ),
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"check_crit#{arn}",
-                check_id="check_crit",
-                status="alarm",
-                severity="critical",
-                domain="network",
-                resource_arn=arn,
-            ),
-        ]
-        graph = SecurityGraphBuilder(
-            resources, violations
-        ).build()
-        node = graph.nodes[0]
-        assert node.violation_count == 2
-        assert node.max_severity == "critical"
 
     def test_evaluator_mixed_alarm_and_ok(self):
         """Evaluator returns both alarm and ok status
@@ -1474,31 +895,6 @@ class TestCrossFeatureEdgeCases:
         # 3 × 8 = 24
         assert resources[0].risk_score == 24
         assert resources[0].violation_count == 3
-
-    def test_graph_phantom_node_properties(self):
-        """Phantom nodes have minimal properties."""
-        arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:i/i-ph"
-        resources = [
-            _make_resource(
-                arn,
-                "phantom-test",
-                "ec2_instance",
-                "ec2",
-                tags={"vpc_id": "vpc-phantom"},
-            ),
-        ]
-        graph = SecurityGraphBuilder(
-            resources, []
-        ).build()
-
-        phantom = next(
-            n
-            for n in graph.nodes
-            if n.id == "vpc-phantom"
-        )
-        assert phantom.resource_type == "vpc"
-        assert phantom.service == "vpc"
-        assert phantom.violation_count == 0
 
     def test_state_manager_put_and_update_roundtrip(
         self,
@@ -1593,72 +989,6 @@ class TestCrossFeatureEdgeCases:
         # the Rego-embedded "old_1.1"
         assert "2.1.5" in v.compliance.cis_aws
 
-    def test_graph_with_mixed_severities(self):
-        """Graph correctly identifies attack paths
-        only for high/critical, not medium/low."""
-        arns = {
-            "crit": (
-                f"arn:aws:ec2:{REGION}:{ACCOUNT}"
-                ":i/i-crit"
-            ),
-            "low": (
-                f"arn:aws:ec2:{REGION}:{ACCOUNT}"
-                ":i/i-low"
-            ),
-        }
-        resources = [
-            _make_resource(
-                arns["crit"],
-                "crit-inst",
-                "ec2_instance",
-                "ec2",
-                tags={"vpc_id": "vpc-shared"},
-            ),
-            _make_resource(
-                arns["low"],
-                "low-inst",
-                "ec2_instance",
-                "ec2",
-                tags={"vpc_id": "vpc-shared"},
-            ),
-        ]
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"crit_check#{arns['crit']}",
-                check_id="crit_check",
-                status="alarm",
-                severity="critical",
-                domain="network",
-                resource_arn=arns["crit"],
-            ),
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"low_check#{arns['low']}",
-                check_id="low_check",
-                status="alarm",
-                severity="low",
-                domain="network",
-                resource_arn=arns["low"],
-            ),
-        ]
-        graph = SecurityGraphBuilder(
-            resources, violations
-        ).build()
-
-        # Both connect to vpc-shared (phantom)
-        # 2 resources + 1 phantom = 3 nodes
-        assert graph.total_nodes == 3
-        assert graph.total_edges == 2
-
-        # Only the critical instance's edge is
-        # an attack path
-        ap = [
-            e for e in graph.edges if e.attack_path
-        ]
-        assert len(ap) == 1
-        assert ap[0].source == arns["crit"]
-
     def test_resource_record_defaults(self):
         """ResourceRecord defaults are correct for
         new resources."""
@@ -1687,41 +1017,6 @@ class TestCrossFeatureEdgeCases:
         assert state.risk_score == 0
         assert state.resolved_at is None
         assert state.ticket_id is None
-
-    def test_graph_encrypted_by_no_attack_path(self):
-        """ENCRYPTED_BY relationship is not a
-        connectivity rel, so no attack path."""
-        s3 = "arn:aws:s3:::enc-bucket"
-        kms = "arn:aws:kms:ap-south-1:123:key/k-1"
-        resources = [
-            _make_resource(
-                s3,
-                "enc-bucket",
-                "s3_bucket",
-                "s3",
-                tags={"kms_key_arn": kms},
-            ),
-        ]
-        violations = [
-            ViolationState(
-                pk=f"{ACCOUNT}#{REGION}",
-                sk=f"s3_check#{s3}",
-                check_id="s3_check",
-                status="alarm",
-                severity="critical",
-                domain="data_protection",
-                resource_arn=s3,
-            ),
-        ]
-        graph = SecurityGraphBuilder(
-            resources, violations
-        ).build()
-        assert graph.total_edges == 1
-        assert graph.edges[0].relationship == (
-            "ENCRYPTED_BY"
-        )
-        # ENCRYPTED_BY is NOT in _CONNECTIVITY_RELS
-        assert graph.attack_paths == 0
 
     def test_classifier_low_severity_weight(self):
         """Low-severity violations add 3 to risk."""

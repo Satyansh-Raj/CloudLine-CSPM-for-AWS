@@ -4,7 +4,6 @@ import type {
   InventorySummary,
   InventoryParams,
 } from "@/types/inventory";
-import type { SecurityGraph } from "@/types/securityGraph";
 
 export async function getInventory(
   params?: InventoryParams,
@@ -32,16 +31,6 @@ export async function getInventoryDetail(
       resource_type: resourceType,
       resource_id: resourceId,
     },
-  });
-  return data;
-}
-
-export async function getSecurityGraph(params?: {
-  region?: string;
-  account_id?: string;
-}): Promise<SecurityGraph> {
-  const { data } = await apiClient.get<SecurityGraph>("/v1/inventory/graph", {
-    params,
   });
   return data;
 }

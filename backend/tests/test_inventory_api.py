@@ -4,8 +4,14 @@ from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_resource_store
+from app.dependencies import (
+    get_boto3_session,
+    get_resource_store,
+    get_settings,
+)
+from app.config import Settings
 from app.main import app
+from app.routers.inventory import reset_region_cache
 from app.models.resource import ResourceRecord
 
 ACCOUNT = "832843292195"
@@ -93,6 +99,15 @@ def _mock_store(resources=None):
         resources if resources is not None else []
     )
     store.query_by_account.return_value = all_res
+    store.summary_by_account.return_value = [
+        {
+            "technology_category": r.technology_category,
+            "exposure": r.exposure,
+            "service": r.service,
+            "is_active": r.is_active,
+        }
+        for r in all_res
+    ]
     store.query_by_category.return_value = [
         r for r in all_res
         if r.technology_category == "storage"
@@ -215,14 +230,39 @@ class TestInventorySummary:
 
     def setup_method(self):
         self._mock = _mock_store(RESOURCES)
+        # Mock session whose EC2 raises so
+        # _discover_regions falls back to config.
+        self._session = MagicMock()
+        ec2 = MagicMock()
+        ec2.describe_regions.side_effect = Exception(
+            "mock"
+        )
+        self._session.client.return_value = ec2
+        self._settings = Settings(
+            aws_regions=[REGION],
+            aws_account_id=ACCOUNT,
+        )
         app.dependency_overrides[
             get_resource_store
         ] = lambda: self._mock
+        app.dependency_overrides[
+            get_boto3_session
+        ] = lambda: self._session
+        app.dependency_overrides[
+            get_settings
+        ] = lambda: self._settings
 
     def teardown_method(self):
         app.dependency_overrides.pop(
             get_resource_store, None
         )
+        app.dependency_overrides.pop(
+            get_boto3_session, None
+        )
+        app.dependency_overrides.pop(
+            get_settings, None
+        )
+        reset_region_cache()
 
     def test_returns_200(self):
         client = TestClient(app)

@@ -31,7 +31,7 @@ from app.routers import (
     policies,
     risk,
     scans,
-    security_graph,
+
     violations,
     websocket,
 )
@@ -188,9 +188,7 @@ app.include_router(
 app.include_router(
     inventory.router, prefix="/api/v1"
 )
-app.include_router(
-    security_graph.router, prefix="/api/v1"
-)
+
 app.include_router(
     jira.router, prefix="/api/v1"
 )

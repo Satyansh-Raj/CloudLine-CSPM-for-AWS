@@ -150,11 +150,9 @@ def list_inventory(
 
     Filter priority: category > exposure > service >
     account (default). Search is applied in-memory
-    after the primary query.
+    after the primary query. Only active resources
+    are returned.
     """
-    effective_region = (
-        region if region else settings.aws_region
-    )
     if category:
         resources = store.query_by_category(
             category, limit=limit
@@ -168,6 +166,9 @@ def list_inventory(
             service, limit=limit
         )
     else:
+        effective_region = (
+            region if region else settings.aws_region
+        )
         resources = store.query_by_account(
             settings.aws_account_id,
             effective_region,
@@ -181,6 +182,11 @@ def list_inventory(
             r for r in resources
             if r.region == region
         ]
+
+    # Filter out soft-deleted resources
+    resources = [
+        r for r in resources if r.is_active
+    ]
 
     if search:
         q = search.lower()
@@ -197,35 +203,58 @@ def list_inventory(
 def inventory_summary(
     region: str | None = Query(
         None,
-        description="Filter by AWS region",
+        description=(
+            "Filter by AWS region. Omit to "
+            "aggregate across all scanned regions."
+        ),
     ),
     store: ResourceStore = Depends(
         get_resource_store
     ),
+    session=Depends(get_boto3_session),
     settings=Depends(get_settings),
 ) -> dict:
-    """Aggregated inventory statistics."""
-    effective_region = (
-        region if region else settings.aws_region
-    )
-    resources = store.query_by_account(
+    """Aggregated inventory statistics.
+
+    When no region is specified, aggregates across all
+    scanned regions (discovered + configured). Only
+    active resources (is_active=true) are counted.
+    """
+    if region:
+        target_regions = [region]
+    else:
+        discovered = _discover_regions(session)
+        target_regions = (
+            discovered or settings.aws_regions
+        )
+
+    items = store.summary_by_account(
         settings.aws_account_id,
-        effective_region,
-        limit=5000,
+        regions=target_regions,
     )
 
-    by_category = Counter(
-        r.technology_category for r in resources
-    )
-    by_exposure = Counter(
-        r.exposure for r in resources
-    )
-    by_service = Counter(
-        r.service for r in resources
-    )
+    by_category: Counter = Counter()
+    by_exposure: Counter = Counter()
+    by_service: Counter = Counter()
+
+    active_count = 0
+    for item in items:
+        # Skip inactive / soft-deleted resources
+        if not item.get("is_active", True):
+            continue
+        active_count += 1
+        cat = item.get("technology_category", "")
+        if cat:
+            by_category[cat] += 1
+        exp = item.get("exposure", "")
+        if exp:
+            by_exposure[exp] += 1
+        svc = item.get("service", "")
+        if svc:
+            by_service[svc] += 1
 
     return {
-        "total": len(resources),
+        "total": active_count,
         "by_category": dict(by_category),
         "by_exposure": dict(by_exposure),
         "by_service": dict(by_service),

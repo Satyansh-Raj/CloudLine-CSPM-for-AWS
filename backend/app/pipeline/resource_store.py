@@ -346,6 +346,62 @@ class ResourceStore:
             )
             return False
 
+    def summary_by_account(
+        self,
+        account_id: str,
+        region: str | None = None,
+        regions: list[str] | None = None,
+    ) -> list[dict]:
+        """Fetch minimal fields for summary counts.
+
+        Returns technology_category, exposure, service,
+        and is_active for resources. No hard limit —
+        paginates until exhausted.
+
+        Args:
+            account_id: AWS account ID.
+            region: Single region (backward compat).
+            regions: Multiple regions to aggregate.
+                Takes precedence over *region*.
+        """
+        target_regions = (
+            regions
+            if regions
+            else ([region] if region else [])
+        )
+        items: list[dict] = []
+        for rgn in target_regions:
+            pk = f"{account_id}#{rgn}"
+            kwargs: dict = {
+                "KeyConditionExpression": (
+                    Key("pk").eq(pk)
+                ),
+                "ProjectionExpression": (
+                    "technology_category, exposure,"
+                    " service, is_active"
+                ),
+            }
+            try:
+                while True:
+                    resp = self.table.query(**kwargs)
+                    items.extend(
+                        resp.get("Items", [])
+                    )
+                    lek = resp.get(
+                        "LastEvaluatedKey"
+                    )
+                    if not lek:
+                        break
+                    kwargs["ExclusiveStartKey"] = lek
+            except Exception as e:
+                logger.error(
+                    "summary_by_account error "
+                    "(%s): %s",
+                    rgn,
+                    e,
+                )
+        return items
+
     def count_by_category(
         self, technology_category: str
     ) -> int:

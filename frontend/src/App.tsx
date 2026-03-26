@@ -25,7 +25,6 @@ import {
 } from "@/pages";
 
 const IamGraphPage = lazy(() => import("@/pages/IamGraphPage"));
-const SecurityGraphPage = lazy(() => import("@/pages/SecurityGraphPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,20 +103,6 @@ const router = createBrowserRouter([
             }
           >
             <IamGraphPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "security-graph",
-        element: (
-          <Suspense
-            fallback={
-              <div className="p-8 animate-pulse text-sm text-gray-400">
-                Loading Security Graph…
-              </div>
-            }
-          >
-            <SecurityGraphPage />
           </Suspense>
         ),
       },

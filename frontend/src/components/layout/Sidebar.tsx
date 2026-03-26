@@ -11,11 +11,6 @@ const navItems = [
   { to: "/inventory", label: "Inventory", icon: "inventory" },
   { to: "/compliance", label: "Compliance", icon: "shield" },
   { to: "/iam-graph", label: "IAM Graph", icon: "graph" },
-  {
-    to: "/security-graph",
-    label: "Security Graph",
-    icon: "secgraph",
-  },
   { to: "/trends", label: "Trends", icon: "chart" },
   { to: "/executive", label: "Executive", icon: "briefcase" },
   { to: "/policies", label: "Policies", icon: "policy" },
@@ -194,34 +189,12 @@ function AccountsIcon() {
     </svg>
   );
 }
-function SecurityGraphIcon() {
-  return (
-    <svg
-      className="w-[18px] h-[18px]"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <circle cx="12" cy="12" r="2" strokeWidth="1.8" />
-      <circle cx="4" cy="6" r="2" strokeWidth="1.8" />
-      <circle cx="20" cy="6" r="2" strokeWidth="1.8" />
-      <circle cx="4" cy="18" r="2" strokeWidth="1.8" />
-      <circle cx="20" cy="18" r="2" strokeWidth="1.8" />
-      <path
-        strokeLinecap="round"
-        strokeWidth="1.8"
-        d="M6 6.5l4.5 4.5M14 13l4.5 4.5M18 6.5l-4.5 4.5M6 17.5l4.5-4.5"
-      />
-    </svg>
-  );
-}
 const iconMap: Record<string, ReactNode> = {
   grid: <GridIcon />,
   alert: <AlertIcon />,
   resolved: <ResolvedIcon />,
   inventory: <InventoryIcon />,
   graph: <GraphIcon />,
-  secgraph: <SecurityGraphIcon />,
   chart: <ChartIcon />,
   briefcase: <BriefcaseIcon />,
   policy: <PolicyIcon />,

@@ -11,5 +11,4 @@ export { default as InventoryPage } from "./InventoryPage";
 export { default as CategoryResourcesPage } from "./CategoryResourcesPage";
 export { default as ResourceDetailPage } from "./ResourceDetailPage";
 export { default as CompliancePage } from "./CompliancePage";
-export { default as SecurityGraphPage } from "./SecurityGraphPage";
 export { default as ResolvedDetailPage } from "./ResolvedDetailPage";

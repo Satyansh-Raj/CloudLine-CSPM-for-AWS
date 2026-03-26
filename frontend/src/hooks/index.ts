@@ -16,4 +16,3 @@ export {
   useCreateJiraTicket,
   useDeleteJiraTicket,
 } from "./useCreateJiraTicket";
-export { useSecurityGraph } from "./useSecurityGraph";
