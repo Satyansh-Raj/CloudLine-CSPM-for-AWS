@@ -175,3 +175,139 @@ class TestProductionConfig:
         r1 = get_registry()
         r2 = get_registry()
         assert r1 is r2
+
+
+# ── SOC2 mapping coverage ────────────────────────
+
+# Valid SOC2 Trust Service Criteria prefixes
+_VALID_SOC2_PREFIXES = (
+    "CC",  # Common Criteria (Security)
+    "A",  # Availability
+    "C",  # Confidentiality
+    "PI",  # Processing Integrity
+    "P",  # Privacy
+)
+
+
+class TestSOC2MappingCoverage:
+    """Every check_id must have at least one SOC2
+    Trust Service Criteria mapping."""
+
+    @pytest.fixture()
+    def config(self):
+        config_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "config",
+            "check_compliance_mapping.json",
+        )
+        with open(config_path) as f:
+            return json.load(f)
+
+    def test_every_check_has_soc2(self, config):
+        """No check_id should have an empty soc2
+        array."""
+        missing = [
+            cid
+            for cid, m in config["mappings"].items()
+            if not m.get("soc2")
+        ]
+        assert missing == [], (
+            f"{len(missing)} checks lack SOC2 "
+            f"mappings: {missing[:10]}..."
+        )
+
+    def test_soc2_criteria_format(self, config):
+        """SOC2 values must match TSC format
+        (e.g. CC6.1, A1.2, C1.1)."""
+        bad = {}
+        for cid, m in config["mappings"].items():
+            for val in m.get("soc2", []):
+                if not any(
+                    val.startswith(p)
+                    for p in _VALID_SOC2_PREFIXES
+                ):
+                    bad.setdefault(cid, []).append(val)
+        assert bad == {}, f"Invalid SOC2 format: {bad}"
+
+    def test_soc2_no_duplicates(self, config):
+        """No duplicate SOC2 criteria per check."""
+        dupes = {}
+        for cid, m in config["mappings"].items():
+            vals = m.get("soc2", [])
+            if len(vals) != len(set(vals)):
+                dupes[cid] = vals
+        assert dupes == {}, (
+            f"Duplicate SOC2 entries: {dupes}"
+        )
+
+    def test_soc2_criteria_sorted(self, config):
+        """SOC2 criteria should be sorted."""
+        unsorted = {}
+        for cid, m in config["mappings"].items():
+            vals = m.get("soc2", [])
+            if vals != sorted(vals):
+                unsorted[cid] = vals
+        assert unsorted == {}, (
+            f"Unsorted SOC2 entries: "
+            f"{list(unsorted.keys())[:10]}"
+        )
+
+    def test_iam_checks_have_cc6_1(self, config):
+        """IAM checks must map to CC6.1
+        (Logical Access)."""
+        missing = []
+        for cid, m in config["mappings"].items():
+            if cid.startswith("iam_"):
+                if "CC6.1" not in m.get("soc2", []):
+                    missing.append(cid)
+        assert missing == [], (
+            f"IAM checks without CC6.1: {missing}"
+        )
+
+    def test_encryption_checks_have_cc6_8(
+        self, config
+    ):
+        """Encryption checks must map to CC6.8."""
+        keywords = (
+            "encryption",
+            "kms_encryption",
+            "tls_12",
+            "https",
+            "deny_http",
+        )
+        missing = []
+        for cid, m in config["mappings"].items():
+            if any(k in cid for k in keywords):
+                if "CC6.8" not in m.get("soc2", []):
+                    missing.append(cid)
+        assert missing == [], (
+            f"Encryption checks without CC6.8: "
+            f"{missing}"
+        )
+
+    def test_logging_checks_have_cc7_2(self, config):
+        """Logging / monitoring checks must map to
+        CC7.2 (Monitor System Components)."""
+        prefixes = ("cloudtrail_", "cloudwatch_")
+        missing = []
+        for cid, m in config["mappings"].items():
+            if any(cid.startswith(p) for p in prefixes):
+                if "CC7.2" not in m.get("soc2", []):
+                    missing.append(cid)
+        assert missing == [], (
+            f"Logging checks without CC7.2: {missing}"
+        )
+
+    def test_network_checks_have_cc6_6(self, config):
+        """VPC / WAF checks must map to CC6.6
+        (Boundary Protection)."""
+        prefixes = ("vpc_", "waf_")
+        missing = []
+        for cid, m in config["mappings"].items():
+            if any(cid.startswith(p) for p in prefixes):
+                if "CC6.6" not in m.get("soc2", []):
+                    missing.append(cid)
+        assert missing == [], (
+            f"Network checks without CC6.6: {missing}"
+        )

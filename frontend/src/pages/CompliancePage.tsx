@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useCompliance } from "@/hooks/useCompliance";
 import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
-import type { FrameworkSummary, ControlStatus } from "@/types/compliance";
+import type {
+  FrameworkSummary,
+  ControlStatus,
+  ControlViolation,
+} from "@/types/compliance";
 
 /* ---- constants ---- */
 
@@ -82,7 +86,7 @@ function FrameworkCard({
       className={`
         aspect-square w-full
         flex flex-col items-center justify-center
-        gap-2 text-center
+        gap-3 text-center
         bg-white dark:bg-[#111]
         border rounded-2xl p-3 shadow-sm
         transition-all duration-200 overflow-hidden
@@ -100,13 +104,13 @@ function FrameworkCard({
         <span className="text-blue-500 dark:text-blue-400">
           <ShieldIcon />
         </span>
-        <span className="text-xs font-semibold text-gray-900 dark:text-white tracking-tight">
+        <span className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
           {label}
         </span>
       </div>
 
       {/* Donut chart */}
-      <div className="w-16 h-16 shrink-0">
+      <div className="w-32 h-32 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -138,10 +142,10 @@ function FrameworkCard({
       </div>
 
       {/* Score + counts */}
-      <span className="text-lg font-bold text-gray-900 dark:text-white leading-none">
+      <span className="text-3xl font-bold text-gray-900 dark:text-white leading-none">
         {score_percent.toFixed(1)}%
       </span>
-      <div className="flex flex-col gap-0.5 text-[10px]">
+      <div className="flex flex-col gap-0.5 text-sm">
         <span className="text-green-600 dark:text-green-400">
           {compliant} compliant
         </span>
@@ -159,9 +163,59 @@ interface DrillDownProps {
   framework: string;
 }
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+function ViolationRows({ violations }: { violations: ControlViolation[] }) {
+  return (
+    <>
+      {violations.map((v, i) => (
+        <tr
+          key={`viol-${v.resource_arn}-${i}`}
+          className="bg-gray-50/50 dark:bg-white/[0.02] border-b border-gray-100/50 dark:border-white/5 last:border-0"
+        >
+          <td className="py-1.5 pr-4 pl-8 font-mono text-xs text-gray-500 dark:text-gray-400 break-all">
+            {v.resource_arn}
+          </td>
+          <td className="py-1.5 pr-4 text-xs capitalize text-gray-500 dark:text-gray-400">
+            {v.severity}
+          </td>
+          <td
+            colSpan={2}
+            className="py-1.5 pr-4 text-xs text-gray-500 dark:text-gray-400"
+          >
+            {v.reason}
+          </td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
 function DrillDown({ framework }: DrillDownProps) {
   const { data, isLoading } = useComplianceFramework(framework);
   const label = FRAMEWORK_LABELS[framework] ?? framework;
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+
+  const toggle = useCallback((id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   return (
     <div
@@ -209,49 +263,71 @@ function DrillDown({ framework }: DrillDownProps) {
               </tr>
             </thead>
             <tbody>
-              {data.controls.map((ctrl: ControlStatus) => (
-                <tr
-                  key={ctrl.control_id}
-                  className={`
-                    border-b border-gray-50 dark:border-white/5
-                    last:border-0
-                    ${
-                      ctrl.status === "non_compliant"
-                        ? "bg-red-50/30 dark:bg-red-500/5"
-                        : ""
-                    }
-                  `}
-                >
-                  <td className="py-2.5 pr-4 font-mono text-xs text-gray-700 dark:text-gray-300">
-                    {ctrl.control_id}
-                  </td>
-                  <td className="py-2.5 pr-4">
-                    <span
-                      data-testid={`status-${ctrl.status}-${ctrl.control_id}`}
+              {data.controls.map((ctrl: ControlStatus) => {
+                const hasViolations = ctrl.violations.length > 0;
+                const isOpen = expanded.has(ctrl.control_id);
+                return (
+                  <>
+                    <tr
+                      key={ctrl.control_id}
+                      data-testid={`control-row-${ctrl.control_id}`}
+                      onClick={
+                        hasViolations
+                          ? () => toggle(ctrl.control_id)
+                          : undefined
+                      }
                       className={`
-                        inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full
+                        border-b border-gray-50 dark:border-white/5
+                        ${!isOpen ? "last:border-0" : ""}
                         ${
-                          ctrl.status === "compliant"
-                            ? "bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400"
-                            : "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400"
+                          ctrl.status === "non_compliant"
+                            ? "bg-red-50/30 dark:bg-red-500/5"
+                            : ""
                         }
+                        ${hasViolations ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors" : ""}
                       `}
                     >
-                      {ctrl.status === "compliant"
-                        ? "Compliant"
-                        : "Non-Compliant"}
-                    </span>
-                  </td>
-                  <td className="py-2.5 pr-4">
-                    <span className="text-xs capitalize text-gray-600 dark:text-gray-400">
-                      {ctrl.severity}
-                    </span>
-                  </td>
-                  <td className="py-2.5 text-xs text-gray-500 dark:text-gray-500">
-                    {ctrl.violations.length > 0 ? ctrl.violations.length : "—"}
-                  </td>
-                </tr>
-              ))}
+                      <td className="py-2.5 pr-4 font-mono text-xs text-gray-700 dark:text-gray-300">
+                        <span className="inline-flex items-center gap-1.5">
+                          {hasViolations && <ChevronIcon open={isOpen} />}
+                          {ctrl.control_id}
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <span
+                          data-testid={`status-${ctrl.status}-${ctrl.control_id}`}
+                          className={`
+                            inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full
+                            ${
+                              ctrl.status === "compliant"
+                                ? "bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400"
+                                : "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400"
+                            }
+                          `}
+                        >
+                          {ctrl.status === "compliant"
+                            ? "Compliant"
+                            : "Non-Compliant"}
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <span className="text-xs capitalize text-gray-600 dark:text-gray-400">
+                          {ctrl.severity}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-xs text-gray-500 dark:text-gray-500">
+                        {hasViolations ? ctrl.violations.length : "—"}
+                      </td>
+                    </tr>
+                    {isOpen && hasViolations && (
+                      <ViolationRows
+                        key={`${ctrl.control_id}-viols`}
+                        violations={ctrl.violations}
+                      />
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
