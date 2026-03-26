@@ -114,7 +114,7 @@ create_composite_table "event-correlation"
 create_composite_table "target-accounts"
 
 # Enable TTL on tables that need it
-for TTL_TABLE in "event-correlation"; do
+for TTL_TABLE in "event-correlation" "resource-inventory"; do
     aws dynamodb update-time-to-live \
         --table-name "$TTL_TABLE" \
         --time-to-live-specification Enabled=true,AttributeName=ttl \

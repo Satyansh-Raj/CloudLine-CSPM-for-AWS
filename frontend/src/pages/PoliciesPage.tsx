@@ -1,9 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getPolicies,
   getPolicySource,
@@ -26,12 +22,7 @@ const DOMAINS = [
   "detection",
 ] as const;
 
-const SEVERITIES = [
-  "critical",
-  "high",
-  "medium",
-  "low",
-] as const;
+const SEVERITIES = ["critical", "high", "medium", "low"] as const;
 
 const DOMAIN_LABELS: Record<string, string> = {
   identity: "Identity & Access",
@@ -41,6 +32,45 @@ const DOMAIN_LABELS: Record<string, string> = {
   logging_monitoring: "Logging & Monitoring",
   detection: "Detection",
 };
+
+/** Derive a short service title from a check_id. */
+function getServiceTitle(checkId: string): string {
+  const TITLE_MAP: Record<string, string> = {
+    iam: "IAM",
+    ec2: "EC2",
+    s3: "S3",
+    rds: "RDS",
+    db: "Database",
+    vpc: "VPC",
+    kms: "KMS",
+    ebs: "EBS",
+    elb: "ELB",
+    alb: "ALB",
+    nlb: "NLB",
+    cdn: "CloudFront",
+    apigw: "API Gateway",
+    lambda: "Lambda",
+    cognito: "Cognito",
+    cloudtrail: "CloudTrail",
+    cloudwatch: "CloudWatch",
+    guardduty: "GuardDuty",
+    config: "Config",
+    secretsmanager: "Secrets Manager",
+    backup: "Backup",
+    dynamodb: "DynamoDB",
+    ecs: "ECS",
+    eks: "EKS",
+    ecr: "ECR",
+    sns: "SNS",
+    sqs: "SQS",
+    storage: "Storage",
+    serverless: "Serverless",
+    awssec: "Security Hub",
+    network: "Network",
+  };
+  const prefix = checkId.split("_")[0];
+  return TITLE_MAP[prefix] ?? prefix.toUpperCase();
+}
 
 const EMPTY_FORM: CreatePolicyRequest = {
   check_id: "",
@@ -75,36 +105,21 @@ const INPUT_FIELD_MAP: Record<string, string> = {
   secretsmanager: "input.secretsmanager",
 };
 
-function generateRegoPreview(
-  f: CreatePolicyRequest,
-): string {
-  if (!f.check_id || !f.domain || !f.severity)
-    return "";
+function generateRegoPreview(f: CreatePolicyRequest): string {
+  if (!f.check_id || !f.domain || !f.severity) return "";
   const inputPath =
-    INPUT_FIELD_MAP[f.input_field] ??
-    `input.${f.input_field || "service"}`;
-  const inputTop = inputPath
-    .replace("input.", "")
-    .split(".")[0];
+    INPUT_FIELD_MAP[f.input_field] ?? `input.${f.input_field || "service"}`;
+  const inputTop = inputPath.replace("input.", "").split(".")[0];
   const slug = f.description
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "");
-  const num = f.check_id.includes("_")
-    ? f.check_id.split("_")[1]
-    : "01";
+  const num = f.check_id.includes("_") ? f.check_id.split("_")[1] : "01";
   const pkg = `aws.check_${num}_${slug || "custom"}`;
-  const cis = f.compliance_cis
-    ? `"${f.compliance_cis}"`
-    : "";
-  const nist = f.compliance_nist
-    ? `"${f.compliance_nist}"`
-    : "";
-  const pci = f.compliance_pci
-    ? `"${f.compliance_pci}"`
-    : "";
-  const res =
-    f.resource_path || "input.service.items[_]";
+  const cis = f.compliance_cis ? `"${f.compliance_cis}"` : "";
+  const nist = f.compliance_nist ? `"${f.compliance_nist}"` : "";
+  const pci = f.compliance_pci ? `"${f.compliance_pci}"` : "";
+  const res = f.resource_path || "input.service.items[_]";
   return `package ${pkg}
 
 violations contains result if {
@@ -138,20 +153,19 @@ error contains result if {
 }`;
 }
 
-function getRegoTemplate(
-  domain: string,
-): string {
-  const service = domain === "data_protection"
-    ? "s3"
-    : domain === "identity"
-      ? "iam"
-      : domain === "network"
-        ? "vpc"
-        : domain === "compute"
-          ? "ec2"
-          : domain === "logging_monitoring"
-            ? "cloudtrail"
-            : "service";
+function getRegoTemplate(domain: string): string {
+  const service =
+    domain === "data_protection"
+      ? "s3"
+      : domain === "identity"
+        ? "iam"
+        : domain === "network"
+          ? "vpc"
+          : domain === "compute"
+            ? "ec2"
+            : domain === "logging_monitoring"
+              ? "cloudtrail"
+              : "service";
   return `package aws.${domain}.${service}
 
 import future.keywords.if
@@ -206,33 +220,25 @@ function ChevronIcon({ open }: { open: boolean }) {
 
 export default function PoliciesPage() {
   const queryClient = useQueryClient();
-  const [form, setForm] =
-    useState<CreatePolicyRequest>(EMPTY_FORM);
+  const [form, setForm] = useState<CreatePolicyRequest>(EMPTY_FORM);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
   /* ── Right-panel state ──────────────────────── */
-  const [activeTab, setActiveTab] = useState<
-    "gui" | "code"
-  >("gui");
-  const [rawForm, setRawForm] =
-    useState<CreateRawPolicyRequest>(EMPTY_RAW);
+  const [activeTab, setActiveTab] = useState<"gui" | "code">("gui");
+  const [rawForm, setRawForm] = useState<CreateRawPolicyRequest>(EMPTY_RAW);
 
   /* ── Left-panel state ───────────────────────── */
   const [search, setSearch] = useState("");
-  const [domainFilter, setDomainFilter] =
-    useState("");
-  const [collapsedDomains, setCollapsedDomains] =
-    useState<Set<string>>(new Set());
-  const [expandedSource, setExpandedSource] =
-    useState<string | null>(null);
-  const [sourceCache, setSourceCache] = useState<
-    Record<string, string>
-  >({});
-  const [sourceLoading, setSourceLoading] =
-    useState(false);
+  const [domainFilter, setDomainFilter] = useState("");
+  const [collapsedDomains, setCollapsedDomains] = useState<Set<string>>(
+    new Set(),
+  );
+  const [expandedSource, setExpandedSource] = useState<string | null>(null);
+  const [sourceCache, setSourceCache] = useState<Record<string, string>>({});
+  const [sourceLoading, setSourceLoading] = useState(false);
 
   const {
     data: policies,
@@ -258,8 +264,7 @@ export default function PoliciesPage() {
     onError: (err: { message?: string }) => {
       setFeedback({
         type: "error",
-        message:
-          err.message ?? "Failed to create policy.",
+        message: err.message ?? "Failed to create policy.",
       });
     },
   });
@@ -278,8 +283,7 @@ export default function PoliciesPage() {
     onError: (err: { message?: string }) => {
       setFeedback({
         type: "error",
-        message:
-          err.message ?? "Failed to delete policy.",
+        message: err.message ?? "Failed to delete policy.",
       });
     },
   });
@@ -299,9 +303,7 @@ export default function PoliciesPage() {
     onError: (err: { message?: string }) => {
       setFeedback({
         type: "error",
-        message:
-          err.message ??
-          "Failed to create policy.",
+        message: err.message ?? "Failed to create policy.",
       });
     },
   });
@@ -311,21 +313,13 @@ export default function PoliciesPage() {
     if (!policies) return [];
     const q = search.toLowerCase();
     return policies.filter((p) => {
-      if (
-        domainFilter &&
-        p.domain !== domainFilter
-      )
-        return false;
+      if (domainFilter && p.domain !== domainFilter) return false;
       if (!q) return true;
       return (
         p.check_id.toLowerCase().includes(q) ||
         p.domain.toLowerCase().includes(q) ||
-        (p.service ?? "")
-          .toLowerCase()
-          .includes(q) ||
-        getCheckName(p.check_id)
-          .toLowerCase()
-          .includes(q)
+        (p.service ?? "").toLowerCase().includes(q) ||
+        getCheckName(p.check_id).toLowerCase().includes(q)
       );
     });
   }, [policies, search, domainFilter]);
@@ -344,11 +338,7 @@ export default function PoliciesPage() {
     }
     // Any remaining domains
     for (const d of Object.keys(groups)) {
-      if (
-        !DOMAINS.includes(
-          d as (typeof DOMAINS)[number],
-        )
-      ) {
+      if (!DOMAINS.includes(d as (typeof DOMAINS)[number])) {
         ordered.push([d, groups[d]]);
       }
     }
@@ -358,9 +348,7 @@ export default function PoliciesPage() {
   /* ── Handlers ───────────────────────────────── */
   function handleChange(
     e: React.ChangeEvent<
-      | HTMLInputElement
-      | HTMLSelectElement
-      | HTMLTextAreaElement
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) {
     setForm((prev) => ({
@@ -406,8 +394,7 @@ export default function PoliciesPage() {
     } catch {
       setSourceCache((prev) => ({
         ...prev,
-        [checkId]:
-          "// Failed to load source code",
+        [checkId]: "// Failed to load source code",
       }));
     } finally {
       setSourceLoading(false);
@@ -416,9 +403,7 @@ export default function PoliciesPage() {
 
   function handleRawChange(
     e: React.ChangeEvent<
-      | HTMLInputElement
-      | HTMLSelectElement
-      | HTMLTextAreaElement
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) {
     setRawForm((prev) => ({
@@ -441,10 +426,7 @@ export default function PoliciesPage() {
     }));
   }
 
-  const regoPreview = useMemo(
-    () => generateRegoPreview(form),
-    [form],
-  );
+  const regoPreview = useMemo(() => generateRegoPreview(form), [form]);
 
   /* ── Shared styles ──────────────────────────── */
   const inputCls =
@@ -457,20 +439,17 @@ export default function PoliciesPage() {
     " focus:ring-blue-500/40 transition-colors";
 
   const labelCls =
-    "block text-xs font-medium text-gray-600" +
-    " dark:text-gray-400 mb-1";
+    "block text-xs font-medium text-gray-600" + " dark:text-gray-400 mb-1";
 
   const totalCount = policies?.length ?? 0;
   const filteredCount = filtered.length;
-  const showingSubset =
-    totalCount > 0 && filteredCount !== totalCount;
+  const showingSubset = totalCount > 0 && filteredCount !== totalCount;
 
   return (
     <div className="space-y-4">
       <h2
         className={
-          "text-xl font-bold text-gray-900" +
-          " dark:text-white tracking-tight"
+          "text-xl font-bold text-gray-900" + " dark:text-white tracking-tight"
         }
       >
         Rego Policies
@@ -558,9 +537,7 @@ export default function PoliciesPage() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search rules..."
                 className={
                   "w-full rounded-lg border" +
@@ -581,9 +558,7 @@ export default function PoliciesPage() {
             </div>
             <select
               value={domainFilter}
-              onChange={(e) =>
-                setDomainFilter(e.target.value)
-              }
+              onChange={(e) => setDomainFilter(e.target.value)}
               className={
                 "rounded-lg border" +
                 " border-gray-200" +
@@ -601,8 +576,7 @@ export default function PoliciesPage() {
               <option value="">All domains</option>
               {DOMAINS.map((d) => (
                 <option key={d} value={d}>
-                  {DOMAIN_LABELS[d] ??
-                    d.replace(/_/g, " ")}
+                  {DOMAIN_LABELS[d] ?? d.replace(/_/g, " ")}
                 </option>
               ))}
             </select>
@@ -627,395 +601,306 @@ export default function PoliciesPage() {
           {/* Loading skeleton */}
           {isLoading && (
             <div className="animate-pulse space-y-2">
-              {Array.from({ length: 6 }).map(
-                (_, i) => (
-                  <div
-                    key={i}
-                    className={
-                      "h-16 bg-gray-100" +
-                      " dark:bg-white/5 rounded-xl"
-                    }
-                  />
-                ),
-              )}
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={"h-16 bg-gray-100" + " dark:bg-white/5 rounded-xl"}
+                />
+              ))}
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <p
-              className={
-                "text-sm text-red-600" +
-                " dark:text-red-400"
-              }
-            >
+            <p className={"text-sm text-red-600" + " dark:text-red-400"}>
               Failed to load policies:{" "}
-              {(error as { message?: string })
-                .message ?? "Unknown error"}
+              {(error as { message?: string }).message ?? "Unknown error"}
             </p>
           )}
 
           {/* Empty states */}
-          {policies &&
-            policies.length === 0 && (
-              <p
-                className={
-                  "text-sm text-gray-500" +
-                  " dark:text-gray-500"
-                }
-              >
-                No policies found.
-              </p>
-            )}
+          {policies && policies.length === 0 && (
+            <p className={"text-sm text-gray-500" + " dark:text-gray-500"}>
+              No policies found.
+            </p>
+          )}
 
-          {policies &&
-            policies.length > 0 &&
-            filtered.length === 0 && (
-              <p
-                className={
-                  "text-sm text-gray-500" +
-                  " dark:text-gray-500"
-                }
-              >
-                No policies match your search.
-              </p>
-            )}
+          {policies && policies.length > 0 && filtered.length === 0 && (
+            <p className={"text-sm text-gray-500" + " dark:text-gray-500"}>
+              No policies match your search.
+            </p>
+          )}
 
           {/* Grouped policy list */}
           {grouped.length > 0 && (
-            <div
-              className={
-                "space-y-1 max-h-[80vh]" +
-                " overflow-y-auto pr-1"
-              }
-            >
-              {grouped.map(
-                ([domain, domainPolicies]) => {
-                  const collapsed =
-                    collapsedDomains.has(domain);
-                  return (
-                    <div key={domain}>
-                      {/* Domain header */}
-                      <button
-                        onClick={() =>
-                          toggleDomain(domain)
-                        }
+            <div className={"space-y-1 max-h-[80vh]" + " overflow-y-auto pr-1"}>
+              {grouped.map(([domain, domainPolicies]) => {
+                const collapsed = collapsedDomains.has(domain);
+                return (
+                  <div key={domain}>
+                    {/* Domain header */}
+                    <button
+                      onClick={() => toggleDomain(domain)}
+                      className={
+                        "w-full flex items-center" +
+                        " gap-2 px-3 py-2" +
+                        " rounded-lg" +
+                        " hover:bg-gray-50" +
+                        " dark:hover:bg-white/[0.03]" +
+                        " transition-colors" +
+                        " group"
+                      }
+                    >
+                      <ChevronIcon open={!collapsed} />
+                      <span
                         className={
-                          "w-full flex items-center" +
-                          " gap-2 px-3 py-2" +
-                          " rounded-lg" +
-                          " hover:bg-gray-50" +
-                          " dark:hover:bg-white/[0.03]" +
-                          " transition-colors" +
-                          " group"
+                          "text-xs font-semibold" +
+                          " uppercase" +
+                          " tracking-wider" +
+                          " text-gray-500" +
+                          " dark:text-gray-400"
                         }
                       >
-                        <ChevronIcon
-                          open={!collapsed}
-                        />
-                        <span
-                          className={
-                            "text-xs font-semibold" +
-                            " uppercase" +
-                            " tracking-wider" +
-                            " text-gray-500" +
-                            " dark:text-gray-400"
-                          }
-                        >
-                          {DOMAIN_LABELS[domain] ??
-                            domain.replace(
-                              /_/g,
-                              " ",
-                            )}
-                        </span>
-                        <span
-                          className={
-                            "ml-auto text-[10px]" +
-                            " font-medium" +
-                            " text-gray-400" +
-                            " dark:text-gray-600" +
-                            " bg-gray-100" +
-                            " dark:bg-white/5" +
-                            " px-1.5 py-0.5" +
-                            " rounded-full"
-                          }
-                        >
-                          {domainPolicies.length}
-                        </span>
-                      </button>
+                        {DOMAIN_LABELS[domain] ?? domain.replace(/_/g, " ")}
+                      </span>
+                      <span
+                        className={
+                          "ml-auto text-[10px]" +
+                          " font-medium" +
+                          " text-gray-400" +
+                          " dark:text-gray-600" +
+                          " bg-gray-100" +
+                          " dark:bg-white/5" +
+                          " px-1.5 py-0.5" +
+                          " rounded-full"
+                        }
+                      >
+                        {domainPolicies.length}
+                      </span>
+                    </button>
 
-                      {/* Rules in domain */}
-                      {!collapsed && (
-                        <div className="space-y-1 ml-2 mt-1">
-                          {domainPolicies.map(
-                            (p) => (
-                              <div
-                                key={p.check_id}
-                              >
-                                {/* Rule card */}
-                                <div
+                    {/* Rules in domain */}
+                    {!collapsed && (
+                      <div className="space-y-1 ml-2 mt-1">
+                        {domainPolicies.map((p) => (
+                          <div key={p.check_id}>
+                            {/* Rule card */}
+                            <div
+                              className={
+                                "flex items-center" +
+                                " justify-between" +
+                                " rounded-xl" +
+                                " border" +
+                                " border-gray-100" +
+                                " dark:border-white/5" +
+                                " bg-gray-50" +
+                                " dark:bg-white/[0.02]" +
+                                " px-4 py-3"
+                              }
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p
                                   className={
-                                    "flex items-center" +
-                                    " justify-between" +
-                                    " rounded-xl" +
-                                    " border" +
-                                    " border-gray-100" +
-                                    " dark:border-white/5" +
-                                    " bg-gray-50" +
-                                    " dark:bg-white/[0.02]" +
-                                    " px-4 py-3"
+                                    "text-sm" +
+                                    " font-medium" +
+                                    " text-gray-900" +
+                                    " dark:text-white" +
+                                    " truncate"
                                   }
                                 >
-                                  <div className="min-w-0 flex-1">
-                                    <p
+                                  {getServiceTitle(p.check_id)}
+                                </p>
+                                <div
+                                  className={
+                                    "flex" +
+                                    " items-center" +
+                                    " gap-2 mt-1" +
+                                    " flex-wrap"
+                                  }
+                                >
+                                  <SeverityBadge severity={p.severity} />
+                                  {p.rule_count > 0 && (
+                                    <span
                                       className={
-                                        "text-sm" +
-                                        " font-medium" +
-                                        " text-gray-900" +
-                                        " dark:text-white" +
-                                        " truncate"
-                                      }
-                                    >
-                                      {p.check_id}
-                                      <span
-                                        className={
-                                          "ml-2" +
-                                          " text-gray-500" +
-                                          " dark:text-gray-400" +
-                                          " font-normal"
-                                        }
-                                      >
-                                        {getCheckName(
-                                          p.check_id,
-                                        )}
-                                      </span>
-                                    </p>
-                                    <div
-                                      className={
-                                        "flex" +
-                                        " items-center" +
-                                        " gap-2 mt-1" +
-                                        " flex-wrap"
-                                      }
-                                    >
-                                      <SeverityBadge
-                                        severity={
-                                          p.severity
-                                        }
-                                      />
-                                      {p.rule_count >
-                                        0 && (
-                                        <span
-                                          className={
-                                            "text-[10px]" +
-                                            " text-gray-400" +
-                                            " dark:text-gray-600" +
-                                            " bg-gray-100" +
-                                            " dark:bg-white/5" +
-                                            " px-1.5 py-0.5" +
-                                            " rounded"
-                                          }
-                                        >
-                                          {
-                                            p.rule_count
-                                          }{" "}
-                                          {p.rule_count ===
-                                          1
-                                            ? "rule"
-                                            : "rules"}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Actions */}
-                                  <div className="flex items-center gap-1 ml-3 shrink-0">
-                                    {/* View Source */}
-                                    <button
-                                      onClick={() =>
-                                        toggleSource(
-                                          p.check_id,
-                                        )
-                                      }
-                                      className={
-                                        "p-1.5" +
-                                        " rounded-lg" +
+                                        "text-[10px]" +
                                         " text-gray-400" +
-                                        " hover:text-blue-600" +
-                                        " dark:hover:text-blue-400" +
-                                        " hover:bg-blue-50" +
-                                        " dark:hover:bg-blue-500/10" +
-                                        " transition-colors"
+                                        " dark:text-gray-600" +
+                                        " bg-gray-100" +
+                                        " dark:bg-white/5" +
+                                        " px-1.5 py-0.5" +
+                                        " rounded"
                                       }
-                                      title="View source"
                                     >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth="1.8"
-                                          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                                        />
-                                      </svg>
-                                    </button>
-
-                                    {/* Delete */}
-                                    <button
-                                      onClick={() =>
-                                        handleDelete(
-                                          p.check_id,
-                                        )
-                                      }
-                                      disabled={
-                                        deleteMutation.isPending
-                                      }
-                                      className={
-                                        "p-1.5" +
-                                        " rounded-lg" +
-                                        " text-gray-400" +
-                                        " hover:text-red-600" +
-                                        " dark:hover:text-red-400" +
-                                        " hover:bg-red-50" +
-                                        " dark:hover:bg-red-500/10" +
-                                        " transition-colors" +
-                                        " disabled:opacity-50"
-                                      }
-                                      title={`Delete ${p.check_id}`}
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth="1.8"
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
+                                      {p.rule_count}{" "}
+                                      {p.rule_count === 1 ? "rule" : "rules"}
+                                    </span>
+                                  )}
                                 </div>
+                              </div>
 
-                                {/* Source code panel */}
-                                {expandedSource ===
-                                  p.check_id && (
-                                  <div
+                              {/* Actions */}
+                              <div className="flex items-center gap-1 ml-3 shrink-0">
+                                {/* View Source */}
+                                <button
+                                  onClick={() => toggleSource(p.check_id)}
+                                  className={
+                                    "p-1.5" +
+                                    " rounded-lg" +
+                                    " text-gray-400" +
+                                    " hover:text-blue-600" +
+                                    " dark:hover:text-blue-400" +
+                                    " hover:bg-blue-50" +
+                                    " dark:hover:bg-blue-500/10" +
+                                    " transition-colors"
+                                  }
+                                  title="View source"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="1.8"
+                                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                                    />
+                                  </svg>
+                                </button>
+
+                                {/* Delete */}
+                                <button
+                                  onClick={() => handleDelete(p.check_id)}
+                                  disabled={deleteMutation.isPending}
+                                  className={
+                                    "p-1.5" +
+                                    " rounded-lg" +
+                                    " text-gray-400" +
+                                    " hover:text-red-600" +
+                                    " dark:hover:text-red-400" +
+                                    " hover:bg-red-50" +
+                                    " dark:hover:bg-red-500/10" +
+                                    " transition-colors" +
+                                    " disabled:opacity-50"
+                                  }
+                                  title={`Delete ${p.check_id}`}
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="1.8"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Source code panel */}
+                            {expandedSource === p.check_id && (
+                              <div
+                                className={
+                                  "mt-1 ml-4" +
+                                  " rounded-xl" +
+                                  " border" +
+                                  " border-gray-100" +
+                                  " dark:border-white/5" +
+                                  " bg-gray-900" +
+                                  " dark:bg-black/40" +
+                                  " overflow-hidden"
+                                }
+                              >
+                                <div
+                                  className={
+                                    "flex" +
+                                    " items-center" +
+                                    " justify-between" +
+                                    " px-3 py-1.5" +
+                                    " bg-gray-800" +
+                                    " dark:bg-white/5" +
+                                    " border-b" +
+                                    " border-gray-700" +
+                                    " dark:border-white/5"
+                                  }
+                                >
+                                  <span
                                     className={
-                                      "mt-1 ml-4" +
-                                      " rounded-xl" +
-                                      " border" +
-                                      " border-gray-100" +
-                                      " dark:border-white/5" +
-                                      " bg-gray-900" +
-                                      " dark:bg-black/40" +
-                                      " overflow-hidden"
+                                      "text-[10px]" +
+                                      " font-mono" +
+                                      " text-gray-400" +
+                                      " dark:text-gray-500"
                                     }
                                   >
+                                    {p.filename}
+                                  </span>
+                                  <button
+                                    onClick={() => setExpandedSource(null)}
+                                    className={
+                                      "text-gray-500" +
+                                      " hover:text-gray-300" +
+                                      " transition-colors"
+                                    }
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                                {sourceLoading && !sourceCache[p.check_id] ? (
+                                  <div className="px-4 py-3">
                                     <div
                                       className={
-                                        "flex" +
-                                        " items-center" +
-                                        " justify-between" +
-                                        " px-3 py-1.5" +
-                                        " bg-gray-800" +
-                                        " dark:bg-white/5" +
-                                        " border-b" +
-                                        " border-gray-700" +
-                                        " dark:border-white/5"
+                                        "h-3 w-32" +
+                                        " bg-gray-700" +
+                                        " rounded" +
+                                        " animate-pulse"
                                       }
-                                    >
-                                      <span
-                                        className={
-                                          "text-[10px]" +
-                                          " font-mono" +
-                                          " text-gray-400" +
-                                          " dark:text-gray-500"
-                                        }
-                                      >
-                                        {
-                                          p.filename
-                                        }
-                                      </span>
-                                      <button
-                                        onClick={() =>
-                                          setExpandedSource(
-                                            null,
-                                          )
-                                        }
-                                        className={
-                                          "text-gray-500" +
-                                          " hover:text-gray-300" +
-                                          " transition-colors"
-                                        }
-                                      >
-                                        <svg
-                                          className="w-3.5 h-3.5"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M6 18L18 6M6 6l12 12"
-                                          />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                    {sourceLoading &&
-                                    !sourceCache[
-                                      p.check_id
-                                    ] ? (
-                                      <div className="px-4 py-3">
-                                        <div
-                                          className={
-                                            "h-3 w-32" +
-                                            " bg-gray-700" +
-                                            " rounded" +
-                                            " animate-pulse"
-                                          }
-                                        />
-                                      </div>
-                                    ) : (
-                                      <pre
-                                        className={
-                                          "px-4 py-3" +
-                                          " text-xs" +
-                                          " leading-relaxed" +
-                                          " font-mono" +
-                                          " text-green-400" +
-                                          " dark:text-green-300" +
-                                          " overflow-x-auto" +
-                                          " max-h-[40vh]" +
-                                          " overflow-y-auto"
-                                        }
-                                      >
-                                        {sourceCache[
-                                          p
-                                            .check_id
-                                        ] ?? ""}
-                                      </pre>
-                                    )}
+                                    />
                                   </div>
+                                ) : (
+                                  <pre
+                                    className={
+                                      "px-4 py-3" +
+                                      " text-xs" +
+                                      " leading-relaxed" +
+                                      " font-mono" +
+                                      " text-green-400" +
+                                      " dark:text-green-300" +
+                                      " overflow-x-auto" +
+                                      " max-h-[40vh]" +
+                                      " overflow-y-auto"
+                                    }
+                                  >
+                                    {sourceCache[p.check_id] ?? ""}
+                                  </pre>
                                 )}
                               </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                },
-              )}
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -1030,8 +915,7 @@ export default function PoliciesPage() {
         >
           <h3
             className={
-              "text-sm font-semibold text-gray-800" +
-              " dark:text-gray-200 mb-4"
+              "text-sm font-semibold text-gray-800" + " dark:text-gray-200 mb-4"
             }
           >
             Add New Policy
@@ -1052,8 +936,7 @@ export default function PoliciesPage() {
                 "flex-1 px-3 py-2 text-xs" +
                 " font-semibold transition-colors" +
                 (activeTab === "gui"
-                  ? " bg-blue-600 text-white" +
-                    " dark:bg-blue-500"
+                  ? " bg-blue-600 text-white" + " dark:bg-blue-500"
                   : " bg-white dark:bg-white/5" +
                     " text-gray-600" +
                     " dark:text-gray-400" +
@@ -1071,8 +954,7 @@ export default function PoliciesPage() {
                 " border-l border-gray-200" +
                 " dark:border-white/10" +
                 (activeTab === "code"
-                  ? " bg-blue-600 text-white" +
-                    " dark:bg-blue-500"
+                  ? " bg-blue-600 text-white" + " dark:bg-blue-500"
                   : " bg-white dark:bg-white/5" +
                     " text-gray-600" +
                     " dark:text-gray-400" +
@@ -1086,15 +968,10 @@ export default function PoliciesPage() {
 
           {/* ── GUI Builder tab ──────────────── */}
           {activeTab === "gui" && (
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-3"
-            >
+            <form onSubmit={handleSubmit} className="space-y-3">
               {/* Check ID */}
               <div>
-                <label className={labelCls}>
-                  Check ID
-                </label>
+                <label className={labelCls}>Check ID</label>
                 <input
                   name="check_id"
                   value={form.check_id}
@@ -1107,9 +984,7 @@ export default function PoliciesPage() {
 
               {/* Name */}
               <div>
-                <label className={labelCls}>
-                  Name
-                </label>
+                <label className={labelCls}>Name</label>
                 <input
                   name="name"
                   value={form.name}
@@ -1123,9 +998,7 @@ export default function PoliciesPage() {
               {/* Domain + Severity */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>
-                    Domain
-                  </label>
+                  <label className={labelCls}>Domain</label>
                   <select
                     name="domain"
                     value={form.domain}
@@ -1133,21 +1006,16 @@ export default function PoliciesPage() {
                     required
                     className={inputCls}
                   >
-                    <option value="">
-                      Select...
-                    </option>
+                    <option value="">Select...</option>
                     {DOMAINS.map((d) => (
                       <option key={d} value={d}>
-                        {DOMAIN_LABELS[d] ??
-                          d.replace(/_/g, " ")}
+                        {DOMAIN_LABELS[d] ?? d.replace(/_/g, " ")}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>
-                    Severity
-                  </label>
+                  <label className={labelCls}>Severity</label>
                   <select
                     name="severity"
                     value={form.severity}
@@ -1155,13 +1023,10 @@ export default function PoliciesPage() {
                     required
                     className={inputCls}
                   >
-                    <option value="">
-                      Select...
-                    </option>
+                    <option value="">Select...</option>
                     {SEVERITIES.map((s) => (
                       <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() +
-                          s.slice(1)}
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
                       </option>
                     ))}
                   </select>
@@ -1170,9 +1035,7 @@ export default function PoliciesPage() {
 
               {/* Description */}
               <div>
-                <label className={labelCls}>
-                  Description
-                </label>
+                <label className={labelCls}>Description</label>
                 <textarea
                   name="description"
                   value={form.description}
@@ -1187,9 +1050,7 @@ export default function PoliciesPage() {
               {/* Input Field + Resource Path */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>
-                    Input Field
-                  </label>
+                  <label className={labelCls}>Input Field</label>
                   <input
                     name="input_field"
                     value={form.input_field}
@@ -1200,9 +1061,7 @@ export default function PoliciesPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
-                    Resource Path
-                  </label>
+                  <label className={labelCls}>Resource Path</label>
                   <input
                     name="resource_path"
                     value={form.resource_path}
@@ -1217,9 +1076,7 @@ export default function PoliciesPage() {
               {/* Condition Field + Value */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>
-                    Condition Field
-                  </label>
+                  <label className={labelCls}>Condition Field</label>
                   <input
                     name="condition_field"
                     value={form.condition_field}
@@ -1230,9 +1087,7 @@ export default function PoliciesPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
-                    Condition Value
-                  </label>
+                  <label className={labelCls}>Condition Value</label>
                   <input
                     name="condition_value"
                     value={form.condition_value}
@@ -1247,9 +1102,7 @@ export default function PoliciesPage() {
               {/* Compliance */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className={labelCls}>
-                    CIS
-                  </label>
+                  <label className={labelCls}>CIS</label>
                   <input
                     name="compliance_cis"
                     value={form.compliance_cis}
@@ -1259,9 +1112,7 @@ export default function PoliciesPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
-                    NIST
-                  </label>
+                  <label className={labelCls}>NIST</label>
                   <input
                     name="compliance_nist"
                     value={form.compliance_nist}
@@ -1271,9 +1122,7 @@ export default function PoliciesPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
-                    PCI
-                  </label>
+                  <label className={labelCls}>PCI</label>
                   <input
                     name="compliance_pci"
                     value={form.compliance_pci}
@@ -1286,9 +1135,7 @@ export default function PoliciesPage() {
 
               {/* Remediation ID */}
               <div>
-                <label className={labelCls}>
-                  Remediation ID
-                </label>
+                <label className={labelCls}>Remediation ID</label>
                 <input
                   name="remediation_id"
                   value={form.remediation_id}
@@ -1301,9 +1148,7 @@ export default function PoliciesPage() {
               {/* Rego Preview */}
               {regoPreview && (
                 <div>
-                  <label className={labelCls}>
-                    Generated Rego Preview
-                  </label>
+                  <label className={labelCls}>Generated Rego Preview</label>
                   <pre
                     className={
                       "rounded-xl border" +
@@ -1329,9 +1174,7 @@ export default function PoliciesPage() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={
-                  createMutation.isPending
-                }
+                disabled={createMutation.isPending}
                 className={
                   "w-full mt-2 px-4 py-2.5" +
                   " rounded-xl text-sm" +
@@ -1344,25 +1187,18 @@ export default function PoliciesPage() {
                   " transition-colors"
                 }
               >
-                {createMutation.isPending
-                  ? "Creating..."
-                  : "Create Policy"}
+                {createMutation.isPending ? "Creating..." : "Create Policy"}
               </button>
             </form>
           )}
 
           {/* ── Code Editor tab ──────────────── */}
           {activeTab === "code" && (
-            <form
-              onSubmit={handleRawSubmit}
-              className="space-y-3"
-            >
+            <form onSubmit={handleRawSubmit} className="space-y-3">
               {/* Domain + Filename row */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>
-                    Domain
-                  </label>
+                  <label className={labelCls}>Domain</label>
                   <select
                     name="domain"
                     value={rawForm.domain}
@@ -1370,21 +1206,16 @@ export default function PoliciesPage() {
                     required
                     className={inputCls}
                   >
-                    <option value="">
-                      Select...
-                    </option>
+                    <option value="">Select...</option>
                     {DOMAINS.map((d) => (
                       <option key={d} value={d}>
-                        {DOMAIN_LABELS[d] ??
-                          d.replace(/_/g, " ")}
+                        {DOMAIN_LABELS[d] ?? d.replace(/_/g, " ")}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>
-                    Filename
-                  </label>
+                  <label className={labelCls}>Filename</label>
                   <input
                     name="filename"
                     value={rawForm.filename}
@@ -1414,9 +1245,7 @@ export default function PoliciesPage() {
 
               {/* Code textarea */}
               <div>
-                <label className={labelCls}>
-                  Rego Policy Code
-                </label>
+                <label className={labelCls}>Rego Policy Code</label>
                 <textarea
                   name="rego_code"
                   value={rawForm.rego_code}
@@ -1426,7 +1255,7 @@ export default function PoliciesPage() {
                     "import future.keywords.if\n" +
                     "import future.keywords.in\n\n" +
                     "violations contains result if {\n" +
-                    '\t# your rules here\n' +
+                    "\t# your rules here\n" +
                     "}"
                   }
                   required
@@ -1470,9 +1299,7 @@ export default function PoliciesPage() {
                   " transition-colors"
                 }
               >
-                {rawMutation.isPending
-                  ? "Creating..."
-                  : "Create Policy"}
+                {rawMutation.isPending ? "Creating..." : "Create Policy"}
               </button>
             </form>
           )}

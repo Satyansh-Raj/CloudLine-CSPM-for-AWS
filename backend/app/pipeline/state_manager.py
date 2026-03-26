@@ -12,6 +12,10 @@ from boto3.dynamodb.conditions import Key
 
 from app.pipeline.models import ViolationState
 
+# Resolved violations auto-expire after this many days.
+# Keeps data for Trends / Issue History pages.
+_RESOLVED_TTL_DAYS = 90
+
 logger = logging.getLogger(__name__)
 
 
@@ -172,7 +176,16 @@ class StateManager:
         }
 
         if new_status == "ok":
-            update_expr += ", resolved_at = :now"
+            expire_at = int(
+                datetime.now(UTC).timestamp()
+                + _RESOLVED_TTL_DAYS * 86400
+            )
+            update_expr += (
+                ", resolved_at = :now, "
+                "#ttl = :ttl"
+            )
+            expr_names["#ttl"] = "ttl"
+            expr_values[":ttl"] = expire_at
 
         try:
             self.table.update_item(

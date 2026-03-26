@@ -182,10 +182,30 @@ def _process_region(
         )
         for v in violations
     }
+    fresh_check_ids: set[str] = {
+        getattr(v, "check_id", "")
+        for v in violations
+    }
     existing_states = state_manager.query_by_account(
         account_id, region, limit=2000
     )
     for old in existing_states:
+        # Purge violations whose check_id no longer
+        # exists in the policy set (renamed/removed).
+        if old.check_id not in fresh_check_ids:
+            state_manager.delete_state(
+                account_id,
+                region,
+                old.check_id,
+                old.resource_arn,
+            )
+            logger.info(
+                "Purged orphaned check_id: %s / %s",
+                old.check_id,
+                old.resource_arn,
+            )
+            continue
+
         if (
             old.check_id,
             old.resource_arn,

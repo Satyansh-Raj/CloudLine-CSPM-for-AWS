@@ -8,7 +8,7 @@ import logging
 from datetime import UTC, datetime
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 
 from app.models.resource import ResourceRecord
 
@@ -178,6 +178,9 @@ class ResourceStore:
                         technology_category
                     )
                 ),
+                FilterExpression=Attr(
+                    "is_active"
+                ).eq(True),
                 ScanIndexForward=False,
             )
             return [
@@ -204,6 +207,9 @@ class ResourceStore:
                 KeyConditionExpression=(
                     Key("exposure").eq(exposure)
                 ),
+                FilterExpression=Attr(
+                    "is_active"
+                ).eq(True),
                 ScanIndexForward=False,
             )
             return [
@@ -230,6 +236,9 @@ class ResourceStore:
                 KeyConditionExpression=(
                     Key("service").eq(service)
                 ),
+                FilterExpression=Attr(
+                    "is_active"
+                ).eq(True),
                 ScanIndexForward=False,
             )
             return [
@@ -296,14 +305,22 @@ class ResourceStore:
         region: str,
         resource_type: str,
         resource_id: str,
+        ttl_days: int = 30,
     ) -> bool:
-        """Soft-delete: set is_active=False."""
+        """Soft-delete: set is_active=False with TTL.
+
+        Args:
+            ttl_days: Days until DynamoDB auto-deletes
+                the record. Default 30 days.
+        """
         pk = f"{account_id}#{region}"
         sk = f"{resource_type}#{resource_id}"
-        now = (
-            datetime.now(UTC)
-            .isoformat()
-            .replace("+00:00", "Z")
+        now = datetime.now(UTC)
+        now_iso = (
+            now.isoformat().replace("+00:00", "Z")
+        )
+        expire_at = int(
+            now.timestamp() + ttl_days * 86400
         )
 
         try:
@@ -311,11 +328,16 @@ class ResourceStore:
                 Key={"pk": pk, "sk": sk},
                 UpdateExpression=(
                     "SET is_active = :false, "
-                    "deactivated_at = :now"
+                    "deactivated_at = :now, "
+                    "#ttl = :ttl"
                 ),
+                ExpressionAttributeNames={
+                    "#ttl": "ttl",
+                },
                 ExpressionAttributeValues={
                     ":false": False,
-                    ":now": now,
+                    ":now": now_iso,
+                    ":ttl": expire_at,
                 },
             )
             return True
@@ -442,4 +464,9 @@ def _item_to_resource(
     for field in _INT_FIELDS:
         if field in item:
             item[field] = int(item[field])
+    if "ttl" in item:
+        item["ttl"] = (
+            int(item["ttl"]) if item["ttl"]
+            else None
+        )
     return ResourceRecord(**item)

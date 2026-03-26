@@ -98,3 +98,7 @@ class ResourceRecord(BaseModel):
     )
     managed_by: str | None = None
     belongs_to: str | None = None
+
+    # TTL — epoch seconds; DynamoDB auto-deletes
+    # expired inactive resources.
+    ttl: int | None = None
