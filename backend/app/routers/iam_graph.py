@@ -23,6 +23,13 @@ _CACHE_TTL = 300  # 5 minutes
 _cache: dict = {"data": None, "ts": 0.0}
 
 
+def invalidate_cache() -> None:
+    """Clear IAM graph cache so the next request
+    fetches fresh data. Called after scan completion."""
+    _cache["data"] = None
+    _cache["ts"] = 0.0
+
+
 @router.get("/iam/graph")
 def get_iam_graph(
     session=Depends(get_boto3_session),
@@ -79,24 +86,9 @@ def get_iam_graph(
             if v.resource_arn == user_arn
         ]
 
-    # Account-level violations (not per-user)
-    account_violations = [
-        {
-            "check_id": v.check_id,
-            "status": v.status,
-            "severity": v.severity,
-            "reason": v.reason,
-            "risk_score": v.risk_score,
-            "resource": v.resource_arn,
-        }
-        for v in identity
-        if v.resource_arn not in user_arns
-    ]
-
     result = {
         "account_id": settings.aws_account_id,
         "users": users,
-        "account_violations": account_violations,
     }
 
     _cache["data"] = result

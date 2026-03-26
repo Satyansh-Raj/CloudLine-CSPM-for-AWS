@@ -172,11 +172,8 @@ class TestIamGraphEndpoint:
 
         assert "account_id" in data
         assert "users" in data
-        assert "account_violations" in data
+        assert "account_violations" not in data
         assert isinstance(data["users"], list)
-        assert isinstance(
-            data["account_violations"], list
-        )
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -241,7 +238,7 @@ class TestIamGraphEndpoint:
     @patch(
         "app.routers.iam_graph.IAMCollector"
     )
-    def test_account_violations_unmatched(
+    def test_no_account_violations_in_response(
         self, mock_cls
     ):
         mock_cls.return_value.collect_graph_data\
@@ -251,11 +248,8 @@ class TestIamGraphEndpoint:
             "/api/v1/iam/graph"
         ).json()
 
-        # iam_root_mfa (root) not matched to any user
-        acct = data["account_violations"]
-        assert len(acct) == 1
-        assert acct[0]["check_id"] == "iam_root_mfa"
-        assert "resource" in acct[0]
+        # account_violations removed from response
+        assert "account_violations" not in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -269,10 +263,7 @@ class TestIamGraphEndpoint:
         ).json()
 
         assert data["users"] == []
-        # All violations become account-level
-        assert (
-            len(data["account_violations"]) == 3
-        )
+        assert "account_violations" not in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -289,7 +280,7 @@ class TestIamGraphEndpoint:
 
         for user in data["users"]:
             assert user["violations"] == []
-        assert data["account_violations"] == []
+        assert "account_violations" not in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -327,9 +318,108 @@ class TestIamGraphEndpoint:
         ).json()
 
         assert data["users"] == []
-        assert (
-            len(data["account_violations"]) == 3
+        assert "account_violations" not in data
+
+
+class TestIamGraphCacheInvalidation:
+    """Tests for IAM graph cache invalidation."""
+
+    def setup_method(self):
+        iam_graph._cache["data"] = None
+        iam_graph._cache["ts"] = 0.0
+
+    def teardown_method(self):
+        iam_graph._cache["data"] = None
+        iam_graph._cache["ts"] = 0.0
+
+    def test_invalidate_cache_clears_data(self):
+        """invalidate_cache() must clear cached data
+        so next request fetches fresh IAM data."""
+        iam_graph._cache["data"] = {"stale": True}
+        iam_graph._cache["ts"] = 9999999999.0
+
+        iam_graph.invalidate_cache()
+
+        assert iam_graph._cache["data"] is None
+        assert iam_graph._cache["ts"] == 0.0
+
+    def test_invalidate_cache_forces_refetch(self):
+        """After invalidation, the endpoint must
+        call the collector again (not serve cache)."""
+        iam_graph._cache["data"] = {
+            "account_id": "old",
+            "users": [],
+        }
+        iam_graph._cache["ts"] = 9999999999.0
+
+        iam_graph.invalidate_cache()
+
+        assert iam_graph._cache["data"] is None
+
+
+class TestNoAccountViolationsInResponse:
+    """account_violations must NOT appear in the
+    IAM graph response — account-level checks are
+    removed from the graph."""
+
+    def setup_method(self):
+        iam_graph._cache["data"] = None
+        iam_graph._cache["ts"] = 0.0
+        self._mock_sm = _mock_state_manager(
+            states=IDENTITY_VIOLATIONS
         )
+        app.dependency_overrides[
+            get_state_manager
+        ] = lambda: self._mock_sm
+
+    def teardown_method(self):
+        app.dependency_overrides.pop(
+            get_state_manager, None
+        )
+        app.dependency_overrides.pop(
+            get_boto3_session, None
+        )
+        iam_graph._cache["data"] = None
+        iam_graph._cache["ts"] = 0.0
+
+    @patch(
+        "app.routers.iam_graph.IAMCollector"
+    )
+    def test_no_account_violations_key(
+        self, mock_cls
+    ):
+        mock_cls.return_value.collect_graph_data\
+            .return_value = MOCK_GRAPH_USERS
+        client = TestClient(app)
+        data = client.get(
+            "/api/v1/iam/graph"
+        ).json()
+
+        assert "account_violations" not in data
+
+    @patch(
+        "app.routers.iam_graph.IAMCollector"
+    )
+    def test_unmatched_violations_excluded(
+        self, mock_cls
+    ):
+        """Violations not matching any user ARN
+        (e.g. root, pwpolicy) should be excluded
+        entirely from the response."""
+        mock_cls.return_value.collect_graph_data\
+            .return_value = MOCK_GRAPH_USERS
+        client = TestClient(app)
+        data = client.get(
+            "/api/v1/iam/graph"
+        ).json()
+
+        # iam_root_mfa targets root ARN —
+        # should not appear anywhere
+        all_check_ids = []
+        for user in data["users"]:
+            for v in user["violations"]:
+                all_check_ids.append(v["check_id"])
+        assert "iam_root_mfa" not in all_check_ids
 
 
 class TestSummarizePermissions:

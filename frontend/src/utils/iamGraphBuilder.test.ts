@@ -298,7 +298,7 @@ describe("buildIamGraph", () => {
     expect(d.worstSeverity).toBe("critical");
   });
 
-  it("account violations create groupNode", () => {
+  it("account violations do NOT create groupNode", () => {
     const resp = makeResponse({
       account_violations: [
         {
@@ -312,7 +312,7 @@ describe("buildIamGraph", () => {
       ],
     });
     const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
-    expect(nodes.some((n) => n.id === "acct-checks")).toBe(true);
+    expect(nodes.some((n) => n.id === "acct-checks")).toBe(false);
   });
 
   it("uses smoothstep edges", () => {
@@ -442,6 +442,57 @@ describe("buildIamGraph", () => {
     expect(nodes[0].id).toBe("account");
     expect(edges).toHaveLength(0);
   });
+
+  it("does NOT create acct-checks groupNode", () => {
+    const resp = makeResponse({
+      account_violations: [
+        {
+          check_id: "iam_root_mfa",
+          status: "alarm",
+          severity: "critical" as const,
+          reason: "Root MFA",
+          risk_score: 95,
+          resource: "arn:aws:iam::123:root",
+        },
+      ],
+    });
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    expect(nodes.some((n) => n.id === "acct-checks")).toBe(false);
+  });
+
+  it("does NOT create edges to acct-checks", () => {
+    const resp = makeResponse({
+      account_violations: [
+        {
+          check_id: "iam_root_mfa",
+          status: "alarm",
+          severity: "critical" as const,
+          reason: "Root MFA",
+          risk_score: 95,
+          resource: "arn:aws:iam::123:root",
+        },
+      ],
+    });
+    const { edges } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    expect(edges.some((e) => e.target === "acct-checks")).toBe(false);
+  });
+
+  it("does NOT create check nodes for account violations", () => {
+    const resp = makeResponse({
+      account_violations: [
+        {
+          check_id: "iam_root_mfa",
+          status: "alarm",
+          severity: "critical" as const,
+          reason: "Root MFA",
+          risk_score: 95,
+          resource: "arn:aws:iam::123:root",
+        },
+      ],
+    });
+    const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
+    expect(nodes.some((n) => n.id === "chk-acct-iam_root_mfa")).toBe(false);
+  });
 });
 
 describe("getInitialCollapsedIds", () => {
@@ -455,7 +506,7 @@ describe("getInitialCollapsedIds", () => {
     expect(ids.has("user-bob")).toBe(true);
   });
 
-  it("includes acct-checks when violations exist", () => {
+  it("never includes acct-checks (account checks removed)", () => {
     const resp = makeResponse({
       account_violations: [
         {
@@ -467,14 +518,6 @@ describe("getInitialCollapsedIds", () => {
           resource: "arn:aws:iam::123:root",
         },
       ],
-    });
-    const ids = getInitialCollapsedIds(resp);
-    expect(ids.has("acct-checks")).toBe(true);
-  });
-
-  it("omits acct-checks when no account violations", () => {
-    const resp = makeResponse({
-      users: [makeUser("alice")],
     });
     const ids = getInitialCollapsedIds(resp);
     expect(ids.has("acct-checks")).toBe(false);

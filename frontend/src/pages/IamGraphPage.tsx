@@ -370,15 +370,10 @@ export default function IamGraphPage() {
     );
   }, [filteredResponse, collapsedIds, onToggleCollapse, onSelect]);
 
-  const hasData =
-    !!apiData &&
-    (apiData.users.length > 0 || apiData.account_violations.length > 0);
+  const hasData = !!apiData && apiData.users.length > 0;
 
   const noMatches =
-    hasData &&
-    filteredResponse !== null &&
-    filteredResponse.users.length === 0 &&
-    filteredResponse.account_violations.length === 0;
+    hasData && filteredResponse !== null && filteredResponse.users.length === 0;
 
   return (
     <div

@@ -593,6 +593,13 @@ def _run_scan(
                 except Exception:
                     pass
 
+        # Invalidate IAM graph cache so the next
+        # request fetches fresh post-scan data.
+        from app.routers.iam_graph import (
+            invalidate_cache as _invalidate_iam_cache,
+        )
+        _invalidate_iam_cache()
+
         _scan_results[scan_id] = {
             "status": "completed",
             "scan_id": scan_id,

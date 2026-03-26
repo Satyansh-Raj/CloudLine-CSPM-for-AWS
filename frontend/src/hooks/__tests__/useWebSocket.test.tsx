@@ -1,12 +1,6 @@
-import {
-  renderHook,
-  act,
-} from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
-import {
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AlertProvider } from "@/context/AlertContext";
 import { useWebSocket } from "../useWebSocket";
 
@@ -17,9 +11,7 @@ interface MockWs {
   url: string;
   readyState: number;
   onopen: ((ev: Event) => void) | null;
-  onmessage:
-    | ((ev: MessageEvent) => void)
-    | null;
+  onmessage: ((ev: MessageEvent) => void) | null;
   onclose: (() => void) | null;
   onerror: (() => void) | null;
   send: ReturnType<typeof vi.fn>;
@@ -33,9 +25,7 @@ class MockWebSocket implements MockWs {
   url: string;
   readyState = 0;
   onopen: ((ev: Event) => void) | null = null;
-  onmessage:
-    | ((ev: MessageEvent) => void)
-    | null = null;
+  onmessage: ((ev: MessageEvent) => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
   send = vi.fn();
@@ -54,11 +44,9 @@ const originalWebSocket = globalThis.WebSocket;
 beforeEach(() => {
   vi.useFakeTimers();
   mockWsInstances = [];
-  globalThis.WebSocket =
-    MockWebSocket as unknown as typeof WebSocket;
+  globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
   // Add OPEN constant to globalThis.WebSocket
-  (globalThis.WebSocket as unknown as { OPEN: number })
-    .OPEN = 1;
+  (globalThis.WebSocket as unknown as { OPEN: number }).OPEN = 1;
   localStorage.clear();
 });
 
@@ -73,11 +61,7 @@ function createWrapper() {
       queries: { retry: false, gcTime: 0 },
     },
   });
-  return function Wrapper({
-    children,
-  }: {
-    children: ReactNode;
-  }) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={qc}>
         <AlertProvider>{children}</AlertProvider>
@@ -93,12 +77,8 @@ describe("useWebSocket", () => {
     });
 
     expect(mockWsInstances).toHaveLength(1);
-    expect(mockWsInstances[0].url).toContain(
-      "/v1/events",
-    );
-    expect(mockWsInstances[0].url).not.toContain(
-      "token=",
-    );
+    expect(mockWsInstances[0].url).toContain("/v1/events");
+    expect(mockWsInstances[0].url).not.toContain("token=");
   });
 
   it("starts ping interval on open", () => {
@@ -222,10 +202,9 @@ describe("useWebSocket", () => {
   });
 
   it("cleans up on unmount", () => {
-    const { unmount } = renderHook(
-      () => useWebSocket(),
-      { wrapper: createWrapper() },
-    );
+    const { unmount } = renderHook(() => useWebSocket(), {
+      wrapper: createWrapper(),
+    });
 
     const ws = mockWsInstances[0];
     ws.readyState = 1;
@@ -237,11 +216,53 @@ describe("useWebSocket", () => {
     expect(ws.close).toHaveBeenCalled();
   });
 
-  it("closes ws if unmounted during onopen", () => {
-    const { unmount } = renderHook(
-      () => useWebSocket(),
-      { wrapper: createWrapper() },
+  it("invalidates iam-graph query on violation events", () => {
+    const qc = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 0 },
+      },
+    });
+    const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
+
+    function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <QueryClientProvider client={qc}>
+          <AlertProvider>{children}</AlertProvider>
+        </QueryClientProvider>
+      );
+    }
+
+    renderHook(() => useWebSocket(), {
+      wrapper: Wrapper,
+    });
+
+    const ws = mockWsInstances[0];
+    ws.readyState = 1;
+    act(() => {
+      ws.onopen?.({} as Event);
+    });
+
+    act(() => {
+      ws.onmessage?.({
+        data: JSON.stringify({
+          type: "violation_new",
+          check_id: "s3_block_public_acls",
+        }),
+      } as MessageEvent);
+    });
+
+    const calledKeys = invalidateSpy.mock.calls.map(
+      (call) => (call[0] as { queryKey: string[] }).queryKey,
     );
+    expect(calledKeys.some((k) => k[0] === "iam-graph")).toBe(true);
+
+    invalidateSpy.mockRestore();
+  });
+
+  it("closes ws if unmounted during onopen", () => {
+    const { unmount } = renderHook(() => useWebSocket(), {
+      wrapper: createWrapper(),
+    });
 
     const ws = mockWsInstances[0];
 
