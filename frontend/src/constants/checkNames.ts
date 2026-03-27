@@ -3,7 +3,7 @@
  * Covers both the new service-based policy structure
  * (iam_XX, ec2_XX, s3_XX, …) and the legacy CHECK_XX IDs.
  * Used across violations, policies, remediation, and
- * executive summary pages.
+ * policy pages.
  */
 const CHECK_NAMES: Record<string, string> = {
   // ── IAM (identity) ─────────────────────────────────────────

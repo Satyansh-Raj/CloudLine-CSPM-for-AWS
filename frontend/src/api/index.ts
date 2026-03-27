@@ -31,4 +31,3 @@ export {
   getInventoryDetail,
 } from "./inventory";
 export { getRegions, type RegionsResponse } from "./regions";
-export { getExecutiveSummary, type ExecutiveSummaryParams } from "./executive";

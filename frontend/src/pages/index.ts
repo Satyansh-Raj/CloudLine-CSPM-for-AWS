@@ -3,7 +3,7 @@ export { default as ViolationsPage } from "./ViolationsPage";
 export { default as ViolationDetailPage } from "./ViolationDetailPage";
 export { default as ResolvedIssuesPage } from "./ResolvedIssuesPage";
 export { default as TrendsPage } from "./TrendsPage";
-export { default as ExecutiveSummaryPage } from "./ExecutiveSummaryPage";
+
 export { default as PlaceholderPage } from "./PlaceholderPage";
 export { default as PoliciesPage } from "./PoliciesPage";
 export { default as IamGraphPage } from "./IamGraphPage";

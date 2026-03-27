@@ -77,10 +77,3 @@ export type {
   InventorySummary,
   InventoryParams,
 } from "./inventory";
-
-export type {
-  DomainBreakdown,
-  SeverityBreakdown,
-  TrendData,
-  ExecutiveSummary,
-} from "./executive";

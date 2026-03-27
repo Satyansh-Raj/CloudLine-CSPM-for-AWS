@@ -11,7 +11,7 @@ export {
   useComplianceFrameworks,
   useComplianceFramework,
 } from "./useComplianceFramework";
-export { useExecutiveSummary } from "./useExecutiveSummary";
+
 export {
   useCreateJiraTicket,
   useDeleteJiraTicket,

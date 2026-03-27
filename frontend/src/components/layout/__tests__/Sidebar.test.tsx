@@ -39,8 +39,7 @@ vi.mock("@/hooks/useAccount", () => ({
 }));
 
 vi.mock("@/api/accounts", () => ({
-  createAccount: (...args: unknown[]) =>
-    mockCreateAccount(...args),
+  createAccount: (...args: unknown[]) => mockCreateAccount(...args),
 }));
 
 import Sidebar from "../Sidebar";
@@ -69,15 +68,12 @@ describe("Sidebar", () => {
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Violations")).toBeInTheDocument();
     expect(screen.getByText("Trends")).toBeInTheDocument();
-    expect(screen.getByText("Executive")).toBeInTheDocument();
   });
 
   it("does NOT show Accounts nav link", () => {
     renderSidebar();
     const links = screen.getAllByRole("link");
-    const accountsLink = links.find(
-      (l) => l.textContent?.includes("Accounts"),
-    );
+    const accountsLink = links.find((l) => l.textContent?.includes("Accounts"));
     expect(accountsLink).toBeUndefined();
   });
 
@@ -89,9 +85,7 @@ describe("Sidebar", () => {
   // Account switcher popover tests
   it("shows active account name in switcher button", () => {
     renderSidebar();
-    expect(
-      screen.getByText("Production"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Production")).toBeInTheDocument();
   });
 
   it("opens popover listing accounts on click", async () => {
@@ -103,13 +97,9 @@ describe("Sidebar", () => {
     });
     await user.click(trigger);
 
-    expect(
-      screen.getByRole("listbox"),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
     expect(screen.getByText("Staging")).toBeInTheDocument();
-    expect(
-      screen.getByText("222222222222"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("222222222222")).toBeInTheDocument();
   });
 
   it("switches account when clicking another account", async () => {
@@ -126,9 +116,7 @@ describe("Sidebar", () => {
       .closest("[role='option']")!;
     await user.click(stagingOption);
 
-    expect(mockSetSelectedAccount).toHaveBeenCalledWith(
-      "222222222222",
-    );
+    expect(mockSetSelectedAccount).toHaveBeenCalledWith("222222222222");
   });
 
   it("shows All Accounts option in popover", async () => {
@@ -140,9 +128,7 @@ describe("Sidebar", () => {
     });
     await user.click(trigger);
 
-    expect(
-      screen.getByText("All Accounts"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("All Accounts")).toBeInTheDocument();
   });
 
   it("shows Add Account button in popover", async () => {
@@ -175,18 +161,10 @@ describe("Sidebar", () => {
     });
     await user.click(addBtn);
 
-    expect(
-      screen.getByRole("dialog"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Account Name"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Account ID"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Role ARN"),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Account Name")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Account ID")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Role ARN")).toBeInTheDocument();
   });
 
   it("submits Add Account form and refreshes", async () => {
@@ -210,14 +188,8 @@ describe("Sidebar", () => {
     await user.click(addBtn);
 
     // Fill form
-    await user.type(
-      screen.getByPlaceholderText("Account Name"),
-      "Dev",
-    );
-    await user.type(
-      screen.getByPlaceholderText("Account ID"),
-      "333333333333",
-    );
+    await user.type(screen.getByPlaceholderText("Account Name"), "Dev");
+    await user.type(screen.getByPlaceholderText("Account ID"), "333333333333");
     await user.type(
       screen.getByPlaceholderText("Role ARN"),
       "arn:aws:iam::333333333333:role/R",

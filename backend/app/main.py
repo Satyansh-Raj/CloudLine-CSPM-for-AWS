@@ -24,7 +24,7 @@ from app.routers import (
     accounts,
     compliance,
     drift,
-    executive,
+
     iam_graph,
     inventory,
     jira,
@@ -48,6 +48,7 @@ async def lifespan(app: FastAPI):
     from app.dependencies import (
         get_boto3_session,
         get_evaluator,
+        get_resource_store,
         get_settings as _get_settings,
         get_state_manager,
     )
@@ -77,6 +78,7 @@ async def lifespan(app: FastAPI):
                     settings=_get_settings(),
                     evaluator=get_evaluator(),
                     state_manager=get_state_manager(),
+                    resource_store=get_resource_store(),
                 )
                 logger.info(
                     "Auto-scan complete [%s]", scan_id
@@ -170,9 +172,7 @@ app.include_router(
 app.include_router(
     compliance.router, prefix="/api/v1"
 )
-app.include_router(
-    executive.router, prefix="/api/v1"
-)
+
 app.include_router(
     drift.router, prefix="/api/v1"
 )

@@ -17,8 +17,8 @@ export interface RemediationMethod {
 interface ParsedArn {
   raw: string;
   service: string;
-  region: string;      // empty string when not in ARN (S3, IAM)
-  accountId: string;   // empty string when not in ARN
+  region: string; // empty string when not in ARN (S3, IAM)
+  accountId: string; // empty string when not in ARN
   resourceType: string;
   resourceId: string;
 }
@@ -40,30 +40,49 @@ function parseArn(resource: string): ParsedArn {
   const parts = resource.split(":");
   if (parts.length < 6) return fallback;
 
-  const service     = parts[2] ?? "";
-  const region      = parts[3] ?? "";
-  const accountId   = parts[4] ?? "";
+  const service = parts[2] ?? "";
+  const region = parts[3] ?? "";
+  const accountId = parts[4] ?? "";
   const resourcePart = parts.slice(5).join(":");
 
   let resourceType = "";
-  let resourceId   = resourcePart;
+  let resourceId = resourcePart;
 
   const noSplit = [
-    "root", "no-trails", "no-recorder", "no-detector",
-    "no-plans", "access-analyzer", "password-policy",
+    "root",
+    "no-trails",
+    "no-recorder",
+    "no-detector",
+    "no-plans",
+    "access-analyzer",
+    "password-policy",
   ];
 
   if (resourcePart.includes("/")) {
     const idx = resourcePart.indexOf("/");
     resourceType = resourcePart.slice(0, idx);
-    resourceId   = resourcePart.slice(idx + 1);
+    resourceId = resourcePart.slice(idx + 1);
   } else if (resourcePart.includes(":") && !noSplit.includes(resourcePart)) {
     const idx = resourcePart.indexOf(":");
     resourceType = resourcePart.slice(0, idx);
-    resourceId   = resourcePart.slice(idx + 1);
+    resourceId = resourcePart.slice(idx + 1);
   }
 
-  return { raw: resource, service, region, accountId, resourceType, resourceId };
+  // Secrets Manager ARNs append a random 6-char suffix
+  // (e.g. "MySecret-yEqB2B") that is NOT part of the
+  // secret name. Strip it so --secret-id works correctly.
+  if (service === "secretsmanager" && resourceType === "secret") {
+    resourceId = resourceId.replace(/-[A-Za-z0-9]{6}$/, "");
+  }
+
+  return {
+    raw: resource,
+    service,
+    region,
+    accountId,
+    resourceType,
+    resourceId,
+  };
 }
 
 // ─── Shell variable helpers ───────────────────────────────────
@@ -72,9 +91,7 @@ function parseArn(resource: string): ParsedArn {
 // If absent, it is derived from the configured AWS CLI profile.
 
 function reg(r: string): string {
-  return r
-    ? `REGION="${r}"`
-    : `REGION=$(aws configure get region)`;
+  return r ? `REGION="${r}"` : `REGION=$(aws configure get region)`;
 }
 
 function acct(a: string): string {
@@ -90,7 +107,6 @@ type RemediationFactory = (p: ParsedArn) => RemediationMethod;
 // ─── Per-check factories ──────────────────────────────────────
 
 const FACTORIES: Record<string, RemediationFactory> = {
-
   // iam_root_mfa — Root account MFA
   iam_root_mfa: ({ accountId }) => ({
     console: [
@@ -247,7 +263,8 @@ resource "aws_s3_bucket_public_access_block" "fix" {
 
   // cloudtrail_enabled — CloudTrail logging disabled
   cloudtrail_enabled: ({ region, accountId, resourceId }) => {
-    const trailName = resourceId === "no-trails" ? "cloudline-trail" : resourceId;
+    const trailName =
+      resourceId === "no-trails" ? "cloudline-trail" : resourceId;
     return {
       console: [
         "Open CloudTrail console → Trails → Create trail.",
@@ -3611,9 +3628,7 @@ resource "aws_guardduty_detector" "main" {
 
   // awssec_guardduty_detector — No GuardDuty detector found
   awssec_guardduty_detector: ({ region }) => ({
-    console: [
-      "Open GuardDuty console → Get Started → Enable GuardDuty.",
-    ],
+    console: ["Open GuardDuty console → Get Started → Enable GuardDuty."],
     cli: `\
 ${reg(region)}
 
@@ -3630,9 +3645,7 @@ resource "aws_guardduty_detector" "fix" {
 
   // awssec_guardduty_s3_protection — GuardDuty S3 protection disabled
   awssec_guardduty_s3_protection: ({ resourceId, region }) => ({
-    console: [
-      `Open GuardDuty console → Settings → S3 Protection → Enable.`,
-    ],
+    console: [`Open GuardDuty console → Settings → S3 Protection → Enable.`],
     cli: `\
 DETECTOR_ID="${resourceId}"
 ${reg(region)}
@@ -7108,9 +7121,7 @@ resource "aws_cloudwatch_metric_alarm" "s3_policy_changes" {
 
   // cloudwatch_vpc_changes_alarm — No alarm for VPC changes
   cloudwatch_vpc_changes_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for VPC changes metric.",
-    ],
+    console: ["Create CloudWatch alarm for VPC changes metric."],
     cli: `\
 ${reg(region)}
 
@@ -7140,9 +7151,7 @@ resource "aws_cloudwatch_metric_alarm" "vpc_changes" {
 
   // cloudwatch_sg_changes_alarm — No alarm for security group changes
   cloudwatch_sg_changes_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for SecurityGroupChanges metric.",
-    ],
+    console: ["Create CloudWatch alarm for SecurityGroupChanges metric."],
     cli: `\
 ${reg(region)}
 
@@ -7172,9 +7181,7 @@ resource "aws_cloudwatch_metric_alarm" "sg_changes" {
 
   // cloudwatch_nacl_changes_alarm — No alarm for NACL changes
   cloudwatch_nacl_changes_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for NACLChanges metric.",
-    ],
+    console: ["Create CloudWatch alarm for NACLChanges metric."],
     cli: `\
 ${reg(region)}
 
@@ -7204,9 +7211,7 @@ resource "aws_cloudwatch_metric_alarm" "nacl_changes" {
 
   // cloudwatch_igw_changes_alarm — No alarm for internet gateway changes
   cloudwatch_igw_changes_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for IGW changes metric.",
-    ],
+    console: ["Create CloudWatch alarm for IGW changes metric."],
     cli: `\
 ${reg(region)}
 
@@ -7326,9 +7331,7 @@ aws cloudwatch describe-alarms \\
 
   // cloudwatch_failed_login_alarm — No alarm for failed console sign-in
   cloudwatch_failed_login_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for FailedConsoleSignIn metric.",
-    ],
+    console: ["Create CloudWatch alarm for FailedConsoleSignIn metric."],
     cli: `\
 ${reg(region)}
 
@@ -7358,9 +7361,7 @@ resource "aws_cloudwatch_metric_alarm" "failed_login" {
 
   // cloudwatch_cmk_deletion_alarm — No alarm for CMK deletion/disable
   cloudwatch_cmk_deletion_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for KMS key deletion/disable events.",
-    ],
+    console: ["Create CloudWatch alarm for KMS key deletion/disable events."],
     cli: `\
 ${reg(region)}
 
@@ -7390,9 +7391,7 @@ resource "aws_cloudwatch_metric_alarm" "cmk_deletion" {
 
   // cloudwatch_config_changes_alarm — No alarm for AWS Config changes
   cloudwatch_config_changes_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for Config configuration changes.",
-    ],
+    console: ["Create CloudWatch alarm for Config configuration changes."],
     cli: `\
 ${reg(region)}
 
@@ -7422,9 +7421,7 @@ resource "aws_cloudwatch_metric_alarm" "config_changes" {
 
   // cloudwatch_org_changes_alarm — No alarm for AWS Organizations changes
   cloudwatch_org_changes_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for Organizations changes.",
-    ],
+    console: ["Create CloudWatch alarm for Organizations changes."],
     cli: `\
 ${reg(region)}
 
@@ -7475,9 +7472,7 @@ resource "aws_cloudwatch_log_group" "fix" {
 
   // cloudwatch_route_table_alarm — No alarm for route table changes
   cloudwatch_route_table_alarm: ({ region }) => ({
-    console: [
-      "Create CloudWatch alarm for route table changes metric.",
-    ],
+    console: ["Create CloudWatch alarm for route table changes metric."],
     cli: `\
 ${reg(region)}
 
@@ -7541,19 +7536,37 @@ resource "aws_accessanalyzer_analyzer" "fix" {
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
-      "Check 'Require at least one uppercase letter'.",
+      "Ensure ALL settings are configured: uppercase, lowercase, numbers, symbols, min length 14, reuse prevention 24, max age 90.",
       "Click Save changes.",
     ],
     cli: `\
+# IMPORTANT: This command replaces the ENTIRE password policy.
+# All flags must be specified in a single call or unset
+# flags revert to defaults.
 aws iam update-account-password-policy \\
-  --require-uppercase-characters
+  --minimum-password-length 14 \\
+  --require-uppercase-characters \\
+  --require-lowercase-characters \\
+  --require-numbers \\
+  --require-symbols \\
+  --allow-users-to-change-password \\
+  --max-password-age 90 \\
+  --password-reuse-prevention 24 \\
+  --hard-expiry false
 
 # Verify
-aws iam get-account-password-policy \\
-  --query 'PasswordPolicy.RequireUppercaseCharacters'`,
+aws iam get-account-password-policy`,
     terraform: `\
-resource "aws_iam_account_password_policy" "fix" {
-  require_uppercase_characters = true
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 24
+  hard_expiry                    = false
 }`,
   }),
 
@@ -7562,19 +7575,37 @@ resource "aws_iam_account_password_policy" "fix" {
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
-      "Check 'Require at least one lowercase letter'.",
+      "Ensure ALL settings are configured: uppercase, lowercase, numbers, symbols, min length 14, reuse prevention 24, max age 90.",
       "Click Save changes.",
     ],
     cli: `\
+# IMPORTANT: This command replaces the ENTIRE password policy.
+# All flags must be specified in a single call or unset
+# flags revert to defaults.
 aws iam update-account-password-policy \\
-  --require-lowercase-characters
+  --minimum-password-length 14 \\
+  --require-uppercase-characters \\
+  --require-lowercase-characters \\
+  --require-numbers \\
+  --require-symbols \\
+  --allow-users-to-change-password \\
+  --max-password-age 90 \\
+  --password-reuse-prevention 24 \\
+  --hard-expiry false
 
 # Verify
-aws iam get-account-password-policy \\
-  --query 'PasswordPolicy.RequireLowercaseCharacters'`,
+aws iam get-account-password-policy`,
     terraform: `\
-resource "aws_iam_account_password_policy" "fix" {
-  require_lowercase_characters = true
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 24
+  hard_expiry                    = false
 }`,
   }),
 
@@ -7583,19 +7614,37 @@ resource "aws_iam_account_password_policy" "fix" {
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
-      "Check 'Require at least one number'.",
+      "Ensure ALL settings are configured: uppercase, lowercase, numbers, symbols, min length 14, reuse prevention 24, max age 90.",
       "Click Save changes.",
     ],
     cli: `\
+# IMPORTANT: This command replaces the ENTIRE password policy.
+# All flags must be specified in a single call or unset
+# flags revert to defaults.
 aws iam update-account-password-policy \\
-  --require-numbers
+  --minimum-password-length 14 \\
+  --require-uppercase-characters \\
+  --require-lowercase-characters \\
+  --require-numbers \\
+  --require-symbols \\
+  --allow-users-to-change-password \\
+  --max-password-age 90 \\
+  --password-reuse-prevention 24 \\
+  --hard-expiry false
 
 # Verify
-aws iam get-account-password-policy \\
-  --query 'PasswordPolicy.RequireNumbers'`,
+aws iam get-account-password-policy`,
     terraform: `\
-resource "aws_iam_account_password_policy" "fix" {
-  require_numbers = true
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 24
+  hard_expiry                    = false
 }`,
   }),
 
@@ -7604,19 +7653,37 @@ resource "aws_iam_account_password_policy" "fix" {
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
-      "Check 'Require at least one non-alphanumeric character'.",
+      "Ensure ALL settings are configured: uppercase, lowercase, numbers, symbols, min length 14, reuse prevention 24, max age 90.",
       "Click Save changes.",
     ],
     cli: `\
+# IMPORTANT: This command replaces the ENTIRE password policy.
+# All flags must be specified in a single call or unset
+# flags revert to defaults.
 aws iam update-account-password-policy \\
-  --require-symbols
+  --minimum-password-length 14 \\
+  --require-uppercase-characters \\
+  --require-lowercase-characters \\
+  --require-numbers \\
+  --require-symbols \\
+  --allow-users-to-change-password \\
+  --max-password-age 90 \\
+  --password-reuse-prevention 24 \\
+  --hard-expiry false
 
 # Verify
-aws iam get-account-password-policy \\
-  --query 'PasswordPolicy.RequireSymbols'`,
+aws iam get-account-password-policy`,
     terraform: `\
-resource "aws_iam_account_password_policy" "fix" {
-  require_symbols = true
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 24
+  hard_expiry                    = false
 }`,
   }),
 
@@ -7625,19 +7692,37 @@ resource "aws_iam_account_password_policy" "fix" {
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
-      "Set 'Number of passwords to remember' to 24.",
+      "Ensure ALL settings are configured: uppercase, lowercase, numbers, symbols, min length 14, reuse prevention 24, max age 90.",
       "Click Save changes.",
     ],
     cli: `\
+# IMPORTANT: This command replaces the ENTIRE password policy.
+# All flags must be specified in a single call or unset
+# flags revert to defaults.
 aws iam update-account-password-policy \\
-  --password-reuse-prevention 24
+  --minimum-password-length 14 \\
+  --require-uppercase-characters \\
+  --require-lowercase-characters \\
+  --require-numbers \\
+  --require-symbols \\
+  --allow-users-to-change-password \\
+  --max-password-age 90 \\
+  --password-reuse-prevention 24 \\
+  --hard-expiry false
 
 # Verify
-aws iam get-account-password-policy \\
-  --query 'PasswordPolicy.PasswordReusePrevention'`,
+aws iam get-account-password-policy`,
     terraform: `\
-resource "aws_iam_account_password_policy" "fix" {
-  password_reuse_prevention = 24
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 24
+  hard_expiry                    = false
 }`,
   }),
 
@@ -7646,19 +7731,37 @@ resource "aws_iam_account_password_policy" "fix" {
     console: [
       "Open IAM console → Account settings.",
       "Click Change password policy.",
-      "Set 'Password expiration period' to 90 days.",
+      "Ensure ALL settings are configured: uppercase, lowercase, numbers, symbols, min length 14, reuse prevention 24, max age 90.",
       "Click Save changes.",
     ],
     cli: `\
+# IMPORTANT: This command replaces the ENTIRE password policy.
+# All flags must be specified in a single call or unset
+# flags revert to defaults.
 aws iam update-account-password-policy \\
-  --max-password-age 90
+  --minimum-password-length 14 \\
+  --require-uppercase-characters \\
+  --require-lowercase-characters \\
+  --require-numbers \\
+  --require-symbols \\
+  --allow-users-to-change-password \\
+  --max-password-age 90 \\
+  --password-reuse-prevention 24 \\
+  --hard-expiry false
 
 # Verify
-aws iam get-account-password-policy \\
-  --query 'PasswordPolicy.MaxPasswordAge'`,
+aws iam get-account-password-policy`,
     terraform: `\
-resource "aws_iam_account_password_policy" "fix" {
-  max_password_age = 90
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 24
+  hard_expiry                    = false
 }`,
   }),
 

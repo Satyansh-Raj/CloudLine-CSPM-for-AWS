@@ -118,6 +118,34 @@ def _process_region(
             if existing
             else now
         )
+
+        # Detect alarm→ok transition: use
+        # update_status so resolved_at,
+        # previous_status and ttl are set properly.
+        if (
+            existing
+            and existing.status == "alarm"
+            and v.status == "ok"
+        ):
+            if state_manager.update_status(
+                account_id,
+                region,
+                v.check_id,
+                resource,
+                new_status="ok",
+                reason=getattr(v, "reason", ""),
+                risk_score=dims.composite,
+            ):
+                persisted += 1
+                stale_resolved += 1
+                logger.info(
+                    "Resolved via compliant result:"
+                    " %s / %s",
+                    v.check_id,
+                    resource,
+                )
+            continue
+
         state = ViolationState(
             pk=pk,
             sk=f"{v.check_id}#{resource}",
@@ -266,21 +294,34 @@ def _process_region(
                 if resource_store.put_resource(rec):
                     inventory_persisted += 1
 
-            # Only count records whose effective region
-            # matches this scan region.  S3 buckets may
-            # have a different true region (via
-            # region_override) — we must NOT include them
-            # in `seen` so the old stale record for
-            # this scan region gets deactivated.
+            # Build set of resources whose effective
+            # region matches this scan region.  S3
+            # buckets may have a different true region
+            # (via region_override) — exclude them so
+            # stale records for *this* region are caught.
             seen = {
                 (r.resource_type, r.resource_id)
                 for r in resource_records
                 if r.region == region
             }
+            # Track which resource types the collectors
+            # actually returned data for.  If a collector
+            # fails (permissions, rate-limit, timeout),
+            # its type won't appear here and we skip
+            # deactivation for that type — preventing
+            # mass false-positive deactivation.
+            collected_types = {
+                r.resource_type
+                for r in resource_records
+                if r.region == region
+            }
+
             existing = resource_store.query_by_account(
                 account_id, region, limit=5000,
             )
             for ex in existing:
+                if ex.resource_type not in collected_types:
+                    continue
                 key = (
                     ex.resource_type,
                     ex.resource_id,

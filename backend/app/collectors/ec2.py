@@ -1,6 +1,7 @@
 """EC2, Security Groups, and EBS collector."""
 
 import logging
+from datetime import datetime, timezone
 
 from app.collectors.base import BaseCollector
 
@@ -52,8 +53,15 @@ class EC2Collector(BaseCollector):
                     asg_client
                 )
             ),
-            "ebs_snapshots": (
+            "snapshots": (
                 self._get_ebs_snapshots(ec2)
+            ),
+            "elastic_ips": (
+                self._get_elastic_ips(ec2)
+            ),
+            "amis": self._get_amis(ec2),
+            "default_vpc_id": (
+                self._get_default_vpc_id(ec2)
             ),
         }
 
@@ -120,23 +128,32 @@ class EC2Collector(BaseCollector):
             f":instance/{iid}"
         )
 
-        # Security groups
-        sg_ids = [
-            sg["GroupId"]
+        # Security groups — list of objects
+        sg_list = [
+            {
+                "group_id": sg.get(
+                    "GroupId", ""
+                ),
+                "group_name": sg.get(
+                    "GroupName", ""
+                ),
+            }
             for sg in inst.get(
                 "SecurityGroups", []
             )
         ]
 
-        # IAM role
-        iam_role = None
+        # IAM instance profile
+        iam_instance_profile = None
         profile = inst.get("IamInstanceProfile")
         if profile:
-            iam_role = {
+            iam_instance_profile = {
                 "role_name": profile.get(
                     "Arn", ""
                 ).split("/")[-1],
-                "role_arn": profile.get("Arn", ""),
+                "role_arn": profile.get(
+                    "Arn", ""
+                ),
                 "attached_policies": [],
             }
 
@@ -151,29 +168,194 @@ class EC2Collector(BaseCollector):
             ),
         }
 
+        # Monitoring
+        monitoring_raw = inst.get(
+            "Monitoring", {}
+        )
+        monitoring = {
+            "state": monitoring_raw.get(
+                "State", "disabled"
+            ),
+        }
+
         # Tags
         tags = {
             t["Key"]: t["Value"]
             for t in inst.get("Tags", [])
         }
 
+        # Block device mappings
+        block_device_mappings = []
+        for bdm in inst.get(
+            "BlockDeviceMappings", []
+        ):
+            ebs_info = bdm.get("Ebs", {})
+            block_device_mappings.append({
+                "device_name": bdm.get(
+                    "DeviceName", ""
+                ),
+                "ebs": {
+                    "volume_id": ebs_info.get(
+                        "VolumeId", ""
+                    ),
+                    "status": ebs_info.get(
+                        "Status", ""
+                    ),
+                    "encrypted": (
+                        self._get_volume_encrypted(
+                            ec2,
+                            ebs_info.get(
+                                "VolumeId", ""
+                            ),
+                        )
+                    ),
+                },
+            })
+
+        # Termination protection
+        disable_api_termination = (
+            self._get_termination_protection(
+                ec2, iid
+            )
+        )
+
+        # State as object with name field
+        state = {
+            "name": inst["State"]["Name"],
+            "code": inst["State"].get("Code", 0),
+        }
+
+        # Compute days_since_stopped
+        days_since_stopped = (
+            self._compute_days_since_stopped(
+                inst
+            )
+        )
+
         return {
             "instance_id": iid,
             "arn": arn,
-            "state": inst["State"]["Name"],
-            "public_ip": inst.get(
+            "state": state,
+            "instance_type": inst.get(
+                "InstanceType", ""
+            ),
+            "key_name": inst.get(
+                "KeyName"
+            ),
+            "public_ip_address": inst.get(
                 "PublicIpAddress"
             ),
-            "private_ip": inst.get(
+            "private_ip_address": inst.get(
                 "PrivateIpAddress"
             ),
             "subnet_id": inst.get("SubnetId"),
             "vpc_id": inst.get("VpcId"),
-            "security_groups": sg_ids,
-            "iam_role": iam_role,
+            "security_groups": sg_list,
+            "iam_instance_profile": (
+                iam_instance_profile
+            ),
             "metadata_options": metadata_options,
+            "monitoring": monitoring,
+            "block_device_mappings": (
+                block_device_mappings
+            ),
+            "root_device_name": inst.get(
+                "RootDeviceName", ""
+            ),
+            "disable_api_termination": (
+                disable_api_termination
+            ),
+            "days_since_stopped": (
+                days_since_stopped
+            ),
             "tags": tags,
         }
+
+    def _get_volume_encrypted(
+        self, ec2, volume_id: str
+    ) -> bool:
+        """Check if an EBS volume is encrypted."""
+        if not volume_id:
+            return False
+        try:
+            resp = ec2.describe_volumes(
+                VolumeIds=[volume_id]
+            )
+            vols = resp.get("Volumes", [])
+            if vols:
+                return vols[0].get(
+                    "Encrypted", False
+                )
+        except Exception as e:
+            logger.error(
+                "EC2 volume encrypted check "
+                "%s: %s",
+                volume_id,
+                e,
+            )
+        return False
+
+    def _get_termination_protection(
+        self, ec2, instance_id: str
+    ) -> bool:
+        """Check if termination protection is
+        disabled for an instance.
+
+        Returns False (protection disabled) when
+        the attribute is False or on error."""
+        try:
+            resp = ec2.describe_instance_attribute(
+                InstanceId=instance_id,
+                Attribute="disableApiTermination",
+            )
+            val = resp.get(
+                "DisableApiTermination", {}
+            )
+            return val.get("Value", False)
+        except Exception as e:
+            logger.error(
+                "EC2 termination protection "
+                "%s: %s",
+                instance_id,
+                e,
+            )
+        return False
+
+    def _compute_days_since_stopped(
+        self, inst: dict
+    ) -> int | None:
+        """Compute days since instance was stopped.
+
+        Uses StateTransitionReason which contains
+        the stop timestamp. Returns None if the
+        instance is not stopped or the timestamp
+        cannot be parsed."""
+        state_name = inst["State"]["Name"]
+        if state_name != "stopped":
+            return None
+        reason = inst.get(
+            "StateTransitionReason", ""
+        )
+        # Format: "User initiated (YYYY-MM-DD ...)"
+        try:
+            if "(" in reason and ")" in reason:
+                ts_str = reason.split("(")[1]
+                ts_str = ts_str.rstrip(")")
+                ts_str = ts_str.strip()
+                stopped_at = datetime.strptime(
+                    ts_str, "%Y-%m-%d %H:%M:%S %Z"
+                ).replace(tzinfo=timezone.utc)
+                now = datetime.now(timezone.utc)
+                delta = now - stopped_at
+                return delta.days
+        except Exception as e:
+            logger.error(
+                "EC2 days_since_stopped parse "
+                "%s: %s",
+                inst["InstanceId"],
+                e,
+            )
+        return 0
 
     def _get_security_groups(
         self,
@@ -207,45 +389,15 @@ class EC2Collector(BaseCollector):
     def _build_security_group(
         self, sg: dict
     ) -> dict:
-        ingress_rules = []
-        for perm in sg.get("IpPermissions", []):
-            from_port = perm.get("FromPort", -1)
-            to_port = perm.get("ToPort", -1)
-            protocol = perm.get(
-                "IpProtocol", "-1"
+        ip_permissions = self._build_ip_permissions(
+            sg.get("IpPermissions", [])
+        )
+        ip_permissions_egress = (
+            self._build_ip_permissions(
+                sg.get("IpPermissionsEgress", [])
             )
-            for ip_range in perm.get(
-                "IpRanges", []
-            ):
-                ingress_rules.append(
-                    {
-                        "from_port": from_port,
-                        "to_port": to_port,
-                        "protocol": protocol,
-                        "cidr": ip_range.get(
-                            "CidrIp", ""
-                        ),
-                        "description": ip_range.get(
-                            "Description", ""
-                        ),
-                    }
-                )
-            for ip_range in perm.get(
-                "Ipv6Ranges", []
-            ):
-                ingress_rules.append(
-                    {
-                        "from_port": from_port,
-                        "to_port": to_port,
-                        "protocol": protocol,
-                        "cidr": ip_range.get(
-                            "CidrIpv6", ""
-                        ),
-                        "description": ip_range.get(
-                            "Description", ""
-                        ),
-                    }
-                )
+        )
+
         sg_id = sg["GroupId"]
         region = self._region
         account = self._get_account_id()
@@ -253,6 +405,12 @@ class EC2Collector(BaseCollector):
             f"arn:aws:ec2:{region}:{account}"
             f":security-group/{sg_id}"
         )
+
+        tags = {
+            t["Key"]: t["Value"]
+            for t in sg.get("Tags", [])
+        }
+
         return {
             "group_id": sg_id,
             "group_name": sg.get(
@@ -260,8 +418,65 @@ class EC2Collector(BaseCollector):
             ),
             "arn": arn,
             "vpc_id": sg.get("VpcId", ""),
-            "ingress_rules": ingress_rules,
+            "ip_permissions": ip_permissions,
+            "ip_permissions_egress": (
+                ip_permissions_egress
+            ),
+            "tags": tags,
         }
+
+    def _build_ip_permissions(
+        self, perms: list[dict]
+    ) -> list[dict]:
+        """Convert boto3 IpPermissions list to the
+        format expected by OPA Rego policies.
+
+        Each permission has: from_port, to_port,
+        ip_protocol, ip_ranges, ipv6_ranges."""
+        result = []
+        for perm in perms:
+            from_port = perm.get("FromPort", -1)
+            to_port = perm.get("ToPort", -1)
+            protocol = perm.get(
+                "IpProtocol", "-1"
+            )
+
+            ip_ranges = [
+                {
+                    "cidr_ip": r.get(
+                        "CidrIp", ""
+                    ),
+                    "description": r.get(
+                        "Description", ""
+                    ),
+                }
+                for r in perm.get(
+                    "IpRanges", []
+                )
+            ]
+
+            ipv6_ranges = [
+                {
+                    "cidr_ipv6": r.get(
+                        "CidrIpv6", ""
+                    ),
+                    "description": r.get(
+                        "Description", ""
+                    ),
+                }
+                for r in perm.get(
+                    "Ipv6Ranges", []
+                )
+            ]
+
+            result.append({
+                "from_port": from_port,
+                "to_port": to_port,
+                "ip_protocol": protocol,
+                "ip_ranges": ip_ranges,
+                "ipv6_ranges": ipv6_ranges,
+            })
+        return result
 
     def _get_ebs_volumes(
         self,
@@ -423,28 +638,12 @@ class EC2Collector(BaseCollector):
                             "Tags", []
                         )
                     }
-                    # Check if public
-                    is_public = False
-                    try:
-                        attr = (
-                            ec2
-                            .describe_snapshot_attribute(
-                                SnapshotId=sid,
-                                Attribute=(
-                                    "createVolumePermission"
-                                ),
-                            )
+                    # Get volume permissions
+                    create_volume_permissions = (
+                        self._get_snapshot_perms(
+                            ec2, sid
                         )
-                        perms = attr.get(
-                            "CreateVolumePermissions",
-                            [],
-                        )
-                        is_public = any(
-                            p.get("Group") == "all"
-                            for p in perms
-                        )
-                    except Exception:
-                        pass
+                    )
                     snapshots.append(
                         {
                             "snapshot_id": sid,
@@ -456,7 +655,9 @@ class EC2Collector(BaseCollector):
                                 "Encrypted",
                                 False,
                             ),
-                            "is_public": is_public,
+                            "create_volume_permissions": (
+                                create_volume_permissions
+                            ),
                             "tags": snap_tags,
                         }
                     )
@@ -465,3 +666,150 @@ class EC2Collector(BaseCollector):
                 "EC2 describe_snapshots: %s", e
             )
         return snapshots
+
+    def _get_snapshot_perms(
+        self, ec2, snapshot_id: str
+    ) -> list[dict]:
+        """Fetch create-volume permissions for a
+        snapshot. Returns list of permission dicts
+        with 'group' and/or 'user_id' keys."""
+        try:
+            attr = (
+                ec2.describe_snapshot_attribute(
+                    SnapshotId=snapshot_id,
+                    Attribute=(
+                        "createVolumePermission"
+                    ),
+                )
+            )
+            raw_perms = attr.get(
+                "CreateVolumePermissions", []
+            )
+            return [
+                {
+                    "group": p.get("Group"),
+                    "user_id": p.get("UserId"),
+                }
+                for p in raw_perms
+            ]
+        except Exception as e:
+            logger.error(
+                "EC2 snapshot permissions "
+                "%s: %s",
+                snapshot_id,
+                e,
+            )
+        return []
+
+    def _get_elastic_ips(
+        self, ec2
+    ) -> list[dict]:
+        """Collect Elastic IP addresses."""
+        eips = []
+        try:
+            resp = ec2.describe_addresses()
+            for addr in resp.get(
+                "Addresses", []
+            ):
+                alloc_id = addr.get(
+                    "AllocationId", ""
+                )
+                region = self._region
+                account = self._get_account_id()
+                arn = (
+                    f"arn:aws:ec2:{region}"
+                    f":{account}"
+                    f":elastic-ip/{alloc_id}"
+                )
+                tags = {
+                    t["Key"]: t["Value"]
+                    for t in addr.get("Tags", [])
+                }
+                eips.append({
+                    "allocation_id": alloc_id,
+                    "public_ip": addr.get(
+                        "PublicIp", ""
+                    ),
+                    "instance_id": addr.get(
+                        "InstanceId"
+                    ),
+                    "network_interface_id": (
+                        addr.get(
+                            "NetworkInterfaceId"
+                        )
+                    ),
+                    "association_id": addr.get(
+                        "AssociationId"
+                    ),
+                    "arn": arn,
+                    "tags": tags,
+                })
+        except Exception as e:
+            logger.error(
+                "EC2 describe_addresses: %s", e
+            )
+        return eips
+
+    def _get_amis(self, ec2) -> list[dict]:
+        """Collect AMIs owned by this account."""
+        amis = []
+        try:
+            resp = ec2.describe_images(
+                Owners=["self"]
+            )
+            for img in resp.get("Images", []):
+                image_id = img.get("ImageId", "")
+                region = self._region
+                account = self._get_account_id()
+                arn = (
+                    f"arn:aws:ec2:{region}"
+                    f":{account}"
+                    f":image/{image_id}"
+                )
+                tags = {
+                    t["Key"]: t["Value"]
+                    for t in img.get("Tags", [])
+                }
+                amis.append({
+                    "image_id": image_id,
+                    "arn": arn,
+                    "name": img.get("Name", ""),
+                    "owner_id": img.get(
+                        "OwnerId", ""
+                    ),
+                    "public": img.get(
+                        "Public", False
+                    ),
+                    "state": img.get(
+                        "State", ""
+                    ),
+                    "tags": tags,
+                })
+        except Exception as e:
+            logger.error(
+                "EC2 describe_images: %s", e
+            )
+        return amis
+
+    def _get_default_vpc_id(
+        self, ec2
+    ) -> str | None:
+        """Find the default VPC ID for this
+        region, or None if there is none."""
+        try:
+            resp = ec2.describe_vpcs(
+                Filters=[
+                    {
+                        "Name": "is-default",
+                        "Values": ["true"],
+                    }
+                ]
+            )
+            vpcs = resp.get("Vpcs", [])
+            if vpcs:
+                return vpcs[0].get("VpcId")
+        except Exception as e:
+            logger.error(
+                "EC2 default VPC lookup: %s", e
+            )
+        return None

@@ -101,21 +101,20 @@ describe("PoliciesPage", () => {
         screen.getAllByText("Identity & Access").length,
       ).toBeGreaterThanOrEqual(1);
     });
-    // Domain headers are <span> elements inside
-    // group buttons — use getAllByText since the
-    // GUI form dropdown also contains these labels.
     expect(
       screen.getAllByText("Data Protection").length,
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Network").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows check ids and names", async () => {
+  it("shows service titles derived from check ids", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("iam_root_mfa")).toBeInTheDocument();
+      // getServiceTitle extracts prefix: iam → "IAM"
+      expect(screen.getByText("IAM")).toBeInTheDocument();
     });
-    expect(screen.getByText("Name for iam_root_mfa")).toBeInTheDocument();
+    expect(screen.getByText("S3")).toBeInTheDocument();
+    expect(screen.getByText("VPC")).toBeInTheDocument();
   });
 
   it("shows severity badges", async () => {
@@ -138,20 +137,20 @@ describe("PoliciesPage", () => {
   it("filters policies by search query", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("iam_root_mfa")).toBeInTheDocument();
+      expect(screen.getByText("IAM")).toBeInTheDocument();
     });
     const searchInput = screen.getByPlaceholderText("Search rules...");
     fireEvent.change(searchInput, {
       target: { value: "vpc" },
     });
-    expect(screen.queryByText("iam_root_mfa")).not.toBeInTheDocument();
-    expect(screen.getByText("vpc_flow_logs")).toBeInTheDocument();
+    expect(screen.queryByText("IAM")).not.toBeInTheDocument();
+    expect(screen.getByText("VPC")).toBeInTheDocument();
   });
 
   it("shows no-match message when filter has no results", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("iam_root_mfa")).toBeInTheDocument();
+      expect(screen.getByText("IAM")).toBeInTheDocument();
     });
     const searchInput = screen.getByPlaceholderText("Search rules...");
     fireEvent.change(searchInput, {
@@ -165,19 +164,17 @@ describe("PoliciesPage", () => {
   it("collapses domain groups on click", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("iam_root_mfa")).toBeInTheDocument();
+      expect(screen.getByText("IAM")).toBeInTheDocument();
     });
-    // The domain header is a button, not an option
     const identityHeaders = screen.getAllByText("Identity & Access");
-    // Find the one that is a span inside a button
     const headerSpan = identityHeaders.find(
       (el) => el.tagName === "SPAN" && el.closest("button"),
     )!;
     fireEvent.click(headerSpan);
-    expect(screen.queryByText("iam_root_mfa")).not.toBeInTheDocument();
+    expect(screen.queryByText("IAM")).not.toBeInTheDocument();
     // Expand again
     fireEvent.click(headerSpan);
-    expect(screen.getByText("iam_root_mfa")).toBeInTheDocument();
+    expect(screen.getByText("IAM")).toBeInTheDocument();
   });
 
   it("shows total count badge", async () => {
@@ -290,7 +287,7 @@ describe("PoliciesPage — view source", () => {
   it("expands source code on view source click", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("iam_root_mfa")).toBeInTheDocument();
+      expect(screen.getByText("IAM")).toBeInTheDocument();
     });
     // Find the view source button (title="View source")
     const viewBtns = screen.getAllByTitle("View source");

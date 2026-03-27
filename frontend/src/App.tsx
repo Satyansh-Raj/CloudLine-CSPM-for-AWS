@@ -15,7 +15,6 @@ import {
   ViolationDetailPage,
   ResolvedIssuesPage,
   TrendsPage,
-  ExecutiveSummaryPage,
   PoliciesPage,
   InventoryPage,
   CategoryResourcesPage,
@@ -60,10 +59,7 @@ const router = createBrowserRouter([
         path: "trends",
         element: <TrendsPage />,
       },
-      {
-        path: "executive",
-        element: <ExecutiveSummaryPage />,
-      },
+
       {
         path: "policies",
         element: <PoliciesPage />,

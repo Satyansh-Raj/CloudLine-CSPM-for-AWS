@@ -12,7 +12,7 @@ const navItems = [
   { to: "/compliance", label: "Compliance", icon: "shield" },
   { to: "/iam-graph", label: "IAM Graph", icon: "graph" },
   { to: "/trends", label: "Trends", icon: "chart" },
-  { to: "/executive", label: "Executive", icon: "briefcase" },
+
   { to: "/policies", label: "Policies", icon: "policy" },
 ];
 

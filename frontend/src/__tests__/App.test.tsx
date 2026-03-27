@@ -8,7 +8,7 @@ vi.mock("@/pages", () => ({
   ViolationDetailPage: () => <div>ViolationDetail</div>,
   ResolvedIssuesPage: () => <div>Resolved</div>,
   TrendsPage: () => <div>Trends</div>,
-  ExecutiveSummaryPage: () => <div>Executive</div>,
+
   PoliciesPage: () => <div>Policies</div>,
   InventoryPage: () => <div>Inventory</div>,
   CategoryResourcesPage: () => <div>CategoryResources</div>,

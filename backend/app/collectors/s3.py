@@ -1,5 +1,6 @@
 """S3 service collector."""
 
+import json
 import logging
 
 from app.collectors.base import BaseCollector
@@ -52,6 +53,10 @@ class S3Collector(BaseCollector):
 
             arn = f"arn:aws:s3:::{bucket_name}"
 
+            policy = self._get_bucket_policy(
+                client, bucket_name
+            )
+
             return {
                 "name": bucket_name,
                 "arn": arn,
@@ -74,6 +79,13 @@ class S3Collector(BaseCollector):
                     client, bucket_name
                 ),
                 "tags": self._get_tags(
+                    client, bucket_name
+                ),
+                "policy": policy,
+                "policy_denies_http": (
+                    self._policy_denies_http(policy)
+                ),
+                "acl": self._get_acl(
                     client, bucket_name
                 ),
             }
@@ -213,3 +225,62 @@ class S3Collector(BaseCollector):
             "enabled": False,
             "target_bucket": None,
         }
+
+    def _get_bucket_policy(
+        self, client, bucket_name: str
+    ) -> dict:
+        """Fetch parsed bucket policy JSON.
+
+        Returns empty Statement list when the bucket
+        has no policy attached.
+        """
+        try:
+            resp = client.get_bucket_policy(
+                Bucket=bucket_name
+            )
+            return json.loads(
+                resp.get("Policy", "{}")
+            )
+        except Exception:
+            return {"Statement": []}
+
+    @staticmethod
+    def _policy_denies_http(policy: dict) -> bool:
+        """Check if the policy contains a Deny statement
+        for unencrypted (HTTP) access via
+        aws:SecureTransport condition."""
+        for stmt in policy.get("Statement", []):
+            if stmt.get("Effect") != "Deny":
+                continue
+            cond = stmt.get("Condition", {})
+            secure = (
+                cond.get("Bool", {})
+                .get("aws:SecureTransport")
+            )
+            if secure in ("false", False):
+                return True
+        return False
+
+    def _get_acl(
+        self, client, bucket_name: str
+    ) -> dict:
+        """Fetch bucket ACL grants."""
+        try:
+            resp = client.get_bucket_acl(
+                Bucket=bucket_name
+            )
+            grants = []
+            for g in resp.get("Grants", []):
+                grantee = g.get("Grantee", {})
+                grants.append({
+                    "grantee": {
+                        "type": grantee.get("Type", ""),
+                        "uri": grantee.get("URI", ""),
+                    },
+                    "permission": g.get(
+                        "Permission", ""
+                    ),
+                })
+            return {"grants": grants}
+        except Exception:
+            return {"grants": []}
