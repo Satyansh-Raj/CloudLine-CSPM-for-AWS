@@ -1,5 +1,6 @@
 """DynamoDB service collector."""
 
+import json
 import logging
 
 from app.collectors.base import BaseCollector
@@ -11,21 +12,35 @@ class DynamoDBCollector(BaseCollector):
     """Collects DynamoDB table configurations."""
 
     def collect(self) -> tuple[str, dict]:
-        client = self.session.client("dynamodb")
+        dynamodb = self.session.client(
+            "dynamodb"
+        )
+        autoscaling = self.session.client(
+            "application-autoscaling"
+        )
         return "dynamodb", {
-            "tables": self._get_tables(client),
+            "tables": self._get_tables(
+                dynamodb, autoscaling
+            ),
         }
 
     def collect_resource(
         self, resource_id: str
     ) -> dict:
-        client = self.session.client("dynamodb")
+        dynamodb = self.session.client(
+            "dynamodb"
+        )
+        autoscaling = self.session.client(
+            "application-autoscaling"
+        )
         try:
-            resp = client.describe_table(
+            resp = dynamodb.describe_table(
                 TableName=resource_id
             )
             return self._build_table(
-                client, resp["Table"]
+                dynamodb,
+                autoscaling,
+                resp["Table"],
             )
         except Exception as e:
             logger.error(
@@ -34,20 +49,22 @@ class DynamoDBCollector(BaseCollector):
         return {}
 
     def _get_tables(
-        self, client
+        self, dynamodb, autoscaling
     ) -> list[dict]:
         tables = []
         try:
-            resp = client.list_tables()
+            resp = dynamodb.list_tables()
             for name in resp.get(
                 "TableNames", []
             ):
-                desc = client.describe_table(
+                desc = dynamodb.describe_table(
                     TableName=name
                 )
                 tables.append(
                     self._build_table(
-                        client, desc["Table"]
+                        dynamodb,
+                        autoscaling,
+                        desc["Table"],
                     )
                 )
         except Exception as e:
@@ -57,22 +74,83 @@ class DynamoDBCollector(BaseCollector):
         return tables
 
     def _build_table(
-        self, client, table: dict
+        self, dynamodb, autoscaling, table: dict
     ) -> dict:
         arn = table.get("TableArn", "")
-        sse = table.get(
-            "SSEDescription", {}
-        )
-        encryption_type = sse.get(
-            "SSEType", ""
-        ) if sse.get("Status") == "ENABLED" else ""
+        name = table["TableName"]
 
-        pitr = False
+        sse_desc = self._build_sse_description(
+            table
+        )
+        backups = (
+            self._build_continuous_backups(
+                dynamodb, name
+            )
+        )
+        deletion = table.get(
+            "DeletionProtectionEnabled", False
+        )
+        policy = self._get_resource_policy(
+            dynamodb, arn
+        )
+        auto_scaling = (
+            self._check_auto_scaling(
+                autoscaling, name
+            )
+        )
+        tags = self._get_tags(dynamodb, arn)
+
+        return {
+            "table_name": name,
+            "table_arn": arn,
+            "table_status": table.get(
+                "TableStatus", "ACTIVE"
+            ),
+            "billing_mode": table.get(
+                "BillingModeSummary", {}
+            ).get(
+                "BillingMode", "PROVISIONED"
+            ),
+            "sse_description": sse_desc,
+            "continuous_backups": backups,
+            "deletion_protection_enabled": (
+                deletion
+            ),
+            "resource_policy": policy,
+            "auto_scaling_enabled": auto_scaling,
+            "tags": tags,
+        }
+
+    # --------------------------------------------------
+    # SSE description
+    # --------------------------------------------------
+
+    def _build_sse_description(
+        self, table: dict
+    ) -> dict:
+        sse = table.get("SSEDescription", {})
+        status = sse.get("Status", "DISABLED")
+        sse_type = sse.get("SSEType", "AES256")
+        if status != "ENABLED":
+            sse_type = "AES256"
+        return {
+            "status": status,
+            "sse_type": sse_type,
+        }
+
+    # --------------------------------------------------
+    # Continuous backups / PITR
+    # --------------------------------------------------
+
+    def _build_continuous_backups(
+        self, dynamodb, table_name: str
+    ) -> dict:
+        pitr_status = "DISABLED"
         try:
             resp = (
-                client
+                dynamodb
                 .describe_continuous_backups(
-                    TableName=table["TableName"]
+                    TableName=table_name
                 )
             )
             desc = resp.get(
@@ -83,39 +161,120 @@ class DynamoDBCollector(BaseCollector):
                 "PointInTimeRecoveryDescription",
                 {},
             )
-            pitr = (
-                pitr_desc.get(
-                    "PointInTimeRecoveryStatus"
-                )
-                == "ENABLED"
+            pitr_status = pitr_desc.get(
+                "PointInTimeRecoveryStatus",
+                "DISABLED",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(
+                "DynamoDB continuous_backups "
+                "%s: %s",
+                table_name,
+                e,
+            )
+        return {
+            "point_in_time_recovery_description": {
+                "point_in_time_recovery_status": (
+                    pitr_status
+                ),
+            },
+        }
 
-        tags = {}
+    # --------------------------------------------------
+    # Resource policy
+    # --------------------------------------------------
+
+    def _get_resource_policy(
+        self, dynamodb, arn: str
+    ) -> dict:
+        """Fetch resource policy for a table.
+        Returns dict with Statement list."""
+        if not arn:
+            return {"Statement": []}
         try:
-            tag_resp = client.list_tags_of_resource(
-                ResourceArn=arn
+            resp = (
+                dynamodb.describe_resource_policy(
+                    ResourceArn=arn
+                )
+            )
+            policy_str = resp.get(
+                "Policy", "{}"
+            )
+            policy = json.loads(policy_str)
+            return {
+                "Statement": policy.get(
+                    "Statement", []
+                ),
+            }
+        except dynamodb.exceptions\
+                .PolicyNotFoundException:
+            return {"Statement": []}
+        except Exception as e:
+            logger.error(
+                "DynamoDB resource_policy "
+                "%s: %s",
+                arn,
+                e,
+            )
+        return {"Statement": []}
+
+    # --------------------------------------------------
+    # Auto-scaling check
+    # --------------------------------------------------
+
+    def _check_auto_scaling(
+        self, autoscaling, table_name: str
+    ) -> bool:
+        """Check if DynamoDB auto-scaling is
+        configured via Application Auto Scaling
+        scalable targets."""
+        try:
+            resp = (
+                autoscaling
+                .describe_scalable_targets(
+                    ServiceNamespace="dynamodb",
+                    ResourceIds=[
+                        "table/" + table_name
+                    ],
+                )
+            )
+            targets = resp.get(
+                "ScalableTargets", []
+            )
+            return len(targets) > 0
+        except Exception as e:
+            logger.error(
+                "DynamoDB auto_scaling "
+                "%s: %s",
+                table_name,
+                e,
+            )
+        return False
+
+    # --------------------------------------------------
+    # Tags
+    # --------------------------------------------------
+
+    def _get_tags(
+        self, dynamodb, arn: str
+    ) -> dict:
+        tags = {}
+        if not arn:
+            return tags
+        try:
+            resp = (
+                dynamodb.list_tags_of_resource(
+                    ResourceArn=arn
+                )
             )
             tags = {
                 t["Key"]: t["Value"]
-                for t in tag_resp.get("Tags", [])
+                for t in resp.get("Tags", [])
             }
-        except Exception:
-            pass
-
-        return {
-            "table_name": table["TableName"],
-            "arn": arn,
-            "table_status": table.get(
-                "TableStatus", "ACTIVE"
-            ),
-            "billing_mode": table.get(
-                "BillingModeSummary", {}
-            ).get(
-                "BillingMode", "PROVISIONED"
-            ),
-            "encryption_type": encryption_type,
-            "point_in_time_recovery": pitr,
-            "tags": tags,
-        }
+        except Exception as e:
+            logger.error(
+                "DynamoDB tags %s: %s",
+                arn,
+                e,
+            )
+        return tags

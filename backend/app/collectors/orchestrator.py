@@ -73,7 +73,10 @@ class CollectionOrchestrator:
         self.region = region
         self.collectors = [
             cls(session, account_id, region)
-            if cls is EC2Collector
+            if cls in (
+                EC2Collector,
+                APIGatewayCollector,
+            )
             else cls(session)
             for cls in COLLECTOR_MAP.values()
         ]
@@ -114,6 +117,52 @@ class CollectionOrchestrator:
                             "plans": [],
                             "protected_resources": [],
                         },
+                    )
+                elif isinstance(
+                    collector, LoggingCollector
+                ):
+                    extra = collector.collect_full()
+                    data["cloudtrail"] = extra.get(
+                        "cloudtrail",
+                        {"trails": []},
+                    )
+                    data["cloudwatch"] = extra.get(
+                        "cloudwatch",
+                        {
+                            "alarms": [],
+                            "log_groups": [],
+                        },
+                    )
+                    data["aws_config"] = extra.get(
+                        "aws_config",
+                        {"recorders": []},
+                    )
+                    data["guardduty"] = extra.get(
+                        "guardduty",
+                        {"detectors": []},
+                    )
+                elif isinstance(
+                    collector, ContainerCollector
+                ):
+                    extra = collector.collect_full()
+                    data["ecs"] = extra.get(
+                        "ecs",
+                        {
+                            "clusters": [],
+                            "task_definitions": [],
+                        },
+                    )
+                    data["eks"] = extra.get(
+                        "eks",
+                        {
+                            "clusters": [],
+                            "node_groups": [],
+                            "eol_versions": [],
+                        },
+                    )
+                    data["ecr"] = extra.get(
+                        "ecr",
+                        {"repositories": []},
                     )
                 else:
                     key, svc_data = collector.collect()
@@ -218,7 +267,10 @@ class CollectionOrchestrator:
             )
             return {}
 
-        if collector_cls is EC2Collector:
+        if collector_cls in (
+            EC2Collector,
+            APIGatewayCollector,
+        ):
             collector = collector_cls(
                 self.session,
                 self.account_id,

@@ -138,7 +138,9 @@ class IAMCollector(BaseCollector):
             "users": self._get_users(client),
             "groups": self._get_groups(client),
             "roles": self._get_roles(client),
-            "policies": self._get_policies(client),
+            "customer_managed_policies": (
+                self._get_policies(client)
+            ),
             "access_analyzer": self._get_access_analyzer(),
         }
 
@@ -169,12 +171,19 @@ class IAMCollector(BaseCollector):
                 "access_keys_active": s.get(
                     "AccessKeysActive", 0
                 ),
+                "account_access_keys_present": (
+                    s.get(
+                        "AccountAccessKeysPresent",
+                        0,
+                    )
+                ),
             }
         except Exception:
             return {
                 "mfa_enabled": False,
                 "users": 0,
                 "access_keys_active": 0,
+                "account_access_keys_present": 0,
             }
 
     def _get_password_policy(self, client) -> dict:
@@ -182,7 +191,7 @@ class IAMCollector(BaseCollector):
             pp = client.get_account_password_policy()
             policy = pp["PasswordPolicy"]
             return {
-                "minimum_length": policy.get(
+                "minimum_password_length": policy.get(
                     "MinimumPasswordLength", 8
                 ),
                 "require_symbols": policy.get(
@@ -191,13 +200,19 @@ class IAMCollector(BaseCollector):
                 "require_numbers": policy.get(
                     "RequireNumbers", False
                 ),
-                "require_uppercase": policy.get(
-                    "RequireUppercaseCharacters", False
+                "require_uppercase_characters": (
+                    policy.get(
+                        "RequireUppercaseCharacters",
+                        False,
+                    )
                 ),
-                "require_lowercase": policy.get(
-                    "RequireLowercaseCharacters", False
+                "require_lowercase_characters": (
+                    policy.get(
+                        "RequireLowercaseCharacters",
+                        False,
+                    )
                 ),
-                "max_age_days": policy.get(
+                "max_password_age": policy.get(
                     "MaxPasswordAge", 0
                 ),
                 "password_reuse_prevention": policy.get(
@@ -209,12 +224,12 @@ class IAMCollector(BaseCollector):
             }
         except client.exceptions.NoSuchEntityException:
             return {
-                "minimum_length": 8,
+                "minimum_password_length": 8,
                 "require_symbols": False,
                 "require_numbers": False,
-                "require_uppercase": False,
-                "require_lowercase": False,
-                "max_age_days": 0,
+                "require_uppercase_characters": False,
+                "require_lowercase_characters": False,
+                "max_password_age": 0,
                 "password_reuse_prevention": 0,
                 "hard_expiry": False,
             }
@@ -265,15 +280,53 @@ class IAMCollector(BaseCollector):
                     last_used_days = delta.days
             except Exception:
                 pass
+            age_days = (
+                datetime.now(timezone.utc)
+                - k["CreateDate"]
+            ).days
             access_keys.append(
                 {
-                    "key_id": k["AccessKeyId"],
+                    "access_key_id": k[
+                        "AccessKeyId"
+                    ],
                     "status": k["Status"],
                     "created_date": k[
                         "CreateDate"
                     ].isoformat(),
-                    "last_used_days_ago": last_used_days,
+                    "last_used_days": last_used_days,
+                    "age_days": age_days,
                 }
+            )
+
+        # Password enabled (login profile check)
+        password_enabled = False
+        try:
+            client.get_login_profile(
+                UserName=username
+            )
+            password_enabled = True
+        except (
+            client.exceptions.NoSuchEntityException
+        ):
+            password_enabled = False
+
+        # Inline policies
+        inline_policies = []
+        try:
+            inline_resp = client.list_user_policies(
+                UserName=username
+            )
+            inline_policies = [
+                {"policy_name": name}
+                for name in inline_resp.get(
+                    "PolicyNames", []
+                )
+            ]
+        except Exception:
+            logger.warning(
+                "Failed to list inline policies "
+                "for %s",
+                username,
             )
 
         # Attached policies
@@ -289,21 +342,25 @@ class IAMCollector(BaseCollector):
         ]
 
         # Last activity
-        last_activity_days = None
+        days_since_last_use = None
         pwd_last_used = user.get("PasswordLastUsed")
         if pwd_last_used:
             delta = (
                 datetime.now(timezone.utc)
                 - pwd_last_used
             )
-            last_activity_days = delta.days
+            days_since_last_use = delta.days
 
         return {
-            "name": username,
+            "username": username,
             "arn": arn,
             "mfa_enabled": mfa_enabled,
+            "password_enabled": password_enabled,
             "access_keys": access_keys,
-            "last_activity_days_ago": last_activity_days,
+            "inline_policies": inline_policies,
+            "days_since_last_use": (
+                days_since_last_use
+            ),
             "attached_policies": policies,
         }
 
@@ -382,7 +439,7 @@ class IAMCollector(BaseCollector):
                             ],
                             "arn": r["Arn"],
                             "role_id": r["RoleId"],
-                            "assume_role_policy": (
+                            "trust_policy": (
                                 r.get(
                                     "AssumeRolePolicyDocument",
                                     {},
@@ -408,6 +465,12 @@ class IAMCollector(BaseCollector):
                 Scope="Local"
             ):
                 for p in page["Policies"]:
+                    doc = (
+                        self
+                        ._get_managed_policy_doc(
+                            client, p["Arn"]
+                        )
+                    )
                     policies.append(
                         {
                             "policy_name": p[
@@ -417,12 +480,17 @@ class IAMCollector(BaseCollector):
                             "policy_id": p[
                                 "PolicyId"
                             ],
-                            "attachment_count": p.get(
-                                "AttachmentCount", 0
+                            "attachment_count": (
+                                p.get(
+                                    "AttachmentCount",
+                                    0,
+                                )
                             ),
                             "is_attachable": p.get(
-                                "IsAttachable", True
+                                "IsAttachable",
+                                True,
                             ),
+                            "document": doc,
                         }
                     )
         except Exception as e:
@@ -705,6 +773,12 @@ class IAMCollector(BaseCollector):
                 }
                 for a in resp.get("analyzers", [])
             ]
-            return {"analyzers": analyzers}
+            return {
+                "analyzers": analyzers,
+                "enabled": len(analyzers) > 0,
+            }
         except Exception:
-            return {"analyzers": []}
+            return {
+                "analyzers": [],
+                "enabled": False,
+            }

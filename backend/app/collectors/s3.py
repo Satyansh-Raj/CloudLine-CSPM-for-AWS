@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import datetime, timedelta, timezone
 
 from app.collectors.base import BaseCollector
 
@@ -72,9 +73,6 @@ class S3Collector(BaseCollector):
                 "versioning": self._get_versioning(
                     client, bucket_name
                 ),
-                "mfa_delete": self._get_mfa_delete(
-                    client, bucket_name
-                ),
                 "logging": self._get_logging(
                     client, bucket_name
                 ),
@@ -87,6 +85,39 @@ class S3Collector(BaseCollector):
                 ),
                 "acl": self._get_acl(
                     client, bucket_name
+                ),
+                "lifecycle_rules": (
+                    self._get_lifecycle_rules(
+                        client, bucket_name
+                    )
+                ),
+                "object_lock": (
+                    self._get_object_lock(
+                        client, bucket_name
+                    )
+                ),
+                "cors_rules": (
+                    self._get_cors_rules(
+                        client, bucket_name
+                    )
+                ),
+                "replication_configuration": (
+                    self._get_replication(
+                        client, bucket_name
+                    )
+                ),
+                "notification_configuration": (
+                    self._get_notifications(
+                        client, bucket_name
+                    )
+                ),
+                "size_gb": self._get_size_gb(
+                    bucket_name, region
+                ),
+                "intelligent_tiering_enabled": (
+                    self._get_intelligent_tiering(
+                        client, bucket_name
+                    )
                 ),
             }
         except Exception as e:
@@ -134,61 +165,69 @@ class S3Collector(BaseCollector):
     def _get_encryption(
         self, client, bucket_name: str
     ) -> dict:
+        """Return encryption config matching Rego
+        expected structure with rules list."""
         try:
             resp = (
                 client.get_bucket_encryption(
                     Bucket=bucket_name
                 )
             )
-            rules = resp[
+            raw_rules = resp[
                 "ServerSideEncryptionConfiguration"
             ]["Rules"]
-            if rules:
-                rule = rules[0][
-                    "ApplyServerSideEncryptionByDefault"
-                ]
-                return {
-                    "enabled": True,
-                    "type": rule.get(
-                        "SSEAlgorithm", ""
-                    ),
-                    "kms_key_id": rule.get(
-                        "KMSMasterKeyID"
-                    ),
+            rules = []
+            for r in raw_rules:
+                default = r.get(
+                    "ApplyServerSideEncryption"
+                    "ByDefault",
+                    {},
+                )
+                entry = {
+                    "apply_server_side_encryption"
+                    "_by_default": {
+                        "sse_algorithm": (
+                            default.get(
+                                "SSEAlgorithm", ""
+                            )
+                        ),
+                    },
                 }
+                key_id = default.get(
+                    "KMSMasterKeyID"
+                )
+                if key_id:
+                    entry[
+                        "apply_server_side_encryption"
+                        "_by_default"
+                    ]["kms_master_key_id"] = key_id
+                rules.append(entry)
+            return {"rules": rules}
         except Exception:
-            pass
-        return {
-            "enabled": False,
-            "type": None,
-            "kms_key_id": None,
-        }
+            return {"rules": []}
 
     def _get_versioning(
         self, client, bucket_name: str
-    ) -> bool:
+    ) -> dict:
+        """Return versioning status and MFA delete
+        as a dict matching Rego expectations."""
         try:
             resp = client.get_bucket_versioning(
                 Bucket=bucket_name
             )
-            return (
-                resp.get("Status") == "Enabled"
-            )
+            return {
+                "status": resp.get(
+                    "Status", "Suspended"
+                ),
+                "mfa_delete": resp.get(
+                    "MFADelete", "Disabled"
+                ),
+            }
         except Exception:
-            return False
-
-    def _get_mfa_delete(
-        self, client, bucket_name: str
-    ) -> bool:
-        try:
-            resp = client.get_bucket_versioning(
-                Bucket=bucket_name
-            )
-            return (
-                resp.get("MFADelete") == "Enabled"
-            )
-        except Exception:
-            return False
+            return {
+                "status": "Suspended",
+                "mfa_delete": "Disabled",
+            }
 
     def _get_tags(
         self, client, bucket_name: str
@@ -274,8 +313,12 @@ class S3Collector(BaseCollector):
                 grantee = g.get("Grantee", {})
                 grants.append({
                     "grantee": {
-                        "type": grantee.get("Type", ""),
-                        "uri": grantee.get("URI", ""),
+                        "type": grantee.get(
+                            "Type", ""
+                        ),
+                        "uri": grantee.get(
+                            "URI", ""
+                        ),
                     },
                     "permission": g.get(
                         "Permission", ""
@@ -284,3 +327,181 @@ class S3Collector(BaseCollector):
             return {"grants": grants}
         except Exception:
             return {"grants": []}
+
+    def _get_lifecycle_rules(
+        self, client, bucket_name: str
+    ) -> list:
+        """Fetch bucket lifecycle rules."""
+        try:
+            resp = (
+                client
+                .get_bucket_lifecycle_configuration(
+                    Bucket=bucket_name
+                )
+            )
+            return resp.get("Rules", [])
+        except Exception:
+            return []
+
+    def _get_object_lock(
+        self, client, bucket_name: str
+    ) -> dict:
+        """Fetch object lock configuration."""
+        try:
+            resp = (
+                client
+                .get_object_lock_configuration(
+                    Bucket=bucket_name
+                )
+            )
+            cfg = resp.get(
+                "ObjectLockConfiguration", {}
+            )
+            enabled = (
+                cfg.get(
+                    "ObjectLockEnabled"
+                )
+                == "Enabled"
+            )
+            return {"enabled": enabled}
+        except Exception:
+            return {"enabled": False}
+
+    def _get_cors_rules(
+        self, client, bucket_name: str
+    ) -> list:
+        """Fetch bucket CORS rules."""
+        try:
+            resp = client.get_bucket_cors(
+                Bucket=bucket_name
+            )
+            raw = resp.get("CORSRules", [])
+            rules = []
+            for r in raw:
+                rules.append({
+                    "allowed_origins": r.get(
+                        "AllowedOrigins", []
+                    ),
+                    "allowed_methods": r.get(
+                        "AllowedMethods", []
+                    ),
+                    "allowed_headers": r.get(
+                        "AllowedHeaders", []
+                    ),
+                    "max_age_seconds": r.get(
+                        "MaxAgeSeconds", 0
+                    ),
+                })
+            return rules
+        except Exception:
+            return []
+
+    def _get_replication(
+        self, client, bucket_name: str
+    ) -> dict:
+        """Fetch bucket replication config."""
+        try:
+            resp = (
+                client.get_bucket_replication(
+                    Bucket=bucket_name
+                )
+            )
+            cfg = resp.get(
+                "ReplicationConfiguration", {}
+            )
+            return {
+                "rules": cfg.get("Rules", []),
+            }
+        except Exception:
+            return {"rules": []}
+
+    def _get_notifications(
+        self, client, bucket_name: str
+    ) -> dict | None:
+        """Fetch bucket notification config.
+
+        Returns None when no notifications are
+        configured.
+        """
+        try:
+            resp = (
+                client
+                .get_bucket_notification_configuration(
+                    Bucket=bucket_name
+                )
+            )
+            resp.pop("ResponseMetadata", None)
+            has_config = any(
+                resp.get(k)
+                for k in (
+                    "TopicConfigurations",
+                    "QueueConfigurations",
+                    "LambdaFunctionConfigurations",
+                    "EventBridgeConfiguration",
+                )
+            )
+            return resp if has_config else None
+        except Exception:
+            return None
+
+    def _get_size_gb(
+        self, bucket_name: str, region: str
+    ) -> float:
+        """Get bucket size in GB via CloudWatch
+        BucketSizeBytes metric."""
+        try:
+            cw = self.session.client(
+                "cloudwatch", region_name=region
+            )
+            now = datetime.now(timezone.utc)
+            resp = cw.get_metric_statistics(
+                Namespace="AWS/S3",
+                MetricName="BucketSizeBytes",
+                Dimensions=[
+                    {
+                        "Name": "BucketName",
+                        "Value": bucket_name,
+                    },
+                    {
+                        "Name": "StorageType",
+                        "Value": "StandardStorage",
+                    },
+                ],
+                StartTime=now - timedelta(days=3),
+                EndTime=now,
+                Period=86400,
+                Statistics=["Average"],
+            )
+            points = resp.get("Datapoints", [])
+            if not points:
+                return 0
+            latest = max(
+                points,
+                key=lambda p: p["Timestamp"],
+            )
+            size_bytes = latest.get("Average", 0)
+            return round(
+                size_bytes / (1024 ** 3), 4
+            )
+        except Exception:
+            return 0
+
+    def _get_intelligent_tiering(
+        self, client, bucket_name: str
+    ) -> bool:
+        """Check if intelligent tiering configs
+        exist for the bucket."""
+        try:
+            resp = (
+                client
+                .list_bucket_intelligent_tiering_configurations(
+                    Bucket=bucket_name
+                )
+            )
+            configs = resp.get(
+                "IntelligentTieringConfigurationList",
+                [],
+            )
+            return len(configs) > 0
+        except Exception:
+            return False
