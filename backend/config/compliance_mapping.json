@@ -3,9 +3,9 @@
   "framework_names": {
     "nist_800_53": "NIST 800-53",
     "soc2": "SOC 2",
-    "pci_dss": "PCI DSS",
+    "pci_dss": "PCI DSS v4.0",
     "hipaa": "HIPAA",
-    "cis_aws": "CIS AWS"
+    "cis_aws": "CIS AWS Foundations Benchmark v1.5.0"
   },
   "mappings": {
     "pii": {

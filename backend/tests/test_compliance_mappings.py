@@ -311,3 +311,67 @@ class TestSOC2MappingCoverage:
         assert missing == [], (
             f"Network checks without CC6.6: {missing}"
         )
+
+
+# ── Framework version labels ──────────────────────
+
+
+class TestFrameworkVersionLabels:
+    """Framework display names must include version
+    strings so the compliance page shows them correctly.
+
+    Expected values:
+      cis_aws  → 'CIS AWS Foundations Benchmark v1.5.0'
+      pci_dss  → 'PCI DSS v4.0'
+    """
+
+    @pytest.fixture()
+    def inventory_config(self):
+        config_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "config",
+            "compliance_mapping.json",
+        )
+        with open(config_path) as f:
+            return json.load(f)
+
+    def test_pci_dss_label_includes_version(
+        self, inventory_config
+    ):
+        """framework_names.pci_dss must be
+        'PCI DSS v4.0'."""
+        names = inventory_config.get(
+            "framework_names", {}
+        )
+        assert names.get("pci_dss") == "PCI DSS v4.0", (
+            f"Expected 'PCI DSS v4.0', "
+            f"got '{names.get('pci_dss')}'"
+        )
+
+    def test_cis_aws_label_includes_version(
+        self, inventory_config
+    ):
+        """framework_names.cis_aws must be
+        'CIS AWS Foundations Benchmark v1.5.0'."""
+        names = inventory_config.get(
+            "framework_names", {}
+        )
+        expected = (
+            "CIS AWS Foundations Benchmark v1.5.0"
+        )
+        assert names.get("cis_aws") == expected, (
+            f"Expected '{expected}', "
+            f"got '{names.get('cis_aws')}'"
+        )
+
+    def test_other_labels_unchanged(
+        self, inventory_config
+    ):
+        """NIST, HIPAA, SOC 2 labels must stay as-is."""
+        names = inventory_config.get(
+            "framework_names", {}
+        )
+        assert names.get("nist_800_53") == "NIST 800-53"
+        assert names.get("hipaa") == "HIPAA"
+        assert names.get("soc2") == "SOC 2"

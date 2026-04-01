@@ -313,11 +313,11 @@ class TestMapSingleDataType:
         result = self.mapper.map(
             _classification(["financial"], "high")
         )
-        assert "PCI DSS" in result.frameworks
+        assert "PCI DSS v4.0" in result.frameworks
         assert "SOC 2" in result.frameworks
         pci_req = next(
             r for r in result.compliance_requirements
-            if r.framework == "PCI DSS"
+            if r.framework == "PCI DSS v4.0"
         )
         assert "3.4" in pci_req.controls
         assert "3.5" in pci_req.controls
@@ -338,12 +338,16 @@ class TestMapSingleDataType:
         result = self.mapper.map(
             _classification(["credentials"], "high")
         )
-        assert "CIS AWS" in result.frameworks
+        assert (
+            "CIS AWS Foundations Benchmark v1.5.0"
+            in result.frameworks
+        )
         assert "NIST 800-53" in result.frameworks
         assert "SOC 2" in result.frameworks
         cis_req = next(
             r for r in result.compliance_requirements
-            if r.framework == "CIS AWS"
+            if r.framework
+            == "CIS AWS Foundations Benchmark v1.5.0"
         )
         assert "1.12" in cis_req.controls
         assert "1.14" in cis_req.controls
@@ -352,7 +356,10 @@ class TestMapSingleDataType:
         result = self.mapper.map(
             _classification(["logs"], "low")
         )
-        assert "CIS AWS" in result.frameworks
+        assert (
+            "CIS AWS Foundations Benchmark v1.5.0"
+            in result.frameworks
+        )
         assert "SOC 2" in result.frameworks
 
     def test_unknown_type_returns_empty(self):
@@ -383,7 +390,7 @@ class TestMapMultipleDataTypes:
         # Both framework sets must be present
         assert "NIST 800-53" in result.frameworks
         assert "SOC 2" in result.frameworks
-        assert "PCI DSS" in result.frameworks
+        assert "PCI DSS v4.0" in result.frameworks
 
     def test_pii_and_health_nist_deduplicated(self):
         """NIST 800-53 appears only once despite two types
@@ -414,9 +421,9 @@ class TestMapMultipleDataTypes:
         for fw in [
             "NIST 800-53",
             "SOC 2",
-            "PCI DSS",
+            "PCI DSS v4.0",
             "HIPAA",
-            "CIS AWS",
+            "CIS AWS Foundations Benchmark v1.5.0",
         ]:
             assert fw in result.frameworks, (
                 f"{fw} missing from frameworks"
@@ -461,10 +468,10 @@ class TestComplianceGapsFormat:
             _classification(["financial"], "high")
         )
         expected = {
-            "PCI DSS 3.4",
-            "PCI DSS 3.5",
-            "PCI DSS 4.1",
-            "PCI DSS 10.1",
+            "PCI DSS v4.0 3.4",
+            "PCI DSS v4.0 3.5",
+            "PCI DSS v4.0 4.1",
+            "PCI DSS v4.0 10.1",
             "SOC 2 CC6.1",
         }
         assert expected.issubset(
@@ -550,7 +557,9 @@ class TestEnrichWithDataClassification:
         )
         assert record.data_sensitivity == "high"
         assert "financial" in record.data_types
-        assert "PCI DSS 3.4" in record.compliance_gaps
+        assert (
+            "PCI DSS v4.0 3.4" in record.compliance_gaps
+        )
 
     def test_unknown_classification_stays_unknown(self):
         """Resource with no signals stays unknown."""
@@ -798,10 +807,14 @@ class TestDataSummaryEndpoint:
         # by_sensitivity
         assert body["by_sensitivity"]["critical"] == 2
         assert body["by_sensitivity"]["high"] == 1
-        # by_framework: PCI DSS appears for 2 financial
+        # by_framework: PCI DSS v4.0 appears for 2 financial
         # resources, NIST 800-53 for 2 pii resources
-        assert body["by_framework"]["PCI DSS"] >= 2
-        assert body["by_framework"]["NIST 800-53"] >= 2
+        assert (
+            body["by_framework"]["PCI DSS v4.0"] >= 2
+        )
+        assert (
+            body["by_framework"]["NIST 800-53"] >= 2
+        )
 
     def test_empty_inventory_returns_zeros(self):
         client = self._make_client([])

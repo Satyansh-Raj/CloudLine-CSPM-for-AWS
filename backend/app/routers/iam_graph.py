@@ -86,9 +86,25 @@ def get_iam_graph(
             if v.resource_arn == user_arn
         ]
 
+    # Collect account-level violations (password policy,
+    # root account checks) whose ARN doesn't match any user
+    account_violations = [
+        {
+            "check_id": v.check_id,
+            "status": v.status,
+            "severity": v.severity,
+            "reason": v.reason,
+            "risk_score": v.risk_score,
+            "resource": v.resource_arn,
+        }
+        for v in identity
+        if v.resource_arn not in user_arns
+    ]
+
     result = {
         "account_id": settings.aws_account_id,
         "users": users,
+        "account_violations": account_violations,
     }
 
     _cache["data"] = result

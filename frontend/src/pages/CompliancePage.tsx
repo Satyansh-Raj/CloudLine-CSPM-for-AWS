@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useCompliance } from "@/hooks/useCompliance";
 import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
+import { getCheckName } from "@/constants/checkNames";
 import type {
   FrameworkSummary,
   ControlStatus,
@@ -12,9 +13,9 @@ import type {
 /* ---- constants ---- */
 
 const FRAMEWORK_LABELS: Record<string, string> = {
-  cis_aws: "CIS AWS",
+  cis_aws: "CIS AWS Foundations Benchmark v1.5.0",
   nist_800_53: "NIST 800-53",
-  pci_dss: "PCI DSS",
+  pci_dss: "PCI DSS v4.0",
   hipaa: "HIPAA",
   soc2: "SOC 2",
   owasp: "OWASP Top 10",
@@ -287,10 +288,23 @@ function DrillDown({ framework }: DrillDownProps) {
                         ${hasViolations ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors" : ""}
                       `}
                     >
-                      <td className="py-2.5 pr-4 font-mono text-xs text-gray-700 dark:text-gray-300">
-                        <span className="inline-flex items-center gap-1.5">
-                          {hasViolations && <ChevronIcon open={isOpen} />}
-                          {ctrl.control_id}
+                      <td className="py-2.5 pr-4 text-xs text-gray-700 dark:text-gray-300">
+                        <span className="inline-flex items-start gap-1.5">
+                          {hasViolations && (
+                            <span className="mt-0.5 shrink-0">
+                              <ChevronIcon open={isOpen} />
+                            </span>
+                          )}
+                          <span className="flex flex-col gap-0.5">
+                            <span className="font-mono">{ctrl.control_id}</span>
+                            {ctrl.check_ids.length > 0 && (
+                              <span className="font-sans text-[10px] text-gray-400 dark:text-gray-500 font-normal leading-tight">
+                                {ctrl.check_ids
+                                  .map((id) => getCheckName(id))
+                                  .join(", ")}
+                              </span>
+                            )}
+                          </span>
                         </span>
                       </td>
                       <td className="py-2.5 pr-4">

@@ -240,7 +240,7 @@ export default function ResolvedDetailPage() {
                     Compliance
                   </h3>
                   <ComplianceSection
-                    label="CIS AWS"
+                    label="CIS AWS Foundations Benchmark v1.5.0"
                     controls={comp.cis_aws ?? []}
                   />
                   <ComplianceSection
@@ -248,7 +248,7 @@ export default function ResolvedDetailPage() {
                     controls={comp.nist_800_53 ?? []}
                   />
                   <ComplianceSection
-                    label="PCI DSS"
+                    label="PCI DSS v4.0"
                     controls={comp.pci_dss ?? []}
                   />
                   <ComplianceSection

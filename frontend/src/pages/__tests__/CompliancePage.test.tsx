@@ -206,9 +206,11 @@ describe("CompliancePage", () => {
 
   it("renders 6 framework cards when data loads", () => {
     renderPage();
-    expect(screen.getByText("CIS AWS")).toBeInTheDocument();
+    expect(
+      screen.getByText("CIS AWS Foundations Benchmark v1.5.0"),
+    ).toBeInTheDocument();
     expect(screen.getByText("NIST 800-53")).toBeInTheDocument();
-    expect(screen.getByText("PCI DSS")).toBeInTheDocument();
+    expect(screen.getByText("PCI DSS v4.0")).toBeInTheDocument();
     expect(screen.getByText("HIPAA")).toBeInTheDocument();
     expect(screen.getByText("SOC 2")).toBeInTheDocument();
     expect(screen.getByText("OWASP Top 10")).toBeInTheDocument();
@@ -400,5 +402,43 @@ describe("CompliancePage", () => {
       screen.getAllByText(/38\s*compliant/i).length,
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/7\s*failed/i).length).toBeGreaterThanOrEqual(1);
+  });
+
+  /* ---- framework version label tests ---- */
+
+  it("renders CIS AWS with full benchmark version label", () => {
+    renderPage();
+    expect(
+      screen.getByText("CIS AWS Foundations Benchmark v1.5.0"),
+    ).toBeInTheDocument();
+  });
+
+  it("renders PCI DSS with version label", () => {
+    renderPage();
+    expect(screen.getByText("PCI DSS v4.0")).toBeInTheDocument();
+  });
+
+  it("does not render unversioned CIS AWS label", () => {
+    renderPage();
+    // The old bare "CIS AWS" text must not appear as a
+    // standalone card label now that the versioned name
+    // is used.
+    expect(screen.queryByText("CIS AWS")).not.toBeInTheDocument();
+  });
+
+  it("does not render unversioned PCI DSS label", () => {
+    renderPage();
+    expect(screen.queryByText("PCI DSS")).not.toBeInTheDocument();
+  });
+
+  it("drill-down heading uses versioned CIS AWS label", () => {
+    renderPage();
+    const card = screen.getByTestId("framework-card-cis_aws");
+    fireEvent.click(card);
+    // Both the card label and the drill-down <h3> show
+    // the versioned name — verify at least one is present.
+    expect(
+      screen.getAllByText(/CIS AWS Foundations Benchmark v1\.5\.0/).length,
+    ).toBeGreaterThanOrEqual(2);
   });
 });
