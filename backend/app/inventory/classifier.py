@@ -194,31 +194,25 @@ class ResourceClassifier:
             )
 
         # IAM policies
-        for pol in input_data.iam.policies:
+        for pol in input_data.iam.customer_managed_policies:
             records.append(
                 self._iam_policy(pol, now)
             )
 
         # CloudTrail trails
-        for trail in (
-            input_data.logging.cloudtrail_trails
-        ):
+        for trail in input_data.cloudtrail.trails:
             records.append(
                 self._cloudtrail(trail, now)
             )
 
         # GuardDuty detectors
-        for det in (
-            input_data.logging.guardduty_detectors
-        ):
+        for det in input_data.guardduty.detectors:
             records.append(
                 self._guardduty(det, now)
             )
 
         # CloudWatch alarms
-        for alarm in (
-            input_data.logging.cloudwatch_alarms
-        ):
+        for alarm in input_data.cloudwatch.alarms:
             records.append(
                 self._cloudwatch_alarm(alarm, now)
             )
@@ -310,40 +304,33 @@ class ResourceClassifier:
             )
 
         # API Gateways
-        for api in input_data.apigateway.apis:
+        for api in input_data.apigateway.rest_apis:
             records.append(
                 self._api_gateway(api, now)
             )
 
         # ECR Repositories
-        for repo in (
-            input_data.containers.ecr_repositories
-        ):
+        for repo in input_data.ecr.repositories:
             records.append(
                 self._ecr_repository(repo, now)
             )
 
         # ECS Clusters
-        for cluster in (
-            input_data.containers.ecs_clusters
-        ):
+        for cluster in input_data.ecs.clusters:
             records.append(
                 self._ecs_cluster(cluster, now)
             )
 
         # ECS Task Definitions
         for td in (
-            input_data.containers
-            .ecs_task_definitions
+            input_data.ecs.task_definitions
         ):
             records.append(
                 self._ecs_task_definition(td, now)
             )
 
         # EKS Clusters
-        for eks in (
-            input_data.containers.eks_clusters
-        ):
+        for eks in input_data.eks.clusters:
             records.append(
                 self._eks_cluster(eks, now)
             )
@@ -518,7 +505,11 @@ class ResourceClassifier:
             now,
             tags=inst.tags,
             exposure=exp,
-            connected_to=list(inst.security_groups),
+            connected_to=[
+                sg["group_id"] if isinstance(sg, dict)
+                else sg
+                for sg in inst.security_groups
+            ],
             belongs_to=inst.vpc_id,
             managed_by=(
                 inst.iam_role.role_arn
@@ -790,16 +781,19 @@ class ResourceClassifier:
         )
 
     def _rds_snapshot(self, snap, now):
+        restore_ids = snap.attributes.get(
+            "restore", []
+        )
         exposure = (
-            "internet" if snap.is_public
+            "internet" if "all" in restore_ids
             else "private"
         )
         return self._make_record(
             "rds_snapshot",
-            snap.arn,
-            snap.snapshot_id,
+            snap.db_snapshot_arn,
+            snap.db_snapshot_identifier,
             now,
-            tags=snap.tags,
+            tags={},
             exposure=exposure,
         )
 
@@ -872,9 +866,10 @@ class ResourceClassifier:
         )
 
     def _api_gateway(self, api, now):
+        ec = getattr(api, "endpoint_configuration", None)
+        types = ec.types if ec else []
         exposure = (
-            "private"
-            if api.endpoint_type == "PRIVATE"
+            "private" if "PRIVATE" in types
             else "internet"
         )
         return self._make_record(
@@ -899,7 +894,7 @@ class ResourceClassifier:
     def _ecs_cluster(self, cluster, now):
         return self._make_record(
             "ecs_cluster",
-            cluster.arn,
+            cluster.cluster_arn,
             cluster.cluster_name,
             now,
             tags=cluster.tags,
@@ -917,15 +912,15 @@ class ResourceClassifier:
         )
 
     def _eks_cluster(self, eks, now):
-        exposure = (
-            "internet"
-            if eks.endpoint_public_access
-            else "private"
+        public = (
+            eks.resources_vpc_config
+            .endpoint_public_access
         )
+        exposure = "internet" if public else "private"
         return self._make_record(
             "eks_cluster",
             eks.arn,
-            eks.cluster_name,
+            eks.name,
             now,
             tags=eks.tags,
             exposure=exposure,

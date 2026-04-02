@@ -264,26 +264,32 @@ class TestPersistAll35Types:
             RESOURCE_TAXONOMY,
         )
         from app.models.aws_input import (
-            APIGateway,
+            APIGatewayAPI,
             APIGatewayData,
             AuroraCluster,
             AutoScalingGroup,
             CDNData,
             CloudFrontDistribution,
+            CloudTrailData,
             CloudTrailTrail,
             CloudWatchAlarm,
-            ContainerData,
+            CloudWatchData,
             DynamoDBData,
             DynamoDBTable,
             EBSSnapshot,
             EBSVolume,
             EC2Data,
             EC2Instance,
+            ECRData,
             ECRRepository,
             ECSCluster,
+            ECSData,
             ECSTaskDefinition,
             EKSCluster,
+            EKSData,
             ELBData,
+            EndpointConfiguration,
+            GuardDutyData,
             GuardDutyDetector,
             IAMData,
             IAMGroup,
@@ -293,16 +299,15 @@ class TestPersistAll35Types:
             InternetGateway,
             KMSData,
             KMSKey,
-            LambdaData,
             LambdaFunction,
             LoadBalancer,
-            LoggingData,
             NACL,
             NATGateway,
             NetworkFirewall,
             RDSData,
             RDSInstance,
             RDSSnapshot,
+            ResourcesVpcConfig,
             Route53HostedZone,
             S3Bucket,
             S3Data,
@@ -431,33 +436,38 @@ class TestPersistAll35Types:
                     name="rt.example.com",
                 )],
             ),
-            lambda_functions=LambdaData(
-                functions=[LambdaFunction(
-                    function_name="fn-rt",
-                    arn=f"arn:aws:lambda:{REGION}"
-                    f":{ACCOUNT}:function:fn-rt",
-                )],
-            ),
-            apigateway=APIGatewayData(apis=[
-                APIGateway(
-                    api_id="api-rt",
+            lambda_functions=[LambdaFunction(
+                function_name="fn-rt",
+                arn=f"arn:aws:lambda:{REGION}"
+                f":{ACCOUNT}:function:fn-rt",
+            )],
+            apigateway=APIGatewayData(rest_apis=[
+                APIGatewayAPI(
+                    id="api-rt",
                     name="api-rt",
                     arn=f"arn:aws:apigateway:{REGION}"
                     "::/restapis/api-rt",
+                    endpoint_configuration=(
+                        EndpointConfiguration(
+                            types=["REGIONAL"]
+                        )
+                    ),
                 ),
             ]),
-            logging=LoggingData(
-                cloudtrail_trails=[CloudTrailTrail(
+            cloudtrail=CloudTrailData(
+                trails=[CloudTrailTrail(
                     name="trail-rt",
                     arn=f"arn:aws:cloudtrail:{REGION}"
                     f":{ACCOUNT}:trail/trail-rt",
                 )],
-                guardduty_detectors=[
-                    GuardDutyDetector(
-                        detector_id="det-rt",
-                    ),
-                ],
-                cloudwatch_alarms=[CloudWatchAlarm(
+            ),
+            guardduty=GuardDutyData(
+                detectors=[GuardDutyDetector(
+                    detector_id="det-rt",
+                )],
+            ),
+            cloudwatch=CloudWatchData(
+                alarms=[CloudWatchAlarm(
                     alarm_name="alarm-rt",
                 )],
             ),
@@ -477,7 +487,7 @@ class TestPersistAll35Types:
                     arn=f"arn:aws:iam::{ACCOUNT}"
                     ":role/role-rt",
                 )],
-                policies=[IAMPolicy(
+                customer_managed_policies=[IAMPolicy(
                     policy_name="pol-rt",
                     arn=f"arn:aws:iam::{ACCOUNT}"
                     ":policy/pol-rt",
@@ -496,18 +506,20 @@ class TestPersistAll35Types:
                     ":secret:sec-rt",
                 )],
             ),
-            containers=ContainerData(
-                ecr_repositories=[ECRRepository(
+            ecr=ECRData(
+                repositories=[ECRRepository(
                     repository_name="ecr-rt",
                     arn=f"arn:aws:ecr:{REGION}"
                     f":{ACCOUNT}:repository/ecr-rt",
                 )],
-                ecs_clusters=[ECSCluster(
+            ),
+            ecs=ECSData(
+                clusters=[ECSCluster(
                     cluster_name="ecs-rt",
-                    arn=f"arn:aws:ecs:{REGION}"
+                    cluster_arn=f"arn:aws:ecs:{REGION}"
                     f":{ACCOUNT}:cluster/ecs-rt",
                 )],
-                ecs_task_definitions=[
+                task_definitions=[
                     ECSTaskDefinition(
                         family="td-rt",
                         arn=f"arn:aws:ecs:{REGION}"
@@ -515,8 +527,10 @@ class TestPersistAll35Types:
                         ":task-definition/td-rt:1",
                     ),
                 ],
-                eks_clusters=[EKSCluster(
-                    cluster_name="eks-rt",
+            ),
+            eks=EKSData(
+                clusters=[EKSCluster(
+                    name="eks-rt",
                     arn=f"arn:aws:eks:{REGION}"
                     f":{ACCOUNT}:cluster/eks-rt",
                 )],
@@ -764,7 +778,6 @@ class TestSoftDeleteMultiType:
             ResourceClassifier,
         )
         from app.models.aws_input import (
-            LambdaData,
             LambdaFunction,
             S3Bucket,
             S3Data,
@@ -781,13 +794,11 @@ class TestSoftDeleteMultiType:
                 name="keep-bkt",
                 arn="arn:aws:s3:::keep-bkt",
             )]),
-            lambda_functions=LambdaData(
-                functions=[LambdaFunction(
-                    function_name="fn-keep",
+            lambda_functions=[LambdaFunction(
+                function_name="fn-keep",
                     arn=f"arn:aws:lambda:{REGION}"
                     f":{ACCOUNT}:function:fn-keep",
-                )],
-            ),
+            )],
         )
 
         clf = ResourceClassifier(ACCOUNT, REGION)

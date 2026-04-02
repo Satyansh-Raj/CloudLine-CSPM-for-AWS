@@ -8,25 +8,33 @@ from app.inventory.classifier import (
 )
 from app.models.aws_input import (
     APIGateway,
+    APIGatewayAPI,
     APIGatewayData,
+    EndpointConfiguration,
     AuroraCluster,
     AutoScalingGroup,
     CDNData,
     CloudFrontDistribution,
+    CloudTrailData,
     CloudTrailTrail,
     CloudWatchAlarm,
-    ContainerData,
+    CloudWatchData,
     EC2Data,
     EC2Instance,
+    ECRData,
     ECRRepository,
     ECSCluster,
+    ECSData,
     ECSTaskDefinition,
     EBSSnapshot,
     EBSVolume,
     DynamoDBData,
     DynamoDBTable,
     EKSCluster,
+    EKSData,
+    ResourcesVpcConfig,
     ELBData,
+    GuardDutyData,
     GuardDutyDetector,
     IAMData,
     IAMGroup,
@@ -37,11 +45,9 @@ from app.models.aws_input import (
     InternetGateway,
     KMSData,
     KMSKey,
-    LambdaData,
     LambdaFunction,
     LambdaVPCConfig,
     LoadBalancer,
-    LoggingData,
     NACL,
     NATGateway,
     NetworkFirewall,
@@ -187,7 +193,10 @@ class TestClassifyEC2:
                             f":{ACCOUNT}:instance/i-1"
                         ),
                         vpc_id="vpc-1",
-                        security_groups=["sg-1", "sg-2"],
+                        security_groups=[
+                            {"group_id": "sg-1"},
+                            {"group_id": "sg-2"},
+                        ],
                         iam_role=InstanceRole(
                             role_name="WebRole",
                             role_arn=(
@@ -394,17 +403,15 @@ class TestClassifyLambda:
 
     def test_no_vpc_is_internet(self):
         data = _make_input(
-            lambda_functions=LambdaData(
-                functions=[
-                    LambdaFunction(
-                        function_name="api-fn",
-                        arn=(
-                            f"arn:aws:lambda:{REGION}"
-                            f":{ACCOUNT}:function:api-fn"
-                        ),
+            lambda_functions=[
+                LambdaFunction(
+                    function_name="api-fn",
+                    arn=(
+                        f"arn:aws:lambda:{REGION}"
+                        f":{ACCOUNT}:function:api-fn"
                     ),
-                ],
-            ),
+                ),
+            ],
         )
         clf = ResourceClassifier(ACCOUNT, REGION)
         recs = clf.classify_all(data)
@@ -417,22 +424,20 @@ class TestClassifyLambda:
 
     def test_vpc_is_private(self):
         data = _make_input(
-            lambda_functions=LambdaData(
-                functions=[
-                    LambdaFunction(
-                        function_name="internal-fn",
-                        arn=(
-                            f"arn:aws:lambda:{REGION}"
-                            f":{ACCOUNT}"
-                            ":function:internal-fn"
-                        ),
-                        vpc_config=LambdaVPCConfig(
-                            subnet_ids=["subnet-1"],
-                            security_group_ids=["sg-1"],
-                        ),
+            lambda_functions=[
+                LambdaFunction(
+                    function_name="internal-fn",
+                    arn=(
+                        f"arn:aws:lambda:{REGION}"
+                        f":{ACCOUNT}"
+                        ":function:internal-fn"
                     ),
-                ],
-            ),
+                    vpc_config=LambdaVPCConfig(
+                        subnet_ids=["subnet-1"],
+                        security_group_ids=["sg-1"],
+                    ),
+                ),
+            ],
         )
         clf = ResourceClassifier(ACCOUNT, REGION)
         recs = clf.classify_all(data)
@@ -444,21 +449,19 @@ class TestClassifyLambda:
 
     def test_lambda_managed_by_role(self):
         data = _make_input(
-            lambda_functions=LambdaData(
-                functions=[
-                    LambdaFunction(
-                        function_name="fn",
-                        arn=(
-                            f"arn:aws:lambda:{REGION}"
-                            f":{ACCOUNT}:function:fn"
-                        ),
-                        role=(
-                            "arn:aws:iam::123"
-                            ":role/LambdaExec"
-                        ),
+            lambda_functions=[
+                LambdaFunction(
+                    function_name="fn",
+                    arn=(
+                        f"arn:aws:lambda:{REGION}"
+                        f":{ACCOUNT}:function:fn"
                     ),
-                ],
-            ),
+                    role=(
+                        "arn:aws:iam::123"
+                        ":role/LambdaExec"
+                    ),
+                ),
+            ],
         )
         clf = ResourceClassifier(ACCOUNT, REGION)
         recs = clf.classify_all(data)
@@ -1006,8 +1009,8 @@ class TestClassifyCloudTrail:
 
     def test_cloudtrail_basic(self):
         data = _make_input(
-            logging=LoggingData(
-                cloudtrail_trails=[
+            cloudtrail=CloudTrailData(
+                trails=[
                     CloudTrailTrail(
                         name="main-trail",
                         arn=(
@@ -1040,8 +1043,8 @@ class TestClassifyGuardDuty:
 
     def test_guardduty_basic(self):
         data = _make_input(
-            logging=LoggingData(
-                guardduty_detectors=[
+            guardduty=GuardDutyData(
+                detectors=[
                     GuardDutyDetector(
                         detector_id="abc123def",
                     ),
@@ -1062,8 +1065,8 @@ class TestClassifyGuardDuty:
 
     def test_guardduty_constructs_arn(self):
         data = _make_input(
-            logging=LoggingData(
-                guardduty_detectors=[
+            guardduty=GuardDutyData(
+                detectors=[
                     GuardDutyDetector(
                         detector_id="det1",
                     ),
@@ -1088,8 +1091,8 @@ class TestClassifyCloudWatchAlarm:
 
     def test_cloudwatch_alarm_basic(self):
         data = _make_input(
-            logging=LoggingData(
-                cloudwatch_alarms=[
+            cloudwatch=CloudWatchData(
+                alarms=[
                     CloudWatchAlarm(
                         alarm_name="high-cpu",
                     ),
@@ -1110,8 +1113,8 @@ class TestClassifyCloudWatchAlarm:
 
     def test_cloudwatch_alarm_constructs_arn(self):
         data = _make_input(
-            logging=LoggingData(
-                cloudwatch_alarms=[
+            cloudwatch=CloudWatchData(
+                alarms=[
                     CloudWatchAlarm(
                         alarm_name="low-disk",
                     ),
@@ -1293,7 +1296,7 @@ class TestClassifyIAMPolicy:
     def test_iam_policy_basic(self):
         data = _make_input(
             iam=IAMData(
-                policies=[
+                customer_managed_policies=[
                     IAMPolicy(
                         policy_name="AdminAccess",
                         arn=(
@@ -1323,7 +1326,7 @@ class TestClassifyIAMPolicy:
         )
         data = _make_input(
             iam=IAMData(
-                policies=[
+                customer_managed_policies=[
                     IAMPolicy(
                         policy_name="ReadOnly",
                         arn=arn,
@@ -1861,9 +1864,11 @@ class TestClassifyRDSSnapshot:
             rds=RDSData(
                 snapshots=[
                     RDSSnapshot(
-                        snapshot_id="snap-1",
-                        arn=arn,
-                        is_public=False,
+                        db_snapshot_identifier=(
+                            "snap-1"
+                        ),
+                        db_snapshot_arn=arn,
+                        attributes={"restore": []},
                     ),
                 ],
             ),
@@ -1888,9 +1893,13 @@ class TestClassifyRDSSnapshot:
             rds=RDSData(
                 snapshots=[
                     RDSSnapshot(
-                        snapshot_id="snap-pub",
-                        arn=arn,
-                        is_public=True,
+                        db_snapshot_identifier=(
+                            "snap-pub"
+                        ),
+                        db_snapshot_arn=arn,
+                        attributes={
+                            "restore": ["all"]
+                        },
                     ),
                 ],
             ),
@@ -2043,12 +2052,16 @@ class TestClassifyAPIGateway:
         )
         data = _make_input(
             apigateway=APIGatewayData(
-                apis=[
-                    APIGateway(
-                        api_id="abc123",
+                rest_apis=[
+                    APIGatewayAPI(
+                        id="abc123",
                         name="my-api",
                         arn=arn,
-                        endpoint_type="REGIONAL",
+                        endpoint_configuration=(
+                            EndpointConfiguration(
+                                types=["REGIONAL"]
+                            )
+                        ),
                     ),
                 ],
             ),
@@ -2068,16 +2081,20 @@ class TestClassifyAPIGateway:
     def test_edge_api(self):
         data = _make_input(
             apigateway=APIGatewayData(
-                apis=[
-                    APIGateway(
-                        api_id="def456",
+                rest_apis=[
+                    APIGatewayAPI(
+                        id="def456",
                         name="edge-api",
                         arn=(
                             f"arn:aws:apigateway"
                             f":{REGION}"
                             "::/restapis/def456"
                         ),
-                        endpoint_type="EDGE",
+                        endpoint_configuration=(
+                            EndpointConfiguration(
+                                types=["EDGE"]
+                            )
+                        ),
                     ),
                 ],
             ),
@@ -2093,16 +2110,20 @@ class TestClassifyAPIGateway:
     def test_private_api(self):
         data = _make_input(
             apigateway=APIGatewayData(
-                apis=[
-                    APIGateway(
-                        api_id="priv789",
+                rest_apis=[
+                    APIGatewayAPI(
+                        id="priv789",
                         name="internal-api",
                         arn=(
                             f"arn:aws:apigateway"
                             f":{REGION}"
                             "::/restapis/priv789"
                         ),
-                        endpoint_type="PRIVATE",
+                        endpoint_configuration=(
+                            EndpointConfiguration(
+                                types=["PRIVATE"]
+                            )
+                        ),
                     ),
                 ],
             ),
@@ -2128,8 +2149,8 @@ class TestClassifyECRRepository:
             ":repository/my-app"
         )
         data = _make_input(
-            containers=ContainerData(
-                ecr_repositories=[
+            ecr=ECRData(
+                repositories=[
                     ECRRepository(
                         repository_name="my-app",
                         arn=arn,
@@ -2161,8 +2182,8 @@ class TestClassifyECRRepository:
             ":repository/backend"
         )
         data = _make_input(
-            containers=ContainerData(
-                ecr_repositories=[
+            ecr=ECRData(
+                repositories=[
                     ECRRepository(
                         repository_name="backend",
                         arn=arn,
@@ -2191,11 +2212,11 @@ class TestClassifyECSCluster:
             ":cluster/prod-cluster"
         )
         data = _make_input(
-            containers=ContainerData(
-                ecs_clusters=[
+            ecs=ECSData(
+                clusters=[
                     ECSCluster(
                         cluster_name="prod-cluster",
-                        arn=arn,
+                        cluster_arn=arn,
                     ),
                 ],
             ),
@@ -2229,8 +2250,8 @@ class TestClassifyECSTaskDefinition:
             ":task-definition/web-app:3"
         )
         data = _make_input(
-            containers=ContainerData(
-                ecs_task_definitions=[
+            ecs=ECSData(
+                task_definitions=[
                     ECSTaskDefinition(
                         family="web-app",
                         arn=arn,
@@ -2268,12 +2289,16 @@ class TestClassifyEKSCluster:
             ":cluster/k8s-prod"
         )
         data = _make_input(
-            containers=ContainerData(
-                eks_clusters=[
+            eks=EKSData(
+                clusters=[
                     EKSCluster(
-                        cluster_name="k8s-prod",
+                        name="k8s-prod",
                         arn=arn,
-                        endpoint_public_access=True,
+                        resources_vpc_config=(
+                            ResourcesVpcConfig(
+                                endpoint_public_access=True
+                            )
+                        ),
                         tags={
                             "Environment": "prod"
                         },
@@ -2302,12 +2327,16 @@ class TestClassifyEKSCluster:
             ":cluster/k8s-internal"
         )
         data = _make_input(
-            containers=ContainerData(
-                eks_clusters=[
+            eks=EKSData(
+                clusters=[
                     EKSCluster(
-                        cluster_name="k8s-internal",
+                        name="k8s-internal",
                         arn=arn,
-                        endpoint_public_access=False,
+                        resources_vpc_config=(
+                            ResourcesVpcConfig(
+                                endpoint_public_access=False
+                            )
+                        ),
                     ),
                 ],
             ),
@@ -2409,8 +2438,10 @@ class TestClassifyAll35Types:
                 ],
                 snapshots=[
                     RDSSnapshot(
-                        snapshot_id="snap-rds",
-                        arn=(
+                        db_snapshot_identifier=(
+                            "snap-rds"
+                        ),
+                        db_snapshot_arn=(
                             f"arn:aws:rds:{REGION}"
                             f":{ACCOUNT}:snapshot"
                             ":snap-rds"
@@ -2517,31 +2548,34 @@ class TestClassifyAll35Types:
                     ),
                 ],
             ),
-            lambda_functions=LambdaData(
-                functions=[
-                    LambdaFunction(
-                        function_name="fn-full",
-                        arn=(
-                            f"arn:aws:lambda:{REGION}"
-                            f":{ACCOUNT}:function:fn-full"
-                        ),
+            lambda_functions=[
+                LambdaFunction(
+                    function_name="fn-full",
+                    arn=(
+                        f"arn:aws:lambda:{REGION}"
+                        f":{ACCOUNT}:function:fn-full"
                     ),
-                ],
-            ),
+                ),
+            ],
             apigateway=APIGatewayData(
-                apis=[
-                    APIGateway(
-                        api_id="api-full",
+                rest_apis=[
+                    APIGatewayAPI(
+                        id="api-full",
                         name="api-full",
                         arn=(
                             f"arn:aws:apigateway:{REGION}"
                             "::/restapis/api-full"
                         ),
+                        endpoint_configuration=(
+                            EndpointConfiguration(
+                                types=["REGIONAL"]
+                            )
+                        ),
                     ),
                 ],
             ),
-            logging=LoggingData(
-                cloudtrail_trails=[
+            cloudtrail=CloudTrailData(
+                trails=[
                     CloudTrailTrail(
                         name="trail-full",
                         arn=(
@@ -2550,12 +2584,16 @@ class TestClassifyAll35Types:
                         ),
                     ),
                 ],
-                guardduty_detectors=[
+            ),
+            guardduty=GuardDutyData(
+                detectors=[
                     GuardDutyDetector(
                         detector_id="det-full",
                     ),
                 ],
-                cloudwatch_alarms=[
+            ),
+            cloudwatch=CloudWatchData(
+                alarms=[
                     CloudWatchAlarm(
                         alarm_name="alarm-full",
                     ),
@@ -2589,7 +2627,7 @@ class TestClassifyAll35Types:
                         ),
                     ),
                 ],
-                policies=[
+                customer_managed_policies=[
                     IAMPolicy(
                         policy_name="pol-full",
                         arn=(
@@ -2622,8 +2660,8 @@ class TestClassifyAll35Types:
                     ),
                 ],
             ),
-            containers=ContainerData(
-                ecr_repositories=[
+            ecr=ECRData(
+                repositories=[
                     ECRRepository(
                         repository_name="ecr-full",
                         arn=(
@@ -2633,16 +2671,18 @@ class TestClassifyAll35Types:
                         ),
                     ),
                 ],
-                ecs_clusters=[
+            ),
+            ecs=ECSData(
+                clusters=[
                     ECSCluster(
                         cluster_name="ecs-full",
-                        arn=(
+                        cluster_arn=(
                             f"arn:aws:ecs:{REGION}"
                             f":{ACCOUNT}:cluster/ecs-full"
                         ),
                     ),
                 ],
-                ecs_task_definitions=[
+                task_definitions=[
                     ECSTaskDefinition(
                         family="td-full",
                         arn=(
@@ -2652,9 +2692,11 @@ class TestClassifyAll35Types:
                         ),
                     ),
                 ],
-                eks_clusters=[
+            ),
+            eks=EKSData(
+                clusters=[
                     EKSCluster(
-                        cluster_name="eks-full",
+                        name="eks-full",
                         arn=(
                             f"arn:aws:eks:{REGION}"
                             f":{ACCOUNT}:cluster/eks-full"

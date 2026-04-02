@@ -136,7 +136,7 @@ class TestIAMModels:
             created_date="2026-01-01",
         )
         assert k.key_id == "AKIA123"
-        assert k.last_used_days_ago is None
+        assert k.last_used_days is None
 
     def test_attached_policy(self):
         p = AttachedPolicy(
@@ -156,7 +156,7 @@ class TestIAMModels:
 
     def test_password_policy_defaults(self):
         pp = PasswordPolicy()
-        assert pp.minimum_length == 8
+        assert pp.minimum_password_length == 8
         assert pp.require_symbols is False
 
     def test_iam_group(self):
@@ -173,7 +173,7 @@ class TestIAMModels:
             arn="arn:aws:iam::123:role/LambdaExec",
         )
         assert r.role_name == "LambdaExec"
-        assert r.assume_role_policy == {}
+        assert r.trust_policy == {}
         assert r.tags == {}
 
     def test_iam_policy(self):
@@ -188,7 +188,7 @@ class TestIAMModels:
         d = IAMData()
         assert d.groups == []
         assert d.roles == []
-        assert d.policies == []
+        assert d.customer_managed_policies == []
 
 
 class TestS3Models:

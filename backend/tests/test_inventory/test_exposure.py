@@ -384,9 +384,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-missing-sg",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-ghost"],
+                        security_groups=[
+                            {"group_id": "sg-ghost"}
+                        ],
                     )
                 ],
                 security_groups=[],
@@ -409,9 +411,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-no-nacl",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -455,9 +459,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-egress",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -592,11 +598,7 @@ class TestLambdaExposure:
                 security_group_ids=[],
             ),
         )
-        data = _input(
-            lambda_functions=LambdaData(
-                functions=[fn]
-            )
-        )
+        data = _input(lambda_functions=[fn])
         cls = ExposureClassifier(data)
         result = cls.classify_lambda(fn)
         assert result == "internet"
@@ -610,11 +612,7 @@ class TestLambdaExposure:
                 security_group_ids=["sg-1"],
             ),
         )
-        data = _input(
-            lambda_functions=LambdaData(
-                functions=[fn]
-            )
-        )
+        data = _input(lambda_functions=[fn])
         cls = ExposureClassifier(data)
         result = cls.classify_lambda(fn)
         assert result == "private"
@@ -635,9 +633,11 @@ class TestClassifyDispatch:
                 instances=[
                     EC2Instance(
                         instance_id="i-1",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -694,11 +694,7 @@ class TestClassifyDispatch:
         fn = LambdaFunction(
             function_name="fn-1",
         )
-        data = _input(
-            lambda_functions=LambdaData(
-                functions=[fn]
-            )
-        )
+        data = _input(lambda_functions=[fn])
         cls = ExposureClassifier(data)
         assert (
             cls.classify("lambda_function", "fn-1")
