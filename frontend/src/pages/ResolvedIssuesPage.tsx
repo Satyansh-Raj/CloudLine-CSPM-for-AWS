@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,14 +13,8 @@ import { useViolations } from "@/hooks/useViolations";
 import { useRegion } from "@/hooks/useRegion";
 import { useAccount } from "@/hooks/useAccount";
 import { toResolvedPath } from "@/utils/violationUrl";
-import {
-  SeverityBadge,
-  StatusBadge,
-} from "@/components/shared";
-import {
-  ViolationFilters,
-  type FilterValues,
-} from "@/components/violations";
+import { SeverityBadge, StatusBadge } from "@/components/shared";
+import { ViolationFilters, type FilterValues } from "@/components/violations";
 import { getCheckName } from "@/constants/checkNames";
 import type { Violation } from "@/types";
 
@@ -69,20 +63,13 @@ const columns = [
   }),
   col.accessor("severity", {
     header: "Severity",
-    cell: (info) => (
-      <SeverityBadge severity={info.getValue()} />
-    ),
+    cell: (info) => <SeverityBadge severity={info.getValue()} />,
   }),
-  col.accessor(
-    (row) => row.previous_status ?? "alarm",
-    {
-      id: "previous_status",
-      header: "Previous Status",
-      cell: (info) => (
-        <StatusBadge status={info.getValue()} />
-      ),
-    },
-  ),
+  col.accessor((row) => row.previous_status ?? "alarm", {
+    id: "previous_status",
+    header: "Previous Status",
+    cell: (info) => <StatusBadge status={info.getValue()} />,
+  }),
   col.accessor("resolved_at", {
     header: "Resolved At",
     cell: (info) => (
@@ -125,14 +112,44 @@ function CheckIcon() {
 
 export default function ResolvedIssuesPage() {
   const navigate = useNavigate();
-  const { selectedRegion, regions, setSelectedRegion } =
-    useRegion();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { regions } = useRegion();
   const { selectedAccount } = useAccount();
-  const [filters, setFilters] = useState<FilterValues>({
-    severity: "",
-    domain: "",
-  });
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "resolved_at", desc: true },
+  ]);
+
+  const filters: FilterValues = {
+    severity: searchParams.get("severity") ?? "",
+    domain: searchParams.get("domain") ?? "",
+  };
+  const selectedRegion = searchParams.get("region") ?? "";
+
+  function setFilters(next: FilterValues) {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next.severity) p.set("severity", next.severity);
+        else p.delete("severity");
+        if (next.domain) p.set("domain", next.domain);
+        else p.delete("domain");
+        return p;
+      },
+      { replace: true },
+    );
+  }
+
+  function setSelectedRegion(r: string) {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (r) p.set("region", r);
+        else p.delete("region");
+        return p;
+      },
+      { replace: true },
+    );
+  }
 
   const params = useMemo(() => {
     const p: Record<string, string> = { status: "ok" };
@@ -167,8 +184,7 @@ export default function ResolvedIssuesPage() {
             Resolved Issues
           </h2>
           <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
-            Violations that currently pass their security
-            checks
+            Violations that currently pass their security checks
           </p>
         </div>
 
@@ -182,19 +198,14 @@ export default function ResolvedIssuesPage() {
       {/* Filters */}
       <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-4">
-          <ViolationFilters
-            filters={filters}
-            onChange={setFilters}
-          />
+          <ViolationFilters filters={filters} onChange={setFilters} />
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               Region
             </label>
             <select
               value={selectedRegion}
-              onChange={(e) =>
-                setSelectedRegion(e.target.value)
-              }
+              onChange={(e) => setSelectedRegion(e.target.value)}
               className="block w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label="Select region"
             >
@@ -226,30 +237,25 @@ export default function ResolvedIssuesPage() {
         <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-5">
           <p className="text-sm text-red-700 dark:text-red-400">
             Failed to load resolved issues:{" "}
-            {(error as { message?: string }).message ??
-              "Unknown error"}
+            {(error as { message?: string }).message ?? "Unknown error"}
           </p>
         </div>
       )}
 
       {/* Empty state */}
-      {!isLoading &&
-        !error &&
-        data &&
-        data.length === 0 && (
-          <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-12 text-center shadow-sm">
-            <div className="w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center mx-auto mb-3">
-              <CheckIcon />
-            </div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              No resolved issues yet
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
-              Violations that pass their checks will appear
-              here.
-            </p>
+      {!isLoading && !error && data && data.length === 0 && (
+        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-12 text-center shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+            <CheckIcon />
           </div>
-        )}
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            No resolved issues yet
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+            Violations that pass their checks will appear here.
+          </p>
+        </div>
+      )}
 
       {/* Table */}
       {!isLoading && !error && data && data.length > 0 && (
@@ -270,16 +276,13 @@ export default function ResolvedIssuesPage() {
                       >
                         <div className="flex items-center gap-1">
                           {flexRender(
-                            header.column.columnDef
-                              .header,
+                            header.column.columnDef.header,
                             header.getContext(),
                           )}
                           {{
                             asc: " \u2191",
                             desc: " \u2193",
-                          }[
-                            header.column.getIsSorted() as string
-                          ] ?? null}
+                          }[header.column.getIsSorted() as string] ?? null}
                         </div>
                       </th>
                     ))}
@@ -316,19 +319,17 @@ export default function ResolvedIssuesPage() {
                         )
                       }
                     >
-                      {row
-                        .getVisibleCells()
-                        .map((cell) => (
-                          <td
-                            key={cell.id}
-                            className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </td>
-                        ))}
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      ))}
                     </tr>
                   ))
                 )}
@@ -340,11 +341,8 @@ export default function ResolvedIssuesPage() {
           {table.getPageCount() > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Page{" "}
-                {table.getState().pagination.pageIndex +
-                  1}{" "}
-                of {table.getPageCount()} ({data.length}{" "}
-                total)
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()} ({data.length} total)
               </p>
               <div className="flex gap-2">
                 <button

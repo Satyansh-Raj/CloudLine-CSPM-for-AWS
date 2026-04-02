@@ -13,7 +13,6 @@ from app.models.aws_input import (
     EC2Data,
     EC2Instance,
     IngressRule,
-    LambdaData,
     LambdaFunction,
     LambdaVPCConfig,
     NACL,
@@ -148,9 +147,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-exposed",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -173,9 +174,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-priv",
-                        public_ip=None,
+                        public_ip_address=None,
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -198,9 +201,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-sg-block",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-priv"],
+                        security_groups=[
+                            {"group_id": "sg-priv"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_restricted()],
@@ -223,9 +228,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-nacl-block",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -268,9 +275,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-deny-first",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],
@@ -294,9 +303,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-ipv6",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[sg],
@@ -319,11 +330,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-multi-sg",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id="vpc-1",
                         security_groups=[
-                            "sg-priv",
-                            "sg-open",
+                            {"group_id": "sg-priv"},
+                            {"group_id": "sg-open"},
                         ],
                     )
                 ],
@@ -350,9 +361,11 @@ class TestEC2Exposure:
                 instances=[
                     EC2Instance(
                         instance_id="i-no-vpc",
-                        public_ip="1.2.3.4",
+                        public_ip_address="1.2.3.4",
                         vpc_id=None,
-                        security_groups=["sg-open"],
+                        security_groups=[
+                            {"group_id": "sg-open"}
+                        ],
                     )
                 ],
                 security_groups=[_sg_open()],

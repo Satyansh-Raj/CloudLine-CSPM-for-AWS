@@ -96,6 +96,12 @@ export default function ResourceDetailPage() {
     ? allViolations.filter((v) => v.resource === resource.resource_id)
     : [];
 
+  const liveTotal = violations.length;
+  const liveCritical = violations.filter(
+    (v) => v.severity === "critical",
+  ).length;
+  const liveHigh = violations.filter((v) => v.severity === "high").length;
+
   const daysRunning = resource.created_at
     ? Math.max(
         1,
@@ -213,7 +219,7 @@ export default function ResourceDetailPage() {
             <h2 className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
               Violation Summary
             </h2>
-            {resource.violation_count === 0 ? (
+            {!violationsLoading && liveTotal === 0 ? (
               <p className="text-sm font-semibold text-green-600 dark:text-green-400 text-center py-2">
                 All Clear
               </p>
@@ -224,7 +230,7 @@ export default function ResourceDetailPage() {
                     Total
                   </span>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {resource.violation_count}
+                    {liveTotal}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -232,7 +238,7 @@ export default function ResourceDetailPage() {
                     Critical
                   </span>
                   <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                    {resource.critical_violations}
+                    {liveCritical}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -240,7 +246,7 @@ export default function ResourceDetailPage() {
                     High
                   </span>
                   <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                    {resource.high_violations}
+                    {liveHigh}
                   </span>
                 </div>
               </div>

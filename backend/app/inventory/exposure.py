@@ -75,9 +75,7 @@ class ExposureClassifier:
         }
         self._lambda_by_name = {
             f.function_name: f
-            for f in (
-                input_data.lambda_functions.functions
-            )
+            for f in input_data.lambda_functions
         }
 
     # ------------------------------------------
@@ -143,7 +141,7 @@ class ExposureClassifier:
         All three must be open for 'internet'.
         """
         # Step 1: must have a public IP
-        if not instance.public_ip:
+        if not instance.public_ip_address:
             return "private"
 
         # Step 2: must have a VPC to evaluate
@@ -152,9 +150,12 @@ class ExposureClassifier:
 
         # Step 3: at least one SG must allow
         #         0.0.0.0/0 or ::/0 ingress
-        sg_result = self._sg_allows_any(
-            instance.security_groups
-        )
+        sg_ids = [
+            sg["group_id"] if isinstance(sg, dict)
+            else sg
+            for sg in instance.security_groups
+        ]
+        sg_result = self._sg_allows_any(sg_ids)
         if sg_result is None:
             return "unknown"
         if not sg_result:

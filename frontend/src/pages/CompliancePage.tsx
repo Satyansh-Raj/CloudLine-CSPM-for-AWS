@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useCompliance } from "@/hooks/useCompliance";
 import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
-import { getCheckName } from "@/constants/checkNames";
+import { getControlName } from "@/constants/controlNames";
 import type {
   FrameworkSummary,
   ControlStatus,
@@ -184,9 +184,12 @@ function ViolationRows({ violations }: { violations: ControlViolation[] }) {
       {violations.map((v, i) => (
         <tr
           key={`viol-${v.resource_arn}-${i}`}
-          className="bg-gray-50/50 dark:bg-white/[0.02] border-b border-gray-100/50 dark:border-white/5 last:border-0"
+          className="bg-red-50/30 dark:bg-red-500/[0.04] border-b border-gray-100/50 dark:border-white/5 last:border-0"
         >
-          <td className="py-1.5 pr-4 pl-8 font-mono text-xs text-gray-500 dark:text-gray-400 break-all">
+          <td
+            colSpan={2}
+            className="py-1.5 pr-4 pl-8 font-mono text-[11px] text-gray-500 dark:text-gray-400 break-all"
+          >
             {v.resource_arn}
           </td>
           <td className="py-1.5 pr-4 text-xs capitalize text-gray-500 dark:text-gray-400">
@@ -202,6 +205,16 @@ function ViolationRows({ violations }: { violations: ControlViolation[] }) {
       ))}
     </>
   );
+}
+
+function formatControlId(id: string, framework: string): string {
+  if (framework !== "cis_aws") return id;
+  const parts = id.split(".");
+  const last = parts[parts.length - 1];
+  if (/^\d$/.test(last)) {
+    parts[parts.length - 1] = last.padStart(2, "0");
+  }
+  return parts.join(".");
 }
 
 function DrillDown({ framework }: DrillDownProps) {
@@ -249,6 +262,9 @@ function DrillDown({ framework }: DrillDownProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-white/5">
+                <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[40%]">
+                  Name
+                </th>
                 <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Control ID
                 </th>
@@ -267,6 +283,7 @@ function DrillDown({ framework }: DrillDownProps) {
               {data.controls.map((ctrl: ControlStatus) => {
                 const hasViolations = ctrl.violations.length > 0;
                 const isOpen = expanded.has(ctrl.control_id);
+                const primaryName = getControlName(ctrl.control_id);
                 return (
                   <>
                     <tr
@@ -288,24 +305,18 @@ function DrillDown({ framework }: DrillDownProps) {
                         ${hasViolations ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors" : ""}
                       `}
                     >
-                      <td className="py-2.5 pr-4 text-xs text-gray-700 dark:text-gray-300">
-                        <span className="inline-flex items-start gap-1.5">
+                      <td className="py-2.5 pr-4 text-xs text-gray-700 dark:text-gray-300 max-w-xs">
+                        <span className="inline-flex items-center gap-1.5">
                           {hasViolations && (
-                            <span className="mt-0.5 shrink-0">
+                            <span className="shrink-0">
                               <ChevronIcon open={isOpen} />
                             </span>
                           )}
-                          <span className="flex flex-col gap-0.5">
-                            <span className="font-mono">{ctrl.control_id}</span>
-                            {ctrl.check_ids.length > 0 && (
-                              <span className="font-sans text-[10px] text-gray-400 dark:text-gray-500 font-normal leading-tight">
-                                {ctrl.check_ids
-                                  .map((id) => getCheckName(id))
-                                  .join(", ")}
-                              </span>
-                            )}
-                          </span>
+                          <span>{primaryName}</span>
                         </span>
+                      </td>
+                      <td className="py-2.5 pr-4 font-mono text-xs text-gray-500 dark:text-gray-400">
+                        {formatControlId(ctrl.control_id, framework)}
                       </td>
                       <td className="py-2.5 pr-4">
                         <span

@@ -150,9 +150,7 @@ class ResourceClassifier:
             )
 
         # Lambda functions
-        for fn in (
-            input_data.lambda_functions.functions
-        ):
+        for fn in input_data.lambda_functions:
             records.append(
                 self._lambda(fn, exposure, now)
             )

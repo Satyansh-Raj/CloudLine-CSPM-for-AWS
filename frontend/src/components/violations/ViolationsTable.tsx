@@ -9,15 +9,24 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import type { Violation } from "@/types";
-import {
-  SeverityBadge,
-  StatusBadge,
-} from "@/components/shared";
+import { SeverityBadge, StatusBadge } from "@/components/shared";
 import { getCheckName } from "@/constants/checkNames";
 
 interface Props {
   data: Violation[];
   onRowClick: (violation: Violation) => void;
+}
+
+function formatDate(iso?: string): string {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso;
+  }
 }
 
 const col = createColumnHelper<Violation>();
@@ -49,15 +58,11 @@ const columns = [
   }),
   col.accessor("severity", {
     header: "Severity",
-    cell: (info) => (
-      <SeverityBadge severity={info.getValue()} />
-    ),
+    cell: (info) => <SeverityBadge severity={info.getValue()} />,
   }),
   col.accessor("status", {
     header: "Status",
-    cell: (info) => (
-      <StatusBadge status={info.getValue()} />
-    ),
+    cell: (info) => <StatusBadge status={info.getValue()} />,
   }),
   col.accessor("domain", {
     header: "Domain",
@@ -67,13 +72,21 @@ const columns = [
       </span>
     ),
   }),
+  col.accessor("first_detected", {
+    header: "Detected",
+    sortingFn: "datetime",
+    cell: (info) => (
+      <span className="text-xs text-gray-500 dark:text-gray-400">
+        {formatDate(info.getValue())}
+      </span>
+    ),
+  }),
 ];
 
-export default function ViolationsTable({
-  data,
-  onRowClick,
-}: Props) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+export default function ViolationsTable({ data, onRowClick }: Props) {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "first_detected", desc: true },
+  ]);
 
   const table = useReactTable({
     data,
@@ -107,9 +120,7 @@ export default function ViolationsTable({
                       {{
                         asc: " \u2191",
                         desc: " \u2193",
-                      }[
-                        header.column.getIsSorted() as string
-                      ] ?? null}
+                      }[header.column.getIsSorted() as string] ?? null}
                     </div>
                   </th>
                 ))}
@@ -155,10 +166,8 @@ export default function ViolationsTable({
       {table.getPageCount() > 1 && (
         <div className="flex items-center justify-between mt-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Page{" "}
-            {table.getState().pagination.pageIndex + 1}{" "}
-            of {table.getPageCount()} ({data.length}{" "}
-            total)
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()} ({data.length} total)
           </p>
           <div className="flex gap-2">
             <button

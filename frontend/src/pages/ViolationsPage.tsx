@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useViolations } from "@/hooks";
 import { useRegion } from "@/hooks/useRegion";
 import {
@@ -12,12 +12,40 @@ import type { Violation } from "@/types";
 
 export default function ViolationsPage() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<FilterValues>({
-    severity: "",
-    domain: "",
-  });
-  const [region, setRegion] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { regions } = useRegion();
+
+  const filters: FilterValues = {
+    severity: searchParams.get("severity") ?? "",
+    domain: searchParams.get("domain") ?? "",
+  };
+  const region = searchParams.get("region") ?? "";
+
+  function setFilters(next: FilterValues) {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next.severity) p.set("severity", next.severity);
+        else p.delete("severity");
+        if (next.domain) p.set("domain", next.domain);
+        else p.delete("domain");
+        return p;
+      },
+      { replace: true },
+    );
+  }
+
+  function setRegion(r: string) {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (r) p.set("region", r);
+        else p.delete("region");
+        return p;
+      },
+      { replace: true },
+    );
+  }
 
   const params = useMemo(() => {
     const p: Record<string, string> = { status: "alarm" };
