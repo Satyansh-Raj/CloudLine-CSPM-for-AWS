@@ -53,6 +53,7 @@ from app.pipeline.models import (
 from app.pipeline.resource_store import ResourceStore
 from app.pipeline.risk_scorer import RiskScorer
 from app.pipeline.state_manager import StateManager
+from app.compliance.mappings import get_registry as _get_compliance_registry
 from app.pipeline.ws_manager import format_drift_event
 
 logger = logging.getLogger(__name__)
@@ -214,13 +215,24 @@ def _process_region(
         getattr(v, "check_id", "")
         for v in violations
     }
+    # All check_ids known to the policy registry.
+    # Used to distinguish "check passed (should resolve)"
+    # from "check renamed/removed (should purge)".
+    known_check_ids: set[str] = set(
+        _get_compliance_registry()._mappings.keys()
+    )
     existing_states = state_manager.query_by_account(
         account_id, region, limit=2000
     )
     for old in existing_states:
-        # Purge violations whose check_id no longer
-        # exists in the policy set (renamed/removed).
-        if old.check_id not in fresh_check_ids:
+        # Purge only check_ids that are unknown to the
+        # policy registry — these were renamed or
+        # removed from Rego. Known checks that produced
+        # no violations simply passed; resolve them.
+        if (
+            old.check_id not in fresh_check_ids
+            and old.check_id not in known_check_ids
+        ):
             state_manager.delete_state(
                 account_id,
                 region,
@@ -232,6 +244,27 @@ def _process_region(
                 old.check_id,
                 old.resource_arn,
             )
+            continue
+
+        # Known check produced zero violations this
+        # scan → it is passing. Resolve any open alarm.
+        if old.check_id not in fresh_check_ids:
+            if old.status == "alarm":
+                if state_manager.update_status(
+                    account_id,
+                    region,
+                    old.check_id,
+                    old.resource_arn,
+                    new_status="ok",
+                    reason="Remediated — check now passing",
+                ):
+                    stale_resolved += 1
+                    logger.info(
+                        "Resolved passing check:"
+                        " %s / %s",
+                        old.check_id,
+                        old.resource_arn,
+                    )
             continue
 
         if (

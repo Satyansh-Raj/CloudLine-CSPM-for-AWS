@@ -293,6 +293,24 @@ test_kms_08_compliant if {
 	_kms_violations_for("kms_owner_purpose_tags", _kms_input) == 0
 }
 
+test_kms_08_pending_deletion_skipped if {
+	key := object.union(
+		object.remove(_good_key, ["tags"]),
+		{"tags": {}, "key_state": "PendingDeletion"},
+	)
+	r := kms.violations with input as {"kms": {"keys": [key]}}
+	count([v | some v in r; v.check_id == "kms_owner_purpose_tags"]) == 0
+}
+
+test_kms_08_pending_replica_deletion_skipped if {
+	key := object.union(
+		object.remove(_good_key, ["tags"]),
+		{"tags": {}, "key_state": "PendingReplicaDeletion"},
+	)
+	r := kms.violations with input as {"kms": {"keys": [key]}}
+	count([v | some v in r; v.check_id == "kms_owner_purpose_tags"]) == 0
+}
+
 # =========================================================================
 # kms_09 — Disabled key > 90 days
 # =========================================================================

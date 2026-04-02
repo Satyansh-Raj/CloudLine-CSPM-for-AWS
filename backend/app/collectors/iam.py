@@ -236,12 +236,24 @@ class IAMCollector(BaseCollector):
 
     def _get_users(self, client) -> list[dict]:
         users = []
-        paginator = client.get_paginator("list_users")
-        for page in paginator.paginate():
-            for user in page["Users"]:
-                users.append(
-                    self._build_user_dict(client, user)
-                )
+        try:
+            paginator = client.get_paginator("list_users")
+            for page in paginator.paginate():
+                for user in page["Users"]:
+                    try:
+                        users.append(
+                            self._build_user_dict(
+                                client, user
+                            )
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            "Skipping user %s: %s",
+                            user.get("UserName", "?"),
+                            e,
+                        )
+        except Exception as e:
+            logger.error("IAM list_users: %s", e)
         return users
 
     def _build_user_dict(
@@ -330,16 +342,24 @@ class IAMCollector(BaseCollector):
             )
 
         # Attached policies
-        attached = client.list_attached_user_policies(
-            UserName=username
-        )
-        policies = [
-            {
-                "policy_name": p["PolicyName"],
-                "policy_arn": p["PolicyArn"],
-            }
-            for p in attached["AttachedPolicies"]
-        ]
+        policies = []
+        try:
+            attached = client.list_attached_user_policies(
+                UserName=username
+            )
+            policies = [
+                {
+                    "policy_name": p["PolicyName"],
+                    "policy_arn": p["PolicyArn"],
+                }
+                for p in attached["AttachedPolicies"]
+            ]
+        except Exception:
+            logger.warning(
+                "Failed to list attached policies "
+                "for %s",
+                username,
+            )
 
         # Last activity
         days_since_last_use = None
@@ -513,16 +533,31 @@ class IAMCollector(BaseCollector):
             "iam", config=_IAM_CONFIG
         )
         users = []
-        paginator = client.get_paginator(
-            "list_users"
-        )
-        for page in paginator.paginate():
-            for user in page["Users"]:
-                users.append(
-                    self._build_graph_user(
-                        client, user
-                    )
-                )
+        try:
+            paginator = client.get_paginator(
+                "list_users"
+            )
+            for page in paginator.paginate():
+                for user in page["Users"]:
+                    try:
+                        users.append(
+                            self._build_graph_user(
+                                client, user
+                            )
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            "Skipping graph user %s:"
+                            " %s",
+                            user.get(
+                                "UserName", "?"
+                            ),
+                            e,
+                        )
+        except Exception as e:
+            logger.error(
+                "IAM list_users (graph): %s", e
+            )
         return users
 
     def _build_graph_user(

@@ -84,10 +84,12 @@ def get_iam_graph(
             }
             for v in identity
             if v.resource_arn == user_arn
+            and v.status == "alarm"
         ]
 
     # Collect account-level violations (password policy,
-    # root account checks) whose ARN doesn't match any user
+    # root account checks) whose ARN doesn't match any user.
+    # Only include active alarms — skip resolved/ok states.
     account_violations = [
         {
             "check_id": v.check_id,
@@ -99,6 +101,7 @@ def get_iam_graph(
         }
         for v in identity
         if v.resource_arn not in user_arns
+        and v.status == "alarm"
     ]
 
     result = {

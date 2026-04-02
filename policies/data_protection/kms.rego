@@ -183,6 +183,7 @@ violations contains result if {
 violations contains result if {
 	some key in input.kms.keys
 	key.key_manager == "CUSTOMER"
+	not key.key_state in {"PendingDeletion", "PendingReplicaDeletion"}
 	not key.tags.owner
 	result := {
 		"check_id": "kms_owner_purpose_tags",

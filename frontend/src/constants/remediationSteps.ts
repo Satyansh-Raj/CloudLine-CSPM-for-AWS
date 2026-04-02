@@ -175,7 +175,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 aws iam get-account-password-policy`,
     terraform: `\
@@ -7552,7 +7552,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 # Verify
 aws iam get-account-password-policy`,
@@ -7591,7 +7591,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 # Verify
 aws iam get-account-password-policy`,
@@ -7630,7 +7630,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 # Verify
 aws iam get-account-password-policy`,
@@ -7669,7 +7669,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 # Verify
 aws iam get-account-password-policy`,
@@ -7708,7 +7708,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 # Verify
 aws iam get-account-password-policy`,
@@ -7747,7 +7747,7 @@ aws iam update-account-password-policy \\
   --allow-users-to-change-password \\
   --max-password-age 90 \\
   --password-reuse-prevention 24 \\
-  --hard-expiry false
+  --no-hard-expiry
 
 # Verify
 aws iam get-account-password-policy`,
