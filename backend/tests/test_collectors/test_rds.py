@@ -65,7 +65,7 @@ class TestRDSCollector:
         collector = RDSCollector(rds_setup)
         _, data = collector.collect()
         ids = [
-            d["db_instance_id"]
+            d["db_instance_identifier"]
             for d in data["db_instances"]
         ]
         assert "prod-db" in ids
@@ -76,7 +76,7 @@ class TestRDSCollector:
         db = next(
             d
             for d in data["db_instances"]
-            if d["db_instance_id"] == "prod-db"
+            if d["db_instance_identifier"] == "prod-db"
         )
         assert db["engine"] == "mysql"
         assert db["storage_encrypted"] is True
@@ -89,7 +89,7 @@ class TestRDSCollector:
             "prod-db"
         )
         assert (
-            result["db_instance_id"] == "prod-db"
+            result["db_instance_identifier"] == "prod-db"
         )
 
     def test_collect_resource_not_found(

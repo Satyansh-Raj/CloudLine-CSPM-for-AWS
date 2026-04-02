@@ -213,6 +213,9 @@ class TestOrchestratorSplit:
         """Stub every collector so no real AWS call
         is made."""
         from app.collectors.kms import KMSCollector
+        from app.collectors.logging_collector import (
+            LoggingCollector,
+        )
         for col in orch.collectors:
             cls_name = col.__class__.__name__
             if isinstance(col, KMSCollector):
@@ -225,6 +228,22 @@ class TestOrchestratorSplit:
                         "backup": {
                             "plans": [],
                             "protected_resources": [],
+                        },
+                    }
+                )
+            elif isinstance(col, LoggingCollector):
+                col.collect_full = MagicMock(
+                    return_value={
+                        "cloudtrail": {"trails": []},
+                        "cloudwatch": {
+                            "alarms": [],
+                            "log_groups": [],
+                        },
+                        "aws_config": {
+                            "recorders": []
+                        },
+                        "guardduty": {
+                            "detectors": []
                         },
                     }
                 )
@@ -275,10 +294,11 @@ class TestOrchestratorSplit:
         Lambda, Logging, KMS."""
         self._stub_all_collectors(orch)
         result = orch.collect_regional()
-        # KMS expands to three keys
+        # KMS expands to kms/secrets_manager/backup
+        # LoggingCollector expands to cloudtrail/cloudwatch/aws_config/guardduty
         expected = {
             "s3", "ec2", "vpc", "rds",
-            "logging", "kms",
+            "cloudtrail", "kms",
         }
         for key in expected:
             assert key in result, (

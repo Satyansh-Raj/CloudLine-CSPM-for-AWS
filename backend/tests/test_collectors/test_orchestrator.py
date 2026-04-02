@@ -86,7 +86,7 @@ class TestOrchestrator:
         assert "vpc" in result
         assert "rds" in result
         assert "lambda_functions" in result
-        assert "logging" in result
+        assert "cloudtrail" in result
         assert "kms" in result
         assert "secrets_manager" in result
         assert "backup" in result
@@ -95,7 +95,7 @@ class TestOrchestrator:
         assert "cdn" in result
         assert "dynamodb" in result
         assert "apigateway" in result
-        assert "containers" in result
+        assert "ecs" in result
 
     def test_collect_full_iam_data(
         self, full_setup
@@ -107,7 +107,7 @@ class TestOrchestrator:
         )
         result = orch.collect_full()
         names = [
-            u["name"]
+            u["username"]
             for u in result["iam"]["users"]
         ]
         assert "testuser" in names
@@ -149,7 +149,7 @@ class TestOrchestrator:
         result = orch.collect_targeted(
             "iam", "testuser"
         )
-        assert result["name"] == "testuser"
+        assert result["username"] == "testuser"
 
     def test_collect_targeted_s3(
         self, full_setup

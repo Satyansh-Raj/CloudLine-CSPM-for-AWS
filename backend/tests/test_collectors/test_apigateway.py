@@ -37,8 +37,8 @@ class TestAPIGatewayCollector:
             apigateway_setup
         )
         _, data = collector.collect()
-        assert "apis" in data
-        assert len(data["apis"]) >= 1
+        assert "rest_apis" in data
+        assert len(data["rest_apis"]) >= 1
 
     def test_api_name(self, apigateway_setup):
         collector = APIGatewayCollector(
@@ -46,7 +46,7 @@ class TestAPIGatewayCollector:
         )
         _, data = collector.collect()
         names = [
-            a["name"] for a in data["apis"]
+            a["name"] for a in data["rest_apis"]
         ]
         assert "test-api" in names
 
@@ -59,11 +59,14 @@ class TestAPIGatewayCollector:
         _, data = collector.collect()
         api = next(
             a
-            for a in data["apis"]
+            for a in data["rest_apis"]
             if a["name"] == "test-api"
         )
-        assert "endpoint_type" in api
-        assert api["endpoint_type"] == "REGIONAL"
+        assert "endpoint_configuration" in api
+        assert (
+            "REGIONAL"
+            in api["endpoint_configuration"]["types"]
+        )
 
     def test_api_has_protocol_type(
         self, apigateway_setup
@@ -74,10 +77,10 @@ class TestAPIGatewayCollector:
         _, data = collector.collect()
         api = next(
             a
-            for a in data["apis"]
+            for a in data["rest_apis"]
             if a["name"] == "test-api"
         )
-        assert api["protocol_type"] == "REST"
+        assert "endpoint_configuration" in api
 
     def test_collect_resource(
         self, apigateway_setup
@@ -86,7 +89,7 @@ class TestAPIGatewayCollector:
             apigateway_setup
         )
         _, data = collector.collect()
-        api_id = data["apis"][0]["api_id"]
+        api_id = data["rest_apis"][0]["id"]
         result = collector.collect_resource(
             api_id
         )

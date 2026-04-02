@@ -71,7 +71,7 @@ class TestELBCollector:
         )
         _, data = collector.collect()
         names = [
-            lb["lb_name"]
+            lb["load_balancer_name"]
             for lb in data["load_balancers"]
         ]
         assert "web-alb" in names
@@ -84,7 +84,7 @@ class TestELBCollector:
         lb = next(
             lb
             for lb in data["load_balancers"]
-            if lb["lb_name"] == "web-alb"
+            if lb["load_balancer_name"] == "web-alb"
         )
         assert lb["scheme"] == "internet-facing"
 
@@ -96,9 +96,9 @@ class TestELBCollector:
         lb = next(
             lb
             for lb in data["load_balancers"]
-            if lb["lb_name"] == "web-alb"
+            if lb["load_balancer_name"] == "web-alb"
         )
-        assert lb["arn"] != ""
+        assert lb["load_balancer_arn"] != ""
 
     def test_collect_resource_not_found(
         self, elb_setup

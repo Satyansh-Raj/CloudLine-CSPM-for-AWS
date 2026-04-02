@@ -85,10 +85,11 @@ class TestLoggingCollector:
             for t in data["cloudtrail_trails"]
             if t["name"] == "mgmt-trail"
         )
-        assert trail["is_multi_region"] is True
+        assert trail["is_multi_region_trail"] is True
         assert trail["is_logging"] is True
         assert (
-            trail["log_file_validation"] is True
+            trail["log_file_validation_enabled"]
+            is True
         )
         assert (
             trail["s3_bucket_name"]

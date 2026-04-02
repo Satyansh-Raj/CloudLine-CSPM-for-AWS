@@ -102,7 +102,7 @@ class TestVPCCollector:
         # Default NACL should have entries
         nacl = data["nacls"][0]
         assert "entries" in nacl
-        assert "nacl_id" in nacl
+        assert "network_acl_id" in nacl
 
     def test_collect_resource_vpc(self, vpc_setup):
         collector = VPCCollector(

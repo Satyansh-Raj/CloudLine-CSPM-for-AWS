@@ -655,6 +655,10 @@ class EC2Collector(BaseCollector):
                                 "Encrypted",
                                 False,
                             ),
+                            "is_public": any(
+                                p.get("group") == "all"
+                                for p in create_volume_permissions
+                            ),
                             "create_volume_permissions": (
                                 create_volume_permissions
                             ),

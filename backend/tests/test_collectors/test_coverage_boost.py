@@ -87,12 +87,12 @@ class TestIAMLastActivity:
         user = next(
             u
             for u in data["users"]
-            if u["name"] == "active-user"
+            if u["username"] == "active-user"
         )
         assert (
-            user["last_activity_days_ago"] is not None
+            user["days_since_last_use"] is not None
         )
-        assert user["last_activity_days_ago"] >= 0
+        assert user["days_since_last_use"] >= 0
 
 
 # --- S3: bucket with logging enabled (lines 187-192)
@@ -133,11 +133,14 @@ class TestS3Logging:
         result = collector._get_versioning(
             client, "bucket"
         )
-        assert result is False
+        assert result == {
+            "status": "Suspended",
+            "mfa_delete": "Disabled",
+        }
 
     def test_mfa_delete_exception(self):
-        """Cover lines 175-176: mfa_delete
-        exception."""
+        """Cover versioning exception returns defaults
+        including mfa_delete field."""
         session = MagicMock()
         client = MagicMock()
         client.get_bucket_versioning.side_effect = (
@@ -145,10 +148,10 @@ class TestS3Logging:
         )
         session.client.return_value = client
         collector = S3Collector(session)
-        result = collector._get_mfa_delete(
+        result = collector._get_versioning(
             client, "bucket"
         )
-        assert result is False
+        assert result["mfa_delete"] == "Disabled"
 
 
 # --- EC2: instance with IAM profile (line 99) ---
@@ -205,8 +208,8 @@ class TestEC2IAMProfile:
 
         collector = EC2Collector(mock_session)
         result = collector.collect_resource(iid)
-        assert result["iam_role"] is not None
-        assert "role_arn" in result["iam_role"]
+        assert result["iam_instance_profile"] is not None
+        assert "role_arn" in result["iam_instance_profile"]
 
 
 # --- Logging: Config recorders (lines 120-136)
@@ -249,7 +252,7 @@ class TestLoggingConfigRecorder:
         assert len(recorders) > 0
         rec = recorders[0]
         assert rec["name"] == "default"
-        assert rec["all_supported"] is True
+        assert rec["recording_group"]["all_supported"] is True
 
 
 # --- VPC: _get_flow_logs with filter (line 70) ---
@@ -317,7 +320,7 @@ class TestVPCNaclFilter:
             ec2_client, [nacl_id]
         )
         assert len(result) == 1
-        assert result[0]["nacl_id"] == nacl_id
+        assert result[0]["network_acl_id"] == nacl_id
 
 
 # --- Orchestrator: collector failure (lines 79-80)
@@ -887,13 +890,13 @@ class TestIAMAccessKeyLastUsed:
         )
         assert (
             result["access_keys"][0][
-                "last_used_days_ago"
+                "last_used_days"
             ]
             is not None
         )
         assert (
             result["access_keys"][0][
-                "last_used_days_ago"
+                "last_used_days"
             ]
             >= 0
         )
@@ -939,7 +942,7 @@ class TestIAMAccessKeyLastUsed:
         )
         assert (
             result["access_keys"][0][
-                "last_used_days_ago"
+                "last_used_days"
             ]
             is None
         )

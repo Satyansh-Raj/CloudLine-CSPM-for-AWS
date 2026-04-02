@@ -65,7 +65,7 @@ class TestLambdaCollector:
         _, data = collector.collect()
         names = [
             f["function_name"]
-            for f in data["functions"]
+            for f in data
         ]
         assert "data-processor" in names
 
@@ -76,7 +76,7 @@ class TestLambdaCollector:
         _, data = collector.collect()
         fn = next(
             f
-            for f in data["functions"]
+            for f in data
             if f["function_name"]
             == "data-processor"
         )
@@ -88,16 +88,16 @@ class TestLambdaCollector:
         _, data = collector.collect()
         fn = next(
             f
-            for f in data["functions"]
+            for f in data
             if f["function_name"]
             == "data-processor"
         )
-        assert fn["tracing_config"] == "Active"
+        assert fn["tracing_config"]["mode"] == "Active"
 
     def test_vpc_config_empty(self, lambda_setup):
         collector = LambdaCollector(lambda_setup)
         _, data = collector.collect()
-        fn = data["functions"][0]
+        fn = data[0]
         assert fn["vpc_config"]["subnet_ids"] == []
         assert (
             fn["vpc_config"][
@@ -128,4 +128,4 @@ class TestLambdaCollector:
     def test_no_functions(self, mock_session):
         collector = LambdaCollector(mock_session)
         _, data = collector.collect()
-        assert data["functions"] == []
+        assert data == []

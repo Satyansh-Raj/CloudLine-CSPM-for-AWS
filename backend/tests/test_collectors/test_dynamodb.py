@@ -71,8 +71,8 @@ class TestDynamoDBCollector:
             for t in data["tables"]
             if t["table_name"] == "users"
         )
-        assert "arn" in tbl
-        assert tbl["arn"] != ""
+        assert "table_arn" in tbl
+        assert tbl["table_arn"] != ""
 
     def test_collect_resource(
         self, dynamodb_setup

@@ -144,13 +144,16 @@ class TestEC2Collector:
             if s["group_id"] == ec2_setup["sg_id"]
         )
         # Should have SSH and HTTPS rules
-        assert len(sg["ingress_rules"]) == 2
+        assert len(sg["ip_permissions"]) == 2
         ssh_rule = next(
             r
-            for r in sg["ingress_rules"]
+            for r in sg["ip_permissions"]
             if r["from_port"] == 22
         )
-        assert ssh_rule["cidr"] == "0.0.0.0/0"
+        assert (
+            ssh_rule["ip_ranges"][0]["cidr_ip"]
+            == "0.0.0.0/0"
+        )
 
     def test_ebs_volume_unencrypted(
         self, ec2_setup
@@ -240,7 +243,7 @@ class TestEC2CollectorASGSnapshots:
     ):
         collector = EC2Collector(mock_session)
         _, data = collector.collect()
-        assert "ebs_snapshots" in data
+        assert "snapshots" in data
 
     def test_asg_collection(self, mock_session):
         asg = mock_session.client("autoscaling")
@@ -306,7 +309,7 @@ class TestEC2CollectorASGSnapshots:
         )
         collector = EC2Collector(mock_session)
         _, data = collector.collect()
-        assert len(data["ebs_snapshots"]) >= 1
+        assert len(data["snapshots"]) >= 1
 
     def test_snapshot_fields(
         self, mock_session
@@ -323,7 +326,7 @@ class TestEC2CollectorASGSnapshots:
         _, data = collector.collect()
         s = next(
             s
-            for s in data["ebs_snapshots"]
+            for s in data["snapshots"]
             if s["snapshot_id"]
             == snap["SnapshotId"]
         )

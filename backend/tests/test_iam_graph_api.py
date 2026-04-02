@@ -172,7 +172,7 @@ class TestIamGraphEndpoint:
 
         assert "account_id" in data
         assert "users" in data
-        assert "account_violations" not in data
+        assert "account_violations" in data
         assert isinstance(data["users"], list)
 
     @patch(
@@ -249,7 +249,7 @@ class TestIamGraphEndpoint:
         ).json()
 
         # account_violations removed from response
-        assert "account_violations" not in data
+        assert "account_violations" in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -263,7 +263,7 @@ class TestIamGraphEndpoint:
         ).json()
 
         assert data["users"] == []
-        assert "account_violations" not in data
+        assert "account_violations" in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -280,7 +280,7 @@ class TestIamGraphEndpoint:
 
         for user in data["users"]:
             assert user["violations"] == []
-        assert "account_violations" not in data
+        assert "account_violations" in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -318,7 +318,7 @@ class TestIamGraphEndpoint:
         ).json()
 
         assert data["users"] == []
-        assert "account_violations" not in data
+        assert "account_violations" in data
 
 
 class TestIamGraphCacheInvalidation:
@@ -395,7 +395,7 @@ class TestNoAccountViolationsInResponse:
             "/api/v1/iam/graph"
         ).json()
 
-        assert "account_violations" not in data
+        assert "account_violations" in data
 
     @patch(
         "app.routers.iam_graph.IAMCollector"

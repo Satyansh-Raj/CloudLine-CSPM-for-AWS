@@ -113,9 +113,11 @@ class TestS3Collector:
             for b in data["buckets"]
             if b["name"] == "secure-bucket"
         )
-        assert secure["encryption"]["enabled"] is True
+        assert len(secure["encryption"]["rules"]) > 0
         assert (
-            secure["encryption"]["type"] == "AES256"
+            secure["encryption"]["rules"][0]
+            ["apply_server_side_encryption_by_default"]
+            ["sse_algorithm"] == "AES256"
         )
 
     def test_versioning_enabled(self, s3_setup):
@@ -126,7 +128,7 @@ class TestS3Collector:
             for b in data["buckets"]
             if b["name"] == "secure-bucket"
         )
-        assert secure["versioning"] is True
+        assert secure["versioning"]["status"] == "Enabled"
 
     def test_insecure_bucket_defaults(
         self, s3_setup
@@ -138,11 +140,8 @@ class TestS3Collector:
             for b in data["buckets"]
             if b["name"] == "insecure-bucket"
         )
-        assert insecure["versioning"] is False
-        assert (
-            insecure["encryption"]["enabled"]
-            is False
-        )
+        assert insecure["versioning"]["status"] != "Enabled"
+        assert insecure["encryption"]["rules"] == []
 
     def test_collect_resource(self, s3_setup):
         collector = S3Collector(s3_setup)

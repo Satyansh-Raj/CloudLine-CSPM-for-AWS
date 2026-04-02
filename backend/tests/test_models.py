@@ -217,8 +217,8 @@ class TestS3Models:
             name="test",
             arn="arn:aws:s3:::test",
         )
-        assert b.versioning is False
-        assert b.mfa_delete is False
+        assert b.versioning.status == "Suspended"
+        assert b.versioning.mfa_delete == "Disabled"
 
 
 class TestEC2Models:
@@ -252,7 +252,7 @@ class TestEC2Models:
 
     def test_ec2_instance(self):
         i = EC2Instance(instance_id="i-123")
-        assert i.state == "running"
+        assert i.state.name == "running"
         assert i.iam_role is None
 
 
@@ -317,9 +317,9 @@ class TestVPCModels:
 
 class TestELBCDNModels:
     def test_load_balancer(self):
-        lb = LoadBalancer(lb_name="web-lb")
+        lb = LoadBalancer(load_balancer_name="web-lb")
         assert lb.scheme == "internal"
-        assert lb.lb_type == "application"
+        assert lb.type == "application"
 
     def test_cloudfront_distribution(self):
         cf = CloudFrontDistribution(
@@ -356,9 +356,10 @@ class TestRDSModels:
         assert c.engine == ""
 
     def test_rds_snapshot(self):
-        s = RDSSnapshot(snapshot_id="snap-1")
-        assert s.is_public is False
-        assert s.encrypted is False
+        s = RDSSnapshot(
+            db_snapshot_identifier="snap-1"
+        )
+        assert s.attributes == {}
 
     def test_rds_data_has_aurora_and_snapshots(self):
         d = RDSData()
@@ -370,7 +371,12 @@ class TestDynamoDBModels:
     def test_dynamodb_table(self):
         t = DynamoDBTable(table_name="users")
         assert t.billing_mode == "PROVISIONED"
-        assert t.point_in_time_recovery is False
+        assert (
+            t.continuous_backups
+            .point_in_time_recovery_description
+            .point_in_time_recovery_status
+            == "DISABLED"
+        )
 
     def test_dynamodb_data_defaults(self):
         d = DynamoDBData()
@@ -386,8 +392,8 @@ class TestLambdaModels:
         f = LambdaFunction(
             function_name="fn1"
         )
-        assert f.tracing_config == "PassThrough"
-        assert f.environment_encryption is False
+        assert f.tracing_config.mode == "PassThrough"
+        assert f.kms_key_arn is None
 
 
 class TestLoggingModels:
@@ -495,7 +501,7 @@ class TestAPIGatewayModel:
 
     def test_api_gateway_data_defaults(self):
         d = APIGatewayData()
-        assert d.apis == []
+        assert d.rest_apis == []
 
 
 class TestContainerModels:
@@ -504,8 +510,14 @@ class TestContainerModels:
             repository_name="my-app"
         )
         assert r.image_tag_mutability == "MUTABLE"
-        assert r.scan_on_push is False
-        assert r.encryption_type == "AES256"
+        assert (
+            r.image_scanning_configuration.scan_on_push
+            is False
+        )
+        assert (
+            r.encryption_configuration.encryption_type
+            == "AES256"
+        )
         assert r.tags == {}
 
     def test_ecs_cluster_defaults(self):
@@ -524,11 +536,19 @@ class TestContainerModels:
         assert td.tags == {}
 
     def test_eks_cluster_defaults(self):
-        e = EKSCluster(cluster_name="k8s")
+        e = EKSCluster(name="k8s")
         assert e.status == "ACTIVE"
-        assert e.kubernetes_version == ""
-        assert e.endpoint_public_access is True
-        assert e.endpoint_private_access is False
+        assert e.version == ""
+        assert (
+            e.resources_vpc_config
+            .endpoint_public_access
+            is True
+        )
+        assert (
+            e.resources_vpc_config
+            .endpoint_private_access
+            is False
+        )
         assert e.tags == {}
 
     def test_eks_cluster_private(self):

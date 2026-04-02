@@ -958,15 +958,25 @@ class TestAccountsAPI:
     def test_create_account(self):
         """POST /api/v1/accounts returns 201 and account data."""
         from app.main import app
-        from app.dependencies import get_account_store
+        from app.dependencies import (
+            get_account_store,
+            get_session_factory,
+        )
 
         mock_store = MagicMock()
         mock_store.put_account.return_value = True
         mock_store.get_account.return_value = None
+        mock_factory = MagicMock()
+        mock_factory.get_session.return_value = (
+            MagicMock()
+        )
 
         app.dependency_overrides[get_account_store] = (
             lambda: mock_store
         )
+        app.dependency_overrides[
+            get_session_factory
+        ] = lambda: mock_factory
         try:
             client = TestClient(app)
             payload = {
@@ -1114,3 +1124,364 @@ class TestAccountsAPI:
             assert resp.status_code == 500
         finally:
             app.dependency_overrides.clear()
+
+    # ------------------------------------------------------------------
+    # POST enhancements: external_id generation + STS validation
+    # ------------------------------------------------------------------
+
+    def test_create_account_generates_external_id(self):
+        """POST /api/v1/accounts auto-generates a UUID external_id."""
+        from app.main import app
+        from app.dependencies import (
+            get_account_store,
+            get_session_factory,
+        )
+
+        mock_store = MagicMock()
+        mock_store.put_account.return_value = True
+        mock_factory = MagicMock()
+        mock_factory.get_session.return_value = (
+            MagicMock()
+        )
+
+        app.dependency_overrides[get_account_store] = (
+            lambda: mock_store
+        )
+        app.dependency_overrides[
+            get_session_factory
+        ] = lambda: mock_factory
+        try:
+            client = TestClient(app)
+            # Do NOT send external_id — server must
+            # generate one
+            payload = {
+                "account_id": "111111111111",
+                "account_name": "Dev Account",
+                "role_arn": (
+                    "arn:aws:iam::111111111111"
+                    ":role/CloudLineScanner"
+                ),
+            }
+            resp = client.post(
+                "/api/v1/accounts", json=payload
+            )
+            assert resp.status_code == 201
+            data = resp.json()
+            ext_id = data.get("external_id", "")
+            # Must be a non-empty UUID (36 chars)
+            assert len(ext_id) == 36
+            assert ext_id.count("-") == 4
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_create_account_sts_validation(self):
+        """POST /api/v1/accounts calls STS assume-role."""
+        from app.main import app
+        from app.dependencies import (
+            get_account_store,
+            get_session_factory,
+        )
+
+        mock_store = MagicMock()
+        mock_store.put_account.return_value = True
+        mock_factory = MagicMock()
+        mock_factory.get_session.return_value = (
+            MagicMock()
+        )
+
+        app.dependency_overrides[get_account_store] = (
+            lambda: mock_store
+        )
+        app.dependency_overrides[
+            get_session_factory
+        ] = lambda: mock_factory
+        try:
+            client = TestClient(app)
+            payload = {
+                "account_id": "111111111111",
+                "account_name": "Dev Account",
+                "role_arn": (
+                    "arn:aws:iam::111111111111"
+                    ":role/CloudLineScanner"
+                ),
+            }
+            client.post(
+                "/api/v1/accounts", json=payload
+            )
+            # STS validation must have been called once
+            mock_factory.get_session.assert_called_once()
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_create_account_bad_role_returns_400(self):
+        """POST returns 400 when assume-role fails."""
+        from app.main import app
+        from app.dependencies import (
+            get_account_store,
+            get_session_factory,
+        )
+
+        mock_store = MagicMock()
+        mock_factory = MagicMock()
+        mock_factory.get_session.side_effect = (
+            RuntimeError(
+                "AssumeRole failed for 111111111111"
+            )
+        )
+
+        app.dependency_overrides[get_account_store] = (
+            lambda: mock_store
+        )
+        app.dependency_overrides[
+            get_session_factory
+        ] = lambda: mock_factory
+        try:
+            client = TestClient(app)
+            payload = {
+                "account_id": "111111111111",
+                "account_name": "Bad Role",
+                "role_arn": (
+                    "arn:aws:iam::111111111111"
+                    ":role/DoesNotExist"
+                ),
+            }
+            resp = client.post(
+                "/api/v1/accounts", json=payload
+            )
+            assert resp.status_code == 400
+            # Account must NOT have been saved
+            mock_store.put_account.assert_not_called()
+        finally:
+            app.dependency_overrides.clear()
+
+    # ------------------------------------------------------------------
+    # PUT endpoint: update alias/regions
+    # ------------------------------------------------------------------
+
+    def test_update_account(self):
+        """PUT /api/v1/accounts/{id} updates name and regions."""
+        from app.main import app
+        from app.dependencies import get_account_store
+        from app.models.account import TargetAccount
+
+        mock_store = MagicMock()
+        mock_store.get_account.return_value = (
+            TargetAccount(
+                sk="111111111111",
+                account_id="111111111111",
+                account_name="Dev",
+                role_arn=(
+                    "arn:aws:iam::111111111111"
+                    ":role/CloudLineScanner"
+                ),
+                regions=["us-east-1"],
+            )
+        )
+        mock_store.update_account.return_value = True
+        # After update, return updated account
+        updated = TargetAccount(
+            sk="111111111111",
+            account_id="111111111111",
+            account_name="Production",
+            role_arn=(
+                "arn:aws:iam::111111111111"
+                ":role/CloudLineScanner"
+            ),
+            regions=["us-east-1", "eu-west-1"],
+        )
+        mock_store.get_account.side_effect = [
+            mock_store.get_account.return_value,
+            updated,
+        ]
+
+        app.dependency_overrides[get_account_store] = (
+            lambda: mock_store
+        )
+        try:
+            client = TestClient(app)
+            resp = client.put(
+                "/api/v1/accounts/111111111111",
+                json={
+                    "account_name": "Production",
+                    "regions": [
+                        "us-east-1", "eu-west-1"
+                    ],
+                },
+            )
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["account_name"] == "Production"
+            assert "eu-west-1" in data["regions"]
+            mock_store.update_account.assert_called_once()
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_update_account_not_found(self):
+        """PUT /api/v1/accounts/{id} returns 404 for missing account."""
+        from app.main import app
+        from app.dependencies import get_account_store
+
+        mock_store = MagicMock()
+        mock_store.get_account.return_value = None
+
+        app.dependency_overrides[get_account_store] = (
+            lambda: mock_store
+        )
+        try:
+            client = TestClient(app)
+            resp = client.put(
+                "/api/v1/accounts/999999999999",
+                json={"account_name": "New Name"},
+            )
+            assert resp.status_code == 404
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_update_account_store_failure(self):
+        """PUT /api/v1/accounts returns 500 on store error."""
+        from app.main import app
+        from app.dependencies import get_account_store
+        from app.models.account import TargetAccount
+
+        mock_store = MagicMock()
+        mock_store.get_account.return_value = (
+            TargetAccount(
+                sk="111111111111",
+                account_id="111111111111",
+                account_name="Dev",
+                role_arn=(
+                    "arn:aws:iam::111111111111"
+                    ":role/CloudLineScanner"
+                ),
+            )
+        )
+        mock_store.update_account.return_value = False
+
+        app.dependency_overrides[get_account_store] = (
+            lambda: mock_store
+        )
+        try:
+            client = TestClient(app)
+            resp = client.put(
+                "/api/v1/accounts/111111111111",
+                json={"account_name": "New Name"},
+            )
+            assert resp.status_code == 500
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# 6. TestAccountStoreUpdate
+# ---------------------------------------------------------------------------
+
+class TestAccountStoreUpdate:
+    """AccountStore.update_account CRUD."""
+
+    def _make_store(self):
+        from app.pipeline.account_store import (
+            AccountStore,
+        )
+        mock_session = MagicMock()
+        mock_table = MagicMock()
+        mock_dynamodb = MagicMock()
+        mock_dynamodb.Table.return_value = mock_table
+        mock_session.resource.return_value = (
+            mock_dynamodb
+        )
+        store = AccountStore(
+            session=mock_session,
+            table_name="target-accounts",
+        )
+        store.table = mock_table
+        return store, mock_table
+
+    def test_update_account_name(self):
+        """update_account updates account_name via update_item."""
+        from app.pipeline.account_store import (
+            AccountStore,
+        )
+
+        store, mock_table = self._make_store()
+        result = store.update_account(
+            "111111111111",
+            account_name="New Name",
+        )
+        assert result is True
+        mock_table.update_item.assert_called_once()
+        call_kwargs = (
+            mock_table.update_item.call_args[1]
+        )
+        assert call_kwargs["Key"] == {
+            "pk": "ACCOUNTS",
+            "sk": "111111111111",
+        }
+        assert "account_name" in call_kwargs.get(
+            "UpdateExpression", ""
+        )
+
+    def test_update_account_regions(self):
+        """update_account updates regions via update_item."""
+        from app.pipeline.account_store import (
+            AccountStore,
+        )
+
+        store, mock_table = self._make_store()
+        result = store.update_account(
+            "111111111111",
+            regions=["eu-west-1"],
+        )
+        assert result is True
+        call_kwargs = (
+            mock_table.update_item.call_args[1]
+        )
+        assert "regions" in call_kwargs.get(
+            "UpdateExpression", ""
+        )
+
+    def test_update_account_both_fields(self):
+        """update_account sets both name and regions."""
+        from app.pipeline.account_store import (
+            AccountStore,
+        )
+
+        store, mock_table = self._make_store()
+        result = store.update_account(
+            "111111111111",
+            account_name="Prod",
+            regions=["us-east-1", "eu-west-1"],
+        )
+        assert result is True
+        call_kwargs = (
+            mock_table.update_item.call_args[1]
+        )
+        expr = call_kwargs.get("UpdateExpression", "")
+        assert "account_name" in expr
+        assert "regions" in expr
+
+    def test_update_account_noop(self):
+        """update_account with no fields returns True without DynamoDB call."""
+        from app.pipeline.account_store import (
+            AccountStore,
+        )
+
+        store, mock_table = self._make_store()
+        result = store.update_account("111111111111")
+        assert result is True
+        mock_table.update_item.assert_not_called()
+
+    def test_update_account_error_returns_false(self):
+        """update_account returns False on DynamoDB error."""
+        from app.pipeline.account_store import (
+            AccountStore,
+        )
+
+        store, mock_table = self._make_store()
+        mock_table.update_item.side_effect = (
+            Exception("DynamoDB error")
+        )
+        result = store.update_account(
+            "111111111111",
+            account_name="New Name",
+        )
+        assert result is False
