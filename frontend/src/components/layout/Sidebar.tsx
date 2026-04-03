@@ -444,7 +444,7 @@ export default function Sidebar() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setModalOpen(false);
+              if (e.target === e.currentTarget) closeModal();
             }}
           >
             <div
@@ -453,49 +453,116 @@ export default function Sidebar() {
               aria-label="Add Account"
               className="w-80 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl p-5"
             >
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                Add Account
-              </h2>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Account Name"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Account ID"
-                  value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Role ARN"
-                  value={roleArn}
-                  onChange={(e) => setRoleArn(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-                />
-              </div>
-              <div className="flex gap-2 mt-4 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving || !accountName || !accountId || !roleArn}
-                  className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? "Saving…" : "Save"}
-                </button>
-              </div>
+              {createdAccount ? (
+                <>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                    Account Added!
+                  </h2>
+                  <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-3">
+                    Paste this trust policy into the CloudLineScanner role in
+                    account {createdAccount.account_id}:
+                  </p>
+                  <pre className="text-[11px] bg-gray-50 dark:bg-black rounded-lg p-3 overflow-auto whitespace-pre-wrap break-all text-gray-700 dark:text-gray-300 mb-4">
+                    {JSON.stringify(
+                      {
+                        Principal: {
+                          AWS: `arn:aws:iam::${MASTER_ACCOUNT_ID}:role/CloudLineBackendRole`,
+                        },
+                        Action: "sts:AssumeRole",
+                        Condition: {
+                          StringEquals: {
+                            "sts:ExternalId": createdAccount.external_id,
+                          },
+                        },
+                      },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          JSON.stringify(
+                            {
+                              Principal: {
+                                AWS: `arn:aws:iam::${MASTER_ACCOUNT_ID}:role/CloudLineBackendRole`,
+                              },
+                              Action: "sts:AssumeRole",
+                              Condition: {
+                                StringEquals: {
+                                  "sts:ExternalId": createdAccount.external_id,
+                                },
+                              },
+                            },
+                            null,
+                            2,
+                          ),
+                        )
+                      }
+                      className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                    Add Account
+                  </h2>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Account Name"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Account ID"
+                      value={accountId}
+                      onChange={(e) => setAccountId(e.target.value)}
+                      className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Role ARN"
+                      value={roleArn}
+                      onChange={(e) => setRoleArn(e.target.value)}
+                      className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-4 justify-end">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={
+                        saving || !accountName || !accountId || !roleArn
+                      }
+                      className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

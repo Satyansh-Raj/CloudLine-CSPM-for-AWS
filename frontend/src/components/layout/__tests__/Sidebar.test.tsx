@@ -391,10 +391,15 @@ describe("Sidebar — Add Account trust policy step", () => {
   });
 
   it("Copy button copies trust policy JSON to clipboard", async () => {
+    // userEvent.setup() also defines navigator.clipboard internally,
+    // so call it first, then override with configurable:true.
+    const user = userEvent.setup();
+
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText },
       writable: true,
+      configurable: true,
     });
 
     mockCreateAccount.mockResolvedValueOnce({
@@ -407,8 +412,6 @@ describe("Sidebar — Add Account trust policy step", () => {
       added_at: "2026-04-03",
       last_scanned: null,
     });
-
-    const user = userEvent.setup();
     renderSidebar();
 
     await user.click(screen.getByRole("button", { name: /switch account/i }));
