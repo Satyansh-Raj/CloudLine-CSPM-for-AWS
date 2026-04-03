@@ -135,6 +135,49 @@ class AccountStore:
             )
             return False
 
+    def update_account(
+        self,
+        account_id: str,
+        account_name: str | None = None,
+        regions: list[str] | None = None,
+    ) -> bool:
+        """Update mutable fields on a registered account.
+
+        Args:
+            account_id: Target account ID.
+            account_name: New alias, if changing.
+            regions: New region list, if changing.
+
+        Returns:
+            True on success, False on error.
+        """
+        expr_parts: list[str] = []
+        attr_values: dict = {}
+        if account_name is not None:
+            expr_parts.append(
+                "account_name = :name"
+            )
+            attr_values[":name"] = account_name
+        if regions is not None:
+            expr_parts.append("regions = :regions")
+            attr_values[":regions"] = regions
+        if not expr_parts:
+            return True  # nothing to update
+        try:
+            self.table.update_item(
+                Key={"pk": _PK, "sk": account_id},
+                UpdateExpression=(
+                    "SET " + ", ".join(expr_parts)
+                ),
+                ExpressionAttributeValues=attr_values,
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                "update_account error: %s", e
+            )
+            return False
+
     def update_last_scanned(
         self, account_id: str, timestamp: str
     ) -> bool:

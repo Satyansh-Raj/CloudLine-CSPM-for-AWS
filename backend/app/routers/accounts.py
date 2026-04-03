@@ -9,14 +9,21 @@ Endpoints:
 """
 
 import logging
+import uuid
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.dependencies import get_account_store
+from app.dependencies import (
+    get_account_store,
+    get_session_factory,
+)
 from app.models.account import TargetAccount
 from app.pipeline.account_store import AccountStore
+from app.pipeline.session_factory import (
+    AWSSessionFactory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +40,14 @@ class AccountCreateRequest(BaseModel):
     account_id: str
     account_name: str
     role_arn: str
-    external_id: str = ""
     regions: list[str] = ["us-east-1"]
+
+
+class AccountUpdateRequest(BaseModel):
+    """Request body for updating a target account."""
+
+    account_name: str | None = None
+    regions: list[str] | None = None
 
 
 def _account_to_dict(acc: TargetAccount) -> dict:
@@ -59,12 +72,24 @@ def _account_to_dict(acc: TargetAccount) -> dict:
 def create_account(
     req: AccountCreateRequest,
     store: AccountStore = Depends(get_account_store),
+    session_factory: AWSSessionFactory = Depends(
+        get_session_factory
+    ),
 ) -> dict:
     """Add a target account for cross-account scanning.
 
+    Generates a unique External ID, validates the role
+    via STS AssumeRole, then persists the account.
+
     Returns:
-        201 with the created account data.
+        201 with the created account data, including
+        the generated external_id.
+
+    Raises:
+        400 if the role cannot be assumed.
+        500 if the account cannot be persisted.
     """
+    external_id = str(uuid.uuid4())
     now = (
         datetime.now(UTC)
         .isoformat()
@@ -76,11 +101,19 @@ def create_account(
         account_id=req.account_id,
         account_name=req.account_name,
         role_arn=req.role_arn,
-        external_id=req.external_id,
+        external_id=external_id,
         regions=req.regions,
         is_active=True,
         added_at=now,
     )
+    # Validate the role is assumable before saving
+    try:
+        session_factory.get_session(account)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot assume role: {exc}",
+        ) from exc
     ok = store.put_account(account)
     if not ok:
         raise HTTPException(
@@ -115,6 +148,39 @@ def get_account(
             status_code=404,
             detail=f"Account {account_id} not found",
         )
+    return _account_to_dict(account)
+
+
+@router.put("/accounts/{account_id}")
+def update_account(
+    account_id: str,
+    req: AccountUpdateRequest,
+    store: AccountStore = Depends(get_account_store),
+) -> dict:
+    """Update alias and/or regions for a target account.
+
+    Raises:
+        404 if the account does not exist.
+        500 if the update cannot be persisted.
+    """
+    if store.get_account(account_id) is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Account {account_id} not found",
+        )
+    ok = store.update_account(
+        account_id,
+        account_name=req.account_name,
+        regions=req.regions,
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Failed to update {account_id}"
+            ),
+        )
+    account = store.get_account(account_id)
     return _account_to_dict(account)
 
 

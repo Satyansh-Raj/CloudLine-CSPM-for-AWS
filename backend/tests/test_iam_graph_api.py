@@ -129,8 +129,7 @@ class TestIamGraphEndpoint:
 
     def setup_method(self):
         # Clear cache before each test
-        iam_graph._cache["data"] = None
-        iam_graph._cache["ts"] = 0.0
+        iam_graph.invalidate_cache()
 
         self._mock_sm = _mock_state_manager(
             states=IDENTITY_VIOLATIONS
@@ -146,8 +145,7 @@ class TestIamGraphEndpoint:
         app.dependency_overrides.pop(
             get_boto3_session, None
         )
-        iam_graph._cache["data"] = None
-        iam_graph._cache["ts"] = 0.0
+        iam_graph.invalidate_cache()
 
     @patch(
         "app.routers.iam_graph.IAMCollector"
@@ -320,17 +318,33 @@ class TestIamGraphEndpoint:
         assert data["users"] == []
         assert "account_violations" in data
 
+    @patch("app.routers.iam_graph.IAMCollector")
+    def test_account_id_param_forwarded(
+        self, mock_cls
+    ):
+        """?account_id= forwarded to query_by_account."""
+        mock_cls.return_value.collect_graph_data\
+            .return_value = []
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/iam/graph?account_id=111111111111"
+        )
+        assert resp.status_code == 200
+        call_args = (
+            self._mock_sm.query_by_account.call_args
+        )
+        # violations must be queried for the given account
+        assert call_args[0][0] == "111111111111"
+
 
 class TestIamGraphCacheInvalidation:
     """Tests for IAM graph cache invalidation."""
 
     def setup_method(self):
-        iam_graph._cache["data"] = None
-        iam_graph._cache["ts"] = 0.0
+        iam_graph.invalidate_cache()
 
     def teardown_method(self):
-        iam_graph._cache["data"] = None
-        iam_graph._cache["ts"] = 0.0
+        iam_graph.invalidate_cache()
 
     def test_invalidate_cache_clears_data(self):
         """invalidate_cache() must clear cached data
@@ -363,8 +377,7 @@ class TestNoAccountViolationsInResponse:
     removed from the graph."""
 
     def setup_method(self):
-        iam_graph._cache["data"] = None
-        iam_graph._cache["ts"] = 0.0
+        iam_graph.invalidate_cache()
         self._mock_sm = _mock_state_manager(
             states=IDENTITY_VIOLATIONS
         )
@@ -379,8 +392,7 @@ class TestNoAccountViolationsInResponse:
         app.dependency_overrides.pop(
             get_boto3_session, None
         )
-        iam_graph._cache["data"] = None
-        iam_graph._cache["ts"] = 0.0
+        iam_graph.invalidate_cache()
 
     @patch(
         "app.routers.iam_graph.IAMCollector"

@@ -215,6 +215,21 @@ class TestViolationsEndpoint:
             limit=100,
         )
 
+    def test_custom_account_id_param(self):
+        """?account_id= is forwarded to query_by_account
+        instead of settings.aws_account_id."""
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/violations"
+            "?account_id=111111111111"
+        )
+        assert resp.status_code == 200
+        self._mock.query_by_account.assert_called_with(
+            "111111111111",
+            "ap-south-1",
+            limit=100,
+        )
+
 
 class TestComplianceEndpoint:
     def setup_method(self):

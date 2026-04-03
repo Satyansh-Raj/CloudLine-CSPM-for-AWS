@@ -3,7 +3,7 @@
 import logging
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.collectors.iam import IAMCollector
 from app.dependencies import (
@@ -20,6 +20,7 @@ router = APIRouter(
 )
 
 _CACHE_TTL = 300  # 5 minutes
+# Per-account cache: {account_id: {"data": ..., "ts": float}}
 _cache: dict = {"data": None, "ts": 0.0}
 
 
@@ -28,10 +29,17 @@ def invalidate_cache() -> None:
     fetches fresh data. Called after scan completion."""
     _cache["data"] = None
     _cache["ts"] = 0.0
+    # Clear per-account entries too
+    for k in [k for k in _cache if k not in ("data", "ts")]:
+        del _cache[k]
 
 
 @router.get("/iam/graph")
 def get_iam_graph(
+    account_id: str | None = Query(
+        None,
+        description="AWS account ID override",
+    ),
     session=Depends(get_boto3_session),
     state_manager: StateManager = Depends(
         get_state_manager
@@ -42,14 +50,20 @@ def get_iam_graph(
     violations.
 
     Fetches live IAM data and joins with stored
-    identity violations. Cached for 5 minutes.
+    identity violations. Cached for 5 minutes per
+    account (default account only when no account_id
+    is given).
     """
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
     now = time.time()
+    cached = _cache.get(effective_account, {})
     if (
-        _cache["data"] is not None
-        and now - _cache["ts"] < _CACHE_TTL
+        cached.get("data") is not None
+        and now - cached.get("ts", 0.0) < _CACHE_TTL
     ):
-        return _cache["data"]
+        return cached["data"]
 
     collector = IAMCollector(session)
     try:
@@ -60,9 +74,9 @@ def get_iam_graph(
         )
         users = []
 
-    # Fetch identity-domain violations
+    # Fetch identity-domain violations for this account
     states = state_manager.query_by_account(
-        settings.aws_account_id,
+        effective_account,
         settings.aws_region,
     )
     identity = [
@@ -105,11 +119,13 @@ def get_iam_graph(
     ]
 
     result = {
-        "account_id": settings.aws_account_id,
+        "account_id": effective_account,
         "users": users,
         "account_violations": account_violations,
     }
 
-    _cache["data"] = result
-    _cache["ts"] = now
+    _cache[effective_account] = {
+        "data": result,
+        "ts": now,
+    }
     return result

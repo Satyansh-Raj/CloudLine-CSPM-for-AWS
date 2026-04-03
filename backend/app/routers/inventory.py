@@ -141,6 +141,10 @@ def list_inventory(
         None,
         description="Filter by AWS region",
     ),
+    account_id: str | None = Query(
+        None,
+        description="Filter by AWS account ID",
+    ),
     store: ResourceStore = Depends(
         get_resource_store
     ),
@@ -153,6 +157,9 @@ def list_inventory(
     after the primary query. Only active resources
     are returned.
     """
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
     if category:
         resources = store.query_by_category(
             category, limit=limit
@@ -170,7 +177,7 @@ def list_inventory(
             region if region else settings.aws_region
         )
         resources = store.query_by_account(
-            settings.aws_account_id,
+            effective_account,
             effective_region,
             limit=limit,
         )
@@ -208,6 +215,10 @@ def inventory_summary(
             "aggregate across all scanned regions."
         ),
     ),
+    account_id: str | None = Query(
+        None,
+        description="Filter by AWS account ID",
+    ),
     store: ResourceStore = Depends(
         get_resource_store
     ),
@@ -228,8 +239,11 @@ def inventory_summary(
             discovered or settings.aws_regions
         )
 
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
     items = store.summary_by_account(
-        settings.aws_account_id,
+        effective_account,
         regions=target_regions,
     )
 
@@ -269,6 +283,10 @@ def get_inventory_detail(
     resource_id: str = Query(
         ..., description="Resource ARN"
     ),
+    account_id: str | None = Query(
+        None,
+        description="AWS account ID override",
+    ),
     store: ResourceStore = Depends(
         get_resource_store
     ),
@@ -276,7 +294,7 @@ def get_inventory_detail(
 ):
     """Get a single resource by type and ID."""
     resource = store.get_resource(
-        settings.aws_account_id,
+        account_id or settings.aws_account_id,
         settings.aws_region,
         resource_type,
         resource_id,
@@ -297,6 +315,10 @@ def get_data_classification(
     resource_id: str = Query(
         ..., description="Resource ARN"
     ),
+    account_id: str | None = Query(
+        None,
+        description="AWS account ID override",
+    ),
     store: ResourceStore = Depends(
         get_resource_store
     ),
@@ -311,7 +333,7 @@ def get_data_classification(
     Returns 404 if the resource is not found.
     """
     resource = store.get_resource(
-        settings.aws_account_id,
+        account_id or settings.aws_account_id,
         settings.aws_region,
         resource_type,
         resource_id,
@@ -332,6 +354,10 @@ def get_data_classification(
 
 @router.get("/inventory/data-summary")
 def get_data_summary(
+    account_id: str | None = Query(
+        None,
+        description="AWS account ID override",
+    ),
     store: ResourceStore = Depends(
         get_resource_store
     ),
@@ -352,7 +378,7 @@ def get_data_summary(
     )
 
     resources = store.query_by_account(
-        settings.aws_account_id,
+        account_id or settings.aws_account_id,
         settings.aws_region,
         limit=5000,
     )

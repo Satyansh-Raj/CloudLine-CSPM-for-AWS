@@ -221,6 +221,28 @@ class TestListInventory:
         resp = client.get("/api/v1/inventory")
         assert resp.json() == []
 
+    def test_account_id_param(self):
+        """?account_id= forwarded to query_by_account
+        instead of settings.aws_account_id."""
+        app.dependency_overrides[
+            get_settings
+        ] = lambda: Settings(
+            aws_account_id=ACCOUNT,
+            aws_regions=[REGION],
+        )
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/inventory?account_id=111111111111"
+        )
+        assert resp.status_code == 200
+        call_args = (
+            self._mock.query_by_account.call_args
+        )
+        assert call_args[0][0] == "111111111111"
+        app.dependency_overrides.pop(
+            get_settings, None
+        )
+
 
 # ── GET /api/v1/inventory/summary ──────────────────
 
@@ -318,6 +340,19 @@ class TestInventorySummary:
         data = resp.json()
         assert data["total"] == 0
 
+    def test_account_id_param(self):
+        """?account_id= forwarded to summary_by_account."""
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/inventory/summary"
+            "?account_id=111111111111"
+        )
+        assert resp.status_code == 200
+        call_args = (
+            self._mock.summary_by_account.call_args
+        )
+        assert call_args[0][0] == "111111111111"
+
 
 # ── GET /api/v1/inventory/detail ───────────────────
 
@@ -371,6 +406,28 @@ class TestInventoryDetail:
             "/api/v1/inventory/detail"
         )
         assert resp.status_code == 422
+
+    def test_account_id_param(self):
+        """?account_id= forwarded to get_resource."""
+        app.dependency_overrides[
+            get_settings
+        ] = lambda: Settings(
+            aws_account_id=ACCOUNT,
+            aws_regions=[REGION],
+        )
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/inventory/detail"
+            "?resource_type=s3_bucket"
+            "&resource_id=arn:aws:s3:::test-bucket"
+            "&account_id=111111111111"
+        )
+        assert resp.status_code == 200
+        call_args = self._mock.get_resource.call_args
+        assert call_args[0][0] == "111111111111"
+        app.dependency_overrides.pop(
+            get_settings, None
+        )
 
 
 # ── Region filtering ─────────────────────────────
@@ -459,3 +516,43 @@ class TestRegionFiltering:
         )
         data = resp.json()
         assert len(data) == 2
+
+
+# ── Data-summary account_id param ──────────────────
+
+
+class TestDataSummaryAccountId:
+    """GET /api/v1/inventory/data-summary ?account_id=."""
+
+    def setup_method(self):
+        self._mock = _mock_store(RESOURCES)
+        app.dependency_overrides[
+            get_resource_store
+        ] = lambda: self._mock
+        app.dependency_overrides[
+            get_settings
+        ] = lambda: Settings(
+            aws_account_id=ACCOUNT,
+            aws_regions=[REGION],
+        )
+
+    def teardown_method(self):
+        app.dependency_overrides.pop(
+            get_resource_store, None
+        )
+        app.dependency_overrides.pop(
+            get_settings, None
+        )
+
+    def test_account_id_param(self):
+        """?account_id= forwarded to query_by_account."""
+        client = TestClient(app)
+        resp = client.get(
+            "/api/v1/inventory/data-summary"
+            "?account_id=111111111111"
+        )
+        assert resp.status_code == 200
+        call_args = (
+            self._mock.query_by_account.call_args
+        )
+        assert call_args[0][0] == "111111111111"

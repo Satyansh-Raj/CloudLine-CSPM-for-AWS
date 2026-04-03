@@ -45,6 +45,10 @@ def list_violations(
         None,
         description="Filter by AWS region",
     ),
+    account_id: str | None = Query(
+        None,
+        description="Filter by AWS account ID",
+    ),
     state_manager: StateManager = Depends(
         get_state_manager
     ),
@@ -57,11 +61,14 @@ def list_violations(
     applied at the DynamoDB level. Severity is
     always applied in-memory.
     """
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
     effective_region = (
         region if region else settings.aws_region
     )
     states = state_manager.query_by_account(
-        settings.aws_account_id,
+        effective_account,
         effective_region,
         limit=limit,
     )
