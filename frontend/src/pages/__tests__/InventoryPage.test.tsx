@@ -8,13 +8,18 @@ const mockSummary = {
   error: null as unknown,
 };
 
+let capturedSummaryArgs: unknown[] = [];
+
 vi.mock("@/hooks/useInventory", () => ({
   useInventory: () => ({
     data: null,
     isLoading: false,
     error: null,
   }),
-  useInventorySummary: () => mockSummary,
+  useInventorySummary: (...args: unknown[]) => {
+    capturedSummaryArgs = args;
+    return mockSummary;
+  },
 }));
 
 vi.mock("@/hooks/useRegion", () => ({
@@ -26,9 +31,11 @@ vi.mock("@/hooks/useRegion", () => ({
   }),
 }));
 
+let mockInventorySelectedAccount = "";
+
 vi.mock("@/hooks/useAccount", () => ({
   useAccount: () => ({
-    selectedAccount: "",
+    selectedAccount: mockInventorySelectedAccount,
     accounts: [],
     isLoading: false,
     setSelectedAccount: vi.fn(),
@@ -145,5 +152,32 @@ describe("InventoryPage", () => {
     const { container } = renderPage();
     const imgs = container.querySelectorAll("img");
     expect(imgs.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("InventoryPage account wiring", () => {
+  beforeEach(() => {
+    capturedSummaryArgs = [];
+    mockInventorySelectedAccount = "";
+  });
+
+  afterEach(() => {
+    mockInventorySelectedAccount = "";
+    mockSummary.data = null;
+    mockSummary.isLoading = false;
+    mockSummary.error = null;
+  });
+
+  it("passes no account_id when selectedAccount is empty", () => {
+    mockInventorySelectedAccount = "";
+    renderPage();
+    // second arg should be undefined or not present
+    expect(capturedSummaryArgs[1]).toBeUndefined();
+  });
+
+  it("passes account_id to useInventorySummary when account selected", () => {
+    mockInventorySelectedAccount = "111111111111";
+    renderPage();
+    expect(capturedSummaryArgs[1]).toBe("111111111111");
   });
 });

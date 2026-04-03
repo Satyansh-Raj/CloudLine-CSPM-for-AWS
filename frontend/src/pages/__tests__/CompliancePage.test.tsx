@@ -72,8 +72,13 @@ const mockComplianceScore = {
 
 /* ---- mocks ---- */
 
+let capturedComplianceArgs: unknown[] = [];
+
 vi.mock("@/hooks/useCompliance", () => ({
-  useCompliance: () => mockComplianceScore,
+  useCompliance: (...args: unknown[]) => {
+    capturedComplianceArgs = args;
+    return mockComplianceScore;
+  },
 }));
 
 vi.mock("@/hooks/useComplianceFramework", () => ({
@@ -90,9 +95,11 @@ vi.mock("@/hooks/useRegion", () => ({
   }),
 }));
 
+let mockComplianceSelectedAccount = "";
+
 vi.mock("@/hooks/useAccount", () => ({
   useAccount: () => ({
-    selectedAccount: "",
+    selectedAccount: mockComplianceSelectedAccount,
     accounts: [],
     isLoading: false,
     setSelectedAccount: vi.fn(),
@@ -440,5 +447,28 @@ describe("CompliancePage", () => {
     expect(
       screen.getAllByText(/CIS AWS Foundations Benchmark v1\.5\.0/).length,
     ).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("CompliancePage account wiring", () => {
+  beforeEach(() => {
+    capturedComplianceArgs = [];
+    mockComplianceSelectedAccount = "";
+  });
+
+  afterEach(() => {
+    mockComplianceSelectedAccount = "";
+  });
+
+  it("passes no account_id when selectedAccount is empty", () => {
+    mockComplianceSelectedAccount = "";
+    renderPage();
+    expect(capturedComplianceArgs[0]).toBeUndefined();
+  });
+
+  it("passes account_id to useCompliance when account selected", () => {
+    mockComplianceSelectedAccount = "111111111111";
+    renderPage();
+    expect(capturedComplianceArgs[0]).toBe("111111111111");
   });
 });

@@ -8,8 +8,13 @@ const mockViolations = {
   error: null as unknown,
 };
 
+let capturedViolationParams: unknown;
+
 vi.mock("@/hooks", () => ({
-  useViolations: () => mockViolations,
+  useViolations: (params: unknown) => {
+    capturedViolationParams = params;
+    return mockViolations;
+  },
 }));
 
 vi.mock("@/hooks/useRegion", () => ({
@@ -18,6 +23,18 @@ vi.mock("@/hooks/useRegion", () => ({
     regions: ["ap-south-1", "us-east-1"],
     isLoading: false,
     setSelectedRegion: vi.fn(),
+  }),
+}));
+
+let mockSelectedAccount = "";
+
+vi.mock("@/hooks/useAccount", () => ({
+  useAccount: () => ({
+    selectedAccount: mockSelectedAccount,
+    accounts: [],
+    isLoading: false,
+    setSelectedAccount: vi.fn(),
+    refresh: vi.fn(),
   }),
 }));
 
@@ -87,5 +104,32 @@ describe("ViolationsPage", () => {
     renderPage();
     expect(screen.getByText("ap-south-1")).toBeInTheDocument();
     expect(screen.getByText("us-east-1")).toBeInTheDocument();
+  });
+});
+
+describe("ViolationsPage account wiring", () => {
+  beforeEach(() => {
+    capturedViolationParams = undefined;
+    mockSelectedAccount = "";
+  });
+
+  afterEach(() => {
+    mockSelectedAccount = "";
+  });
+
+  it("passes no account_id when selectedAccount is empty", () => {
+    mockSelectedAccount = "";
+    renderPage();
+    expect(
+      (capturedViolationParams as Record<string, unknown>)?.account_id,
+    ).toBeUndefined();
+  });
+
+  it("passes account_id to useViolations when account selected", () => {
+    mockSelectedAccount = "111111111111";
+    renderPage();
+    expect(
+      (capturedViolationParams as Record<string, unknown>)?.account_id,
+    ).toBe("111111111111");
   });
 });

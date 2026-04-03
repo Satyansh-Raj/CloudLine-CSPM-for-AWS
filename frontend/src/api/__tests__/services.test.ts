@@ -15,10 +15,9 @@ vi.mock("../client", () => ({
 import { getComplianceScore } from "../compliance";
 import { getDriftAlerts } from "../drift";
 import { getHealth } from "../health";
-import {
-  getRiskScores,
-  getRiskSummary,
-} from "../risk";
+import { getIamGraph } from "../iamGraph";
+import { getInventorySummary } from "../inventory";
+import { getRiskScores, getRiskSummary } from "../risk";
 import { triggerScan } from "../scans";
 import { getViolations } from "../violations";
 import { createWsConnection } from "../websocket";
@@ -33,10 +32,26 @@ describe("compliance API", () => {
     mockGet.mockResolvedValue({ data: mockData });
 
     const result = await getComplianceScore();
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/compliance/score",
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/compliance/score", {
+      params: undefined,
+    });
     expect(result).toEqual(mockData);
+  });
+
+  it("getComplianceScore passes account_id as query param", async () => {
+    mockGet.mockResolvedValue({ data: { overall_score: 90 } });
+    await getComplianceScore("111111111111");
+    expect(mockGet).toHaveBeenCalledWith("/v1/compliance/score", {
+      params: { account_id: "111111111111" },
+    });
+  });
+
+  it("getComplianceScore passes undefined params when no account_id", async () => {
+    mockGet.mockResolvedValue({ data: { overall_score: 90 } });
+    await getComplianceScore(undefined);
+    expect(mockGet).toHaveBeenCalledWith("/v1/compliance/score", {
+      params: undefined,
+    });
   });
 });
 
@@ -46,10 +61,9 @@ describe("drift API", () => {
     mockGet.mockResolvedValue({ data: mockData });
 
     const result = await getDriftAlerts();
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/drift/alerts",
-      { params: undefined },
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/drift/alerts", {
+      params: undefined,
+    });
     expect(result).toEqual(mockData);
   });
 
@@ -58,10 +72,7 @@ describe("drift API", () => {
     const params = { limit: 10 };
 
     await getDriftAlerts(params);
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/drift/alerts",
-      { params },
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/drift/alerts", { params });
   });
 });
 
@@ -82,10 +93,9 @@ describe("risk API", () => {
     mockGet.mockResolvedValue({ data: mockData });
 
     const result = await getRiskScores();
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/risk/scores",
-      { params: undefined },
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/risk/scores", {
+      params: undefined,
+    });
     expect(result).toEqual(mockData);
   });
 
@@ -94,10 +104,7 @@ describe("risk API", () => {
     const params = { severity: "critical" };
 
     await getRiskScores(params);
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/risk/scores",
-      { params },
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/risk/scores", { params });
   });
 
   it("getRiskSummary calls GET /v1/risk/summary", async () => {
@@ -105,9 +112,7 @@ describe("risk API", () => {
     mockGet.mockResolvedValue({ data: mockData });
 
     const result = await getRiskSummary();
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/risk/summary",
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/risk/summary");
     expect(result).toEqual(mockData);
   });
 });
@@ -118,8 +123,20 @@ describe("scans API", () => {
     mockPost.mockResolvedValue({ data: mockData });
 
     const result = await triggerScan();
-    expect(mockPost).toHaveBeenCalledWith("/v1/scans");
+    expect(mockPost).toHaveBeenCalledWith("/v1/scans", undefined, {
+      params: undefined,
+    });
     expect(result).toEqual(mockData);
+  });
+
+  it("triggerScan passes account_id as query param", async () => {
+    mockPost.mockResolvedValue({
+      data: { scan_id: "s2", status: "started" },
+    });
+    await triggerScan("111111111111");
+    expect(mockPost).toHaveBeenCalledWith("/v1/scans", undefined, {
+      params: { account_id: "111111111111" },
+    });
   });
 });
 
@@ -129,10 +146,9 @@ describe("violations API", () => {
     mockGet.mockResolvedValue({ data: mockData });
 
     const result = await getViolations();
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/violations",
-      { params: undefined },
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/violations", {
+      params: undefined,
+    });
     expect(result).toEqual(mockData);
   });
 
@@ -144,10 +160,72 @@ describe("violations API", () => {
     };
 
     await getViolations(params);
-    expect(mockGet).toHaveBeenCalledWith(
-      "/v1/violations",
-      { params },
-    );
+    expect(mockGet).toHaveBeenCalledWith("/v1/violations", { params });
+  });
+
+  it("getViolations passes account_id as query param", async () => {
+    mockGet.mockResolvedValue({ data: [] });
+    const params = { account_id: "111111111111" };
+    await getViolations(params);
+    expect(mockGet).toHaveBeenCalledWith("/v1/violations", { params });
+  });
+});
+
+describe("inventory API", () => {
+  it("getInventorySummary calls GET /v1/inventory/summary", async () => {
+    const mockData = { total: 10, by_category: {} };
+    mockGet.mockResolvedValue({ data: mockData });
+
+    const result = await getInventorySummary();
+    expect(mockGet).toHaveBeenCalledWith("/v1/inventory/summary", {
+      params: undefined,
+    });
+    expect(result).toEqual(mockData);
+  });
+
+  it("getInventorySummary passes account_id as query param", async () => {
+    mockGet.mockResolvedValue({ data: { total: 5 } });
+    await getInventorySummary(undefined, "111111111111");
+    expect(mockGet).toHaveBeenCalledWith("/v1/inventory/summary", {
+      params: { account_id: "111111111111" },
+    });
+  });
+
+  it("getInventorySummary passes region and account_id together", async () => {
+    mockGet.mockResolvedValue({ data: { total: 3 } });
+    await getInventorySummary("ap-south-1", "222222222222");
+    expect(mockGet).toHaveBeenCalledWith("/v1/inventory/summary", {
+      params: { region: "ap-south-1", account_id: "222222222222" },
+    });
+  });
+});
+
+describe("iamGraph API", () => {
+  it("getIamGraph calls GET /v1/iam/graph", async () => {
+    const mockData = { account_id: "123", users: [] };
+    mockGet.mockResolvedValue({ data: mockData });
+
+    const result = await getIamGraph();
+    expect(mockGet).toHaveBeenCalledWith("/v1/iam/graph", {
+      params: undefined,
+    });
+    expect(result).toEqual(mockData);
+  });
+
+  it("getIamGraph passes account_id as query param", async () => {
+    mockGet.mockResolvedValue({ data: { account_id: "111", users: [] } });
+    await getIamGraph("111111111111");
+    expect(mockGet).toHaveBeenCalledWith("/v1/iam/graph", {
+      params: { account_id: "111111111111" },
+    });
+  });
+
+  it("getIamGraph passes undefined params when no account_id", async () => {
+    mockGet.mockResolvedValue({ data: { account_id: "x", users: [] } });
+    await getIamGraph(undefined);
+    expect(mockGet).toHaveBeenCalledWith("/v1/iam/graph", {
+      params: undefined,
+    });
   });
 });
 
@@ -158,19 +236,15 @@ describe("websocket API", () => {
     class MockWS {
       url: string;
       onopen: ((ev: Event) => void) | null = null;
-      onmessage:
-        | ((ev: MessageEvent) => void)
-        | null = null;
-      onclose: ((ev: CloseEvent) => void) | null =
-        null;
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onclose: ((ev: CloseEvent) => void) | null = null;
       onerror: ((ev: Event) => void) | null = null;
 
       constructor(url: string) {
         this.url = url;
       }
     }
-    globalThis.WebSocket =
-      MockWS as unknown as typeof WebSocket;
+    globalThis.WebSocket = MockWS as unknown as typeof WebSocket;
   });
 
   afterEach(() => {
@@ -180,9 +254,7 @@ describe("websocket API", () => {
   it("creates connection with correct URL", () => {
     const ws = createWsConnection();
     expect(ws).toBeDefined();
-    expect(
-      (ws as unknown as { url: string }).url,
-    ).toContain("/v1/events");
+    expect((ws as unknown as { url: string }).url).toContain("/v1/events");
   });
 
   it("calls onOpen callback", () => {
