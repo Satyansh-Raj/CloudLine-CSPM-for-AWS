@@ -210,7 +210,9 @@ describe("ResolvedDetailPage", () => {
 
   it("shows CIS AWS controls", () => {
     renderPage();
-    expect(screen.getByText("CIS AWS")).toBeInTheDocument();
+    expect(
+      screen.getByText("CIS AWS Foundations Benchmark v1.5.0"),
+    ).toBeInTheDocument();
     expect(screen.getByText("1.5")).toBeInTheDocument();
   });
 

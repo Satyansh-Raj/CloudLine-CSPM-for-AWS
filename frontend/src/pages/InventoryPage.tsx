@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useInventorySummary } from "@/hooks/useInventory";
+import { useAccount } from "@/hooks/useAccount";
 
 /* ---------- category icons ---------- */
 
@@ -25,7 +26,13 @@ function capitalize(s: string): string {
 /* ---------- page ---------- */
 
 export default function InventoryPage() {
-  const { data: summary, isLoading, error } = useInventorySummary();
+  const { selectedAccount } = useAccount();
+  const accountId = selectedAccount || undefined;
+  const {
+    data: summary,
+    isLoading,
+    error,
+  } = useInventorySummary(undefined, accountId);
 
   return (
     <div className="space-y-6">

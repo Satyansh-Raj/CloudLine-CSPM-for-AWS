@@ -17,23 +17,25 @@ vi.mock("@/hooks", () => ({
   useRiskSummary: () => mockRisk,
 }));
 
+vi.mock("@/hooks/useAccount", () => ({
+  useAccount: () => ({
+    selectedAccount: "",
+    accounts: [],
+    isLoading: false,
+    setSelectedAccount: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
 vi.mock("@/components/dashboard", () => ({
-  ComplianceScoreDonut: () => (
-    <div data-testid="donut" />
-  ),
+  ComplianceScoreDonut: () => <div data-testid="donut" />,
   DomainDonut: () => <div data-testid="domain" />,
   SeverityBar: () => <div data-testid="severity" />,
   RiskCards: () => <div data-testid="risk" />,
   KpiCards: () => <div data-testid="kpi" />,
-  ViolationAreaChart: () => (
-    <div data-testid="area-chart" />
-  ),
-  TopViolationsTable: () => (
-    <div data-testid="top-violations" />
-  ),
-  DomainPieChart: () => (
-    <div data-testid="domain-pie" />
-  ),
+  ViolationAreaChart: () => <div data-testid="area-chart" />,
+  TopViolationsTable: () => <div data-testid="top-violations" />,
+  DomainPieChart: () => <div data-testid="domain-pie" />,
 }));
 
 describe("DashboardPage", () => {
@@ -49,24 +51,18 @@ describe("DashboardPage", () => {
   it("shows loading skeleton", () => {
     mockCompliance.isLoading = true;
     const { container } = render(<DashboardPage />);
-    expect(
-      container.querySelector(".animate-pulse"),
-    ).toBeTruthy();
+    expect(container.querySelector(".animate-pulse")).toBeTruthy();
   });
 
   it("shows error banner", () => {
     mockCompliance.error = { message: "Network fail" };
     render(<DashboardPage />);
-    expect(
-      screen.getByText(/network fail/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/network fail/i)).toBeInTheDocument();
   });
 
   it("shows no data message", () => {
     render(<DashboardPage />);
-    expect(
-      screen.getByText(/no scan data yet/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/no scan data yet/i)).toBeInTheDocument();
   });
 
   it("renders charts when data is loaded", () => {
@@ -86,17 +82,9 @@ describe("DashboardPage", () => {
       highest_risk: [],
     };
     render(<DashboardPage />);
-    expect(
-      screen.getByTestId("donut"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("severity"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("kpi"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("domain-pie"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("donut")).toBeInTheDocument();
+    expect(screen.getByTestId("severity")).toBeInTheDocument();
+    expect(screen.getByTestId("kpi")).toBeInTheDocument();
+    expect(screen.getByTestId("domain-pie")).toBeInTheDocument();
   });
 });

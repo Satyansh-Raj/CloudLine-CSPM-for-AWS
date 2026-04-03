@@ -10,6 +10,7 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import { useIamGraph } from "@/hooks";
+import { useAccount } from "@/hooks/useAccount";
 import {
   buildIamGraph,
   getInitialCollapsedIds,
@@ -399,7 +400,9 @@ export default function IamGraphPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const { data: apiData, isLoading, isError } = useIamGraph();
+  const { selectedAccount } = useAccount();
+  const accountId = selectedAccount || undefined;
+  const { data: apiData, isLoading, isError } = useIamGraph(accountId);
 
   // Collapse all nodes synchronously on first data load
   // (React 18 pattern: set state during render to avoid

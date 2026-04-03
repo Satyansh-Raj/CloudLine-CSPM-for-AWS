@@ -100,6 +100,42 @@ describe("ResourceDetailPage", () => {
   });
 
   it("shows violation summary", () => {
+    // Provide live violations to match resource_id
+    mockViolations.data = [
+      {
+        check_id: "s3_block_public_acls",
+        resource: mockResource.resource_id,
+        severity: "critical",
+        status: "alarm",
+        domain: "storage",
+        reason: "Public ACLs enabled",
+        compliance: {},
+        remediation_id: "",
+        risk_score: 90,
+      },
+      {
+        check_id: "s3_versioning_enabled",
+        resource: mockResource.resource_id,
+        severity: "high",
+        status: "alarm",
+        domain: "storage",
+        reason: "Versioning disabled",
+        compliance: {},
+        remediation_id: "",
+        risk_score: 70,
+      },
+      {
+        check_id: "s3_server_side_encryption",
+        resource: mockResource.resource_id,
+        severity: "high",
+        status: "alarm",
+        domain: "storage",
+        reason: "Encryption disabled",
+        compliance: {},
+        remediation_id: "",
+        risk_score: 75,
+      },
+    ];
     renderPage();
     // 3 total violations
     expect(screen.getByText("3")).toBeInTheDocument();

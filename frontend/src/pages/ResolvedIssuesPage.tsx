@@ -275,14 +275,18 @@ export default function ResolvedIssuesPage() {
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <div className="flex items-center gap-1">
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {{
-                            asc: " \u2191",
-                            desc: " \u2193",
-                          }[header.column.getIsSorted() as string] ?? null}
+                          <span>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                          </span>
+                          <span>
+                            {{
+                              asc: "\u2191",
+                              desc: "\u2193",
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </span>
                         </div>
                       </th>
                     ))}

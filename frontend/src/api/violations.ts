@@ -10,6 +10,7 @@ export interface ViolationParams {
   domain?: string;
   status?: string;
   region?: string;
+  account_id?: string;
 }
 
 export async function getViolations(

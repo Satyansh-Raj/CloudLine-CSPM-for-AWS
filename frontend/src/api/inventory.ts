@@ -14,10 +14,16 @@ export async function getInventory(
 
 export async function getInventorySummary(
   region?: string,
+  accountId?: string,
 ): Promise<InventorySummary> {
+  const params: Record<string, string> = {};
+  if (region) params.region = region;
+  if (accountId) params.account_id = accountId;
   const { data } = await apiClient.get<InventorySummary>(
     "/v1/inventory/summary",
-    { params: region ? { region } : undefined },
+    {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    },
   );
   return data;
 }

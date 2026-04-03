@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useViolations } from "@/hooks";
 import { useRegion } from "@/hooks/useRegion";
+import { useAccount } from "@/hooks/useAccount";
 import {
   ViolationsTable,
   ViolationFilters,
@@ -14,6 +15,7 @@ export default function ViolationsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { regions } = useRegion();
+  const { selectedAccount } = useAccount();
 
   const filters: FilterValues = {
     severity: searchParams.get("severity") ?? "",
@@ -48,12 +50,15 @@ export default function ViolationsPage() {
   }
 
   const params = useMemo(() => {
-    const p: Record<string, string> = { status: "alarm" };
+    const p: Record<string, string | undefined> = {
+      status: "alarm",
+    };
     if (filters.severity) p.severity = filters.severity;
     if (filters.domain) p.domain = filters.domain;
     if (region) p.region = region;
+    if (selectedAccount) p.account_id = selectedAccount;
     return p;
-  }, [filters, region]);
+  }, [filters, region, selectedAccount]);
 
   const { data, isLoading, error } = useViolations(params);
 

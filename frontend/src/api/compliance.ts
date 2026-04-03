@@ -1,12 +1,14 @@
 import { apiClient } from "./client";
-import type {
-  ComplianceScore,
-  FrameworkScore,
-} from "@/types";
+import type { ComplianceScore, FrameworkScore } from "@/types";
 
-export async function getComplianceScore(): Promise<ComplianceScore> {
+export async function getComplianceScore(
+  accountId?: string,
+): Promise<ComplianceScore> {
   const { data } = await apiClient.get<ComplianceScore>(
     "/v1/compliance/score",
+    {
+      params: accountId ? { account_id: accountId } : undefined,
+    },
   );
   return data;
 }

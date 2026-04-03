@@ -3,6 +3,39 @@ import { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useAccount } from "@/hooks/useAccount";
 import { createAccount } from "@/api/accounts";
+import { triggerScan } from "@/api/scans";
+import type { TargetAccount } from "@/types/account";
+
+/** Master AWS account that hosts the CloudLine backend role. */
+const MASTER_ACCOUNT_ID = "832843292195";
+
+function formatRelativeTime(iso: string | null): string {
+  if (!iso) return "Never scanned";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  if (diffHrs < 24) return `${diffHrs}h ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  return `${diffDays}d ago`;
+}
+
+function buildTrustPolicy(externalId: string): string {
+  return JSON.stringify(
+    {
+      Principal: {
+        AWS: `arn:aws:iam::${MASTER_ACCOUNT_ID}:role/CloudLineBackendRole`,
+      },
+      Action: "sts:AssumeRole",
+      Condition: {
+        StringEquals: { "sts:ExternalId": externalId },
+      },
+    },
+    null,
+    2,
+  );
+}
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: "grid" },
@@ -212,6 +245,10 @@ export default function Sidebar() {
   const [accountId, setAccountId] = useState("");
   const [roleArn, setRoleArn] = useState("");
   const [saving, setSaving] = useState(false);
+  // After account created: show trust policy
+  const [createdAccount, setCreatedAccount] = useState<TargetAccount | null>(
+    null,
+  );
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -234,22 +271,35 @@ export default function Sidebar() {
     ? activeAccount.account_name
     : "All Accounts";
 
+  function closeModal() {
+    setModalOpen(false);
+    setCreatedAccount(null);
+    setAccountName("");
+    setAccountId("");
+    setRoleArn("");
+  }
+
   async function handleSave() {
     if (!accountName || !accountId || !roleArn) return;
     setSaving(true);
     try {
-      await createAccount({
+      const result = await createAccount({
         account_name: accountName,
         account_id: accountId,
         role_arn: roleArn,
       });
       await refresh();
-      setAccountName("");
-      setAccountId("");
-      setRoleArn("");
-      setModalOpen(false);
+      setCreatedAccount(result as TargetAccount);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleScanNow(acct: TargetAccount) {
+    try {
+      await triggerScan(acct.account_id);
+    } finally {
+      await refresh();
     }
   }
 
@@ -357,6 +407,22 @@ export default function Sidebar() {
                 <p className="text-[11px] text-gray-400 dark:text-gray-600 truncate">
                   {a.account_id}
                 </p>
+                <div className="flex items-center justify-between mt-0.5">
+                  <p className="text-[10px] text-gray-400 dark:text-gray-600">
+                    {formatRelativeTime(a.last_scanned)}
+                  </p>
+                  <button
+                    type="button"
+                    aria-label={`Scan now ${a.account_name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleScanNow(a);
+                    }}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 font-medium"
+                  >
+                    Scan Now
+                  </button>
+                </div>
               </div>
             ))}
             <div className="border-t border-gray-100 dark:border-white/5 mt-1 pt-1">

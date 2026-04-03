@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useCompliance } from "@/hooks/useCompliance";
 import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
+import { useAccount } from "@/hooks/useAccount";
 import { getControlName } from "@/constants/controlNames";
 import type {
   FrameworkSummary,
@@ -207,14 +208,8 @@ function ViolationRows({ violations }: { violations: ControlViolation[] }) {
   );
 }
 
-function formatControlId(id: string, framework: string): string {
-  if (framework !== "cis_aws") return id;
-  const parts = id.split(".");
-  const last = parts[parts.length - 1];
-  if (/^\d$/.test(last)) {
-    parts[parts.length - 1] = last.padStart(2, "0");
-  }
-  return parts.join(".");
+function formatControlId(id: string, _framework: string): string {
+  return id;
 }
 
 function DrillDown({ framework }: DrillDownProps) {
@@ -283,7 +278,9 @@ function DrillDown({ framework }: DrillDownProps) {
               {data.controls.map((ctrl: ControlStatus) => {
                 const hasViolations = ctrl.violations.length > 0;
                 const isOpen = expanded.has(ctrl.control_id);
-                const primaryName = getControlName(ctrl.control_id);
+                const resolvedName = getControlName(ctrl.control_id);
+                const primaryName =
+                  resolvedName !== ctrl.control_id ? resolvedName : "—";
                 return (
                   <>
                     <tr
@@ -379,7 +376,9 @@ function LoadingSkeleton() {
 /* ---- main page ---- */
 
 export default function CompliancePage() {
-  const { data, isLoading, error } = useCompliance();
+  const { selectedAccount } = useAccount();
+  const accountId = selectedAccount || undefined;
+  const { data, isLoading, error } = useCompliance(accountId);
   const { selectedRegion, regions, setSelectedRegion } = useRegion();
 
   const [selectedFramework, setSelectedFramework] = useState<string>("");
