@@ -30,6 +30,18 @@ htmlcov/
 coverage/
 frontend/coverage/
 
+# ── Test source directories ──────────────────────
+backend/tests/
+policies/tests/
+frontend/src/__tests__/
+frontend/src/api/__tests__/
+frontend/src/components/__tests__/
+frontend/src/context/__tests__/
+frontend/src/hooks/__tests__/
+frontend/src/pages/__tests__/
+frontend/src/test/
+frontend/src/utils/__tests__/
+
 # ── Linters / Formatters ────────────────────────
 .ruff_cache/
 
