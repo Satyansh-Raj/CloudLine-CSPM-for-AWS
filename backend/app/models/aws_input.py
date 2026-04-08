@@ -13,6 +13,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models.macie import MacieData
+
 
 class _Flex(BaseModel):
     """Base that silently accepts extra fields."""
@@ -1145,6 +1147,11 @@ class UnifiedAWSInput(_Flex):
     )
     ecr: ECRData = Field(
         default_factory=ECRData
+    )
+
+    # Macie findings (populated by MacieCollector)
+    macie: MacieData = Field(
+        default_factory=MacieData
     )
 
     # backward-compat: old field names accepted via
