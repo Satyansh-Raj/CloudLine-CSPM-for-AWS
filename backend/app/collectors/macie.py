@@ -241,6 +241,10 @@ class MacieCollector(BaseCollector):
                 account_id=raw.get(
                     "accountId", ""
                 ),
+                detection_types=(
+                    MacieCollector
+                    ._extract_detection_types(raw)
+                ),
             )
         except (KeyError, TypeError) as e:
             logger.warning(
@@ -249,6 +253,36 @@ class MacieCollector(BaseCollector):
                 e,
             )
             return None
+
+    @staticmethod
+    def _extract_detection_types(
+        raw: dict,
+    ) -> list[str]:
+        """Extract specific managed identifier types
+        from classificationDetails.result.sensitiveData.
+
+        Returns a flat deduplicated list of detection
+        type strings (e.g. "MEDICAL_RECORD_NUMBER").
+        """
+        try:
+            sensitive_data = (
+                raw.get("classificationDetails", {})
+                .get("result", {})
+                .get("sensitiveData", [])
+            )
+            seen: set[str] = set()
+            types: list[str] = []
+            for entry in sensitive_data:
+                for det in entry.get(
+                    "detections", []
+                ):
+                    dt = det.get("type", "")
+                    if dt and dt not in seen:
+                        seen.add(dt)
+                        types.append(dt)
+            return types
+        except Exception:
+            return []
 
     @staticmethod
     def _compute_summary(

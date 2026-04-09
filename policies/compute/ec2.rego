@@ -199,7 +199,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
-			"EC2 instance '%s' has IAM role with AdministratorAccess",
+			"EC2 instance '%s' has IAM role with AdministratorAccess — use a scoped role with only required services; for management/bastion hosts use an assumable admin role with MFA instead",
 			[inst.instance_id],
 		),
 		"resource": inst.arn,

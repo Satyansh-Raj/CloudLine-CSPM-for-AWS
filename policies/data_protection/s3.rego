@@ -297,7 +297,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
-			"S3 bucket '%s' CORS rule allows all origins (*)",
+			"S3 bucket '%s' CORS allows all origins — acceptable for public content buckets; ensure bucket is read-only public and access logging is enabled",
 			[bucket.name],
 		),
 		"resource": concat("", ["arn:aws:s3:::", bucket.name]),

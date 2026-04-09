@@ -124,12 +124,41 @@ TAG_MAPPINGS: dict[str, dict[str, str]] = {
 }
 
 # Macie finding type substring → data_type
+# (used when detection_types is empty)
 _MACIE_TYPE_MAP: dict[str, str] = {
     "Personal": "pii",
     "Financial": "financial",
     "Credentials": "credentials",
     "CustomIdentifier": "pii",
     "Multiple": "pii",
+}
+
+# Macie managed identifier type → data_type
+# (takes precedence over type-level map when present)
+_MACIE_DETECTION_MAP: dict[str, str] = {
+    # Health / PHI
+    "MEDICAL_RECORD_NUMBER": "health",
+    "UK_NHS_NUMBER": "health",
+    "HEALTH_INSURANCE_CLAIM_NUMBER": "health",
+    "MEDICARE_BENEFICIARY_NUMBER": "health",
+    "US_DRUG_ENFORCEMENT_AGENCY_NUMBER": "health",
+    # PII
+    "US_SOCIAL_SECURITY_NUMBER": "pii",
+    "PASSPORT_NUMBER": "pii",
+    "DRIVERS_LICENSE": "pii",
+    "DATE_OF_BIRTH": "pii",
+    "EMAIL_ADDRESS": "pii",
+    "PHONE_NUMBER": "pii",
+    "NAME": "pii",
+    # Financial
+    "CREDIT_CARD_NUMBER": "financial",
+    "BANK_ACCOUNT_NUMBER": "financial",
+    "BANK_ROUTING_NUMBER": "financial",
+    "SWIFT_CODE": "financial",
+    # Credentials
+    "AWS_CREDENTIALS": "credentials",
+    "PRIVATE_KEY": "credentials",
+    "API_KEY": "credentials",
 }
 
 
@@ -285,12 +314,26 @@ def _classify_from_macie_data(
     ]
 
     found_types: list[str] = []
+
     for f in findings:
-        for keyword, dt in _MACIE_TYPE_MAP.items():
-            if keyword in f.type:
-                if dt not in found_types:
+        # Prefer detection-level map (specific
+        # managed identifiers) over type-level map
+        if f.detection_types:
+            for det_type in f.detection_types:
+                dt = _MACIE_DETECTION_MAP.get(
+                    det_type
+                )
+                if dt and dt not in found_types:
                     found_types.append(dt)
-                break
+        else:
+            # Fall back to top-level type substring
+            for keyword, dt in (
+                _MACIE_TYPE_MAP.items()
+            ):
+                if keyword in f.type:
+                    if dt not in found_types:
+                        found_types.append(dt)
+                    break
 
     if not found_types:
         return None

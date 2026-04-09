@@ -240,7 +240,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "high",
 		"reason": sprintf(
-			"KMS key '%s' grants kms:* to root without conditions — over-privileged",
+			"KMS key '%s' grants kms:* to root without MFA condition — keep root access but add aws:MultiFactorAuthPresent to enforce MFA for all root key administration",
 			[key.key_id],
 		),
 		"resource": key.arn,

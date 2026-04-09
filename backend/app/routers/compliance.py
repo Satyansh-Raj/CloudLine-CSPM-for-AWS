@@ -23,7 +23,7 @@ router = APIRouter(
 # Total security checks defined in OPA policies.
 # Used for check-level compliance scoring since OPA
 # only produces violations (no "ok" results).
-TOTAL_DEFINED_CHECKS = 287
+TOTAL_DEFINED_CHECKS = 290
 
 # Per-domain check counts (must sum to
 # TOTAL_DEFINED_CHECKS). Derived from the Rego
@@ -31,8 +31,9 @@ TOTAL_DEFINED_CHECKS = 287
 CHECKS_PER_DOMAIN: dict[str, int] = {
     "identity": 37,           # iam(20) + cognito(17)
     "compute": 40,            # ec2(20) + serverless(20)
-    "data_protection": 88,    # s3(20) + kms(15)
+    "data_protection": 91,    # s3(20) + kms(15)
     #   + secretsmanager(13) + db(20) + storage(20)
+    #   + macie(3)
     "network": 54,            # vpc(20) + apigw(20) + waf(14)
     "logging_monitoring": 47,  # cloudtrail(15)
     #   + cloudwatch(20) + config(12)

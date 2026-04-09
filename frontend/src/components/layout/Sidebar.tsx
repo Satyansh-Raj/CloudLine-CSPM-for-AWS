@@ -21,22 +21,6 @@ function formatRelativeTime(iso: string | null): string {
   return `${diffDays}d ago`;
 }
 
-function buildTrustPolicy(externalId: string): string {
-  return JSON.stringify(
-    {
-      Principal: {
-        AWS: `arn:aws:iam::${MASTER_ACCOUNT_ID}:role/CloudLineBackendRole`,
-      },
-      Action: "sts:AssumeRole",
-      Condition: {
-        StringEquals: { "sts:ExternalId": externalId },
-      },
-    },
-    null,
-    2,
-  );
-}
-
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: "grid" },
   { to: "/violations", label: "Violations", icon: "alert" },

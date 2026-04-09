@@ -31,3 +31,4 @@ export {
   getInventoryDetail,
 } from "./inventory";
 export { getRegions, type RegionsResponse } from "./regions";
+export { getMacieFindings } from "./macie";

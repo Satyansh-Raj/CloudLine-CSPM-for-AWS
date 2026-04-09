@@ -199,7 +199,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
-			"IAM user '%s' has inline policies — use managed policies instead",
+			"IAM user '%s' has inline policies — convert to customer-managed policies for central auditability",
 			[user.username],
 		),
 		"resource": user.arn,
@@ -221,7 +221,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
-			"IAM user '%s' has AdministratorAccess — use roles with limited scope",
+			"IAM user '%s' has permanent AdministratorAccess — grant admin via an assumable role so access is time-limited and auditable",
 			[user.username],
 		),
 		"resource": user.arn,
@@ -376,7 +376,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
-			"IAM user '%s' has both console password and active access keys",
+			"IAM user '%s' has both console password and active access keys — if both are required, enforce MFA on console and rotate keys every 90 days; prefer STS temporary credentials over long-term access keys",
 			[user.username],
 		),
 		"resource": user.arn,

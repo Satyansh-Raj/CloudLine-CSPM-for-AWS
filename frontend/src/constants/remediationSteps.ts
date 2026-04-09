@@ -1218,35 +1218,47 @@ resource "aws_instance" "fix" {
   }),
 
   // ec2_no_admin_role — EC2 instance has admin IAM role
-  ec2_no_admin_role: ({ resourceId, region }) => ({
+  ec2_no_admin_role: ({ resourceId, region, accountId }) => ({
     console: [
-      `Open EC2 console → Instances → select "${resourceId}".`,
-      "Actions → Security → Modify IAM role.",
-      "Replace the admin role with a least-privilege role.",
-      "Update.",
+      "NOTE: The goal is not to remove admin capability — it is to stop granting permanent AdministratorAccess directly to an instance role.",
+      "Path A (regular EC2): IAM → Roles → find the instance role → detach AdministratorAccess → create a customer-managed policy listing only the specific services this instance calls → attach it.",
+      "Path B (management/bastion host): Follow the same assumable role pattern as iam_no_admin_access — create a CloudLineAdminRole with AdministratorAccess and a trust policy for this instance's role → the instance assumes it only when needed via sts:AssumeRole.",
+      `EC2 console → Instances → select "${resourceId}" → Actions → Security → Modify IAM role → switch to the scoped role.`,
     ],
     cli: `\
 INSTANCE_ID="${resourceId}"
+ACCOUNT_ID="${accountId}"
 ${reg(region)}
 
-# View current role
-aws ec2 describe-instances \\
-  --instance-ids "$INSTANCE_ID" \\
-  --region "$REGION" \\
-  --query 'Reservations[0].Instances[0].IamInstanceProfile.Arn'
+# Check what the current role is
+CURRENT_ROLE=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --region "$REGION" --query 'Reservations[0].Instances[0].IamInstanceProfile.Arn' --output text)
+echo "Current instance profile: $CURRENT_ROLE"
+ROLE_NAME=$(echo "$CURRENT_ROLE" | awk -F/ '{print $NF}')
 
-# Create a scoped instance profile
-# aws iam create-role --role-name scoped-ec2-role \\
-#   --assume-role-policy-document '{...}'
-# aws iam create-instance-profile --instance-profile-name scoped-ec2
-# aws iam add-role-to-instance-profile \\
-#   --instance-profile-name scoped-ec2 --role-name scoped-ec2-role
+# List what this role currently does (what services it calls)
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue="$ROLE_NAME" --region "$REGION" --query 'Events[].EventName' --output text | tr '\\t' '\\n' | sort -u
 
-# Replace the admin role
-# aws ec2 associate-iam-instance-profile \\
-#   --instance-id "$INSTANCE_ID" \\
-#   --iam-instance-profile Name=scoped-ec2 \\
-#   --region "$REGION"`,
+# Path A: Create a scoped role with only required actions (replace example actions)
+cat > /tmp/ec2-scoped-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"], "Resource": "arn:aws:s3:::your-bucket/*" },
+    { "Effect": "Allow", "Action": ["logs:CreateLogGroup", "logs:PutLogEvents"], "Resource": "*" }
+  ]
+}
+EOF
+
+aws iam create-role --role-name "$ROLE_NAME-scoped" --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+aws iam put-role-policy --role-name "$ROLE_NAME-scoped" --policy-name "scoped-access" --policy-document file:///tmp/ec2-scoped-policy.json
+aws iam create-instance-profile --instance-profile-name "$ROLE_NAME-scoped"
+aws iam add-role-to-instance-profile --instance-profile-name "$ROLE_NAME-scoped" --role-name "$ROLE_NAME-scoped"
+
+# Replace the instance profile
+ASSOC_ID=$(aws ec2 describe-iam-instance-profile-associations --filters Name=instance-id,Values="$INSTANCE_ID" --query 'IamInstanceProfileAssociations[0].AssociationId' --output text)
+aws ec2 replace-iam-instance-profile-association --association-id "$ASSOC_ID" --iam-instance-profile Name="$ROLE_NAME-scoped"
+echo "Role replaced. Verify with:"
+aws ec2 describe-iam-instance-profile-associations --filters Name=instance-id,Values="$INSTANCE_ID" --query 'IamInstanceProfileAssociations[0].IamInstanceProfile.Arn'`,
     terraform: `\
 resource "aws_iam_role" "scoped" {
   name = "ec2-least-privilege"
@@ -2815,24 +2827,29 @@ resource "aws_s3_bucket_object_lock_configuration" "fix" {
   // s3_cors_wildcard — S3 CORS configuration allows all origins
   s3_cors_wildcard: ({ resourceId }) => ({
     console: [
-      `Open S3 console → select bucket "${resourceId}".`,
-      "Permissions tab → Cross-origin resource sharing (CORS) → Edit.",
-      "Replace '*' in AllowedOrigins with specific domains.",
-      "Save changes.",
+      `If bucket "${resourceId}" serves public content (static website, public assets): wildcard CORS is correct. Ensure bucket policy allows only s3:GetObject (read-only public) and enable S3 access logging to monitor usage.`,
+      "If this is NOT a public content bucket: S3 console → bucket → Permissions → CORS → Edit → replace '*' in AllowedOrigins with your specific domains (e.g., https://app.example.com).",
     ],
     cli: `\
 BUCKET="${resourceId}"
 
-aws s3api put-bucket-cors \\
-  --bucket "$BUCKET" \\
-  --cors-configuration '{
-    "CORSRules": [{
-      "AllowedOrigins": ["https://your-domain.com"],
-      "AllowedMethods": ["GET", "HEAD"],
-      "AllowedHeaders": ["*"],
-      "MaxAgeSeconds": 3600
-    }]
-  }'
+# Check if this is a public static site or a private bucket
+aws s3api get-bucket-website --bucket "$BUCKET" 2>/dev/null && echo "Static website hosting is ON" || echo "Not a static website bucket"
+aws s3api get-bucket-policy --bucket "$BUCKET" --query 'Policy' --output text 2>/dev/null | python3 -m json.tool | grep -A3 "Principal"
+
+# If NOT a public bucket: restrict CORS to known origins
+aws s3api put-bucket-cors --bucket "$BUCKET" --cors-configuration '{
+  "CORSRules": [{
+    "AllowedOrigins": ["https://your-domain.com"],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedHeaders": ["Authorization"],
+    "MaxAgeSeconds": 3600
+  }]
+}'
+
+# If IS a public bucket: leave CORS, enable access logging instead
+LOGS_BUCKET="$BUCKET-logs"
+aws s3api put-bucket-logging --bucket "$BUCKET" --bucket-logging-status '{"LoggingEnabled":{"TargetBucket":"'"$LOGS_BUCKET"'","TargetPrefix":"access/"}}'
 
 # Verify
 aws s3api get-bucket-cors --bucket "$BUCKET"`,
@@ -4217,72 +4234,83 @@ resource "aws_lambda_function" "fix" {
   // serverless_lambda_no_public_invoke — Lambda resource policy allows public invocation
   serverless_lambda_no_public_invoke: ({ resourceId, region }) => ({
     console: [
-      `Open Lambda console → function "${resourceId}".`,
-      "Configuration → Permissions → Resource-based policy.",
-      "Remove statements with Principal: '*' and no conditions.",
-      "Add specific principal ARNs instead.",
+      "If this Lambda is intentionally public (webhook, SaaS callback): keep the public permission but add a Lambda authorizer or API key, enable WAF on the API Gateway in front, and check that the function validates all inputs.",
+      "If this Lambda is NOT intentionally public: Configuration → Permissions → Resource-based policy → remove statements where Principal is '*' → add specific principal ARNs (e.g., API Gateway ARN, specific AWS account).",
+      `Lambda console → function "${resourceId}" → Configuration → Permissions → Resource-based policy statements.`,
     ],
     cli: `\
 FUNCTION="${resourceId}"
 ${reg(region)}
 
-# View current policy
-aws lambda get-policy \\
-  --function-name "$FUNCTION" \\
-  --region "$REGION"
+# Step 1 — view current resource policy to understand what is public
+aws lambda get-policy --function-name "$FUNCTION" --region "$REGION" --query 'Policy' --output text | python3 -m json.tool
 
-# Remove public permission (replace SID)
-# aws lambda remove-permission \\
-#   --function-name "$FUNCTION" \\
-#   --statement-id <STATEMENT_ID> \\
-#   --region "$REGION"
+# Step 2a — if NOT intentionally public: remove the public statement
+# Find the statement ID from the policy above
+PUBLIC_SID="<STATEMENT_ID_WITH_STAR_PRINCIPAL>"
+aws lambda remove-permission --function-name "$FUNCTION" --statement-id "$PUBLIC_SID" --region "$REGION"
 
-# Add scoped permission
-# aws lambda add-permission \\
-#   --function-name "$FUNCTION" \\
-#   --statement-id "AllowSpecificService" \\
-#   --action "lambda:InvokeFunction" \\
-#   --principal apigateway.amazonaws.com \\
-#   --source-arn "<API_ARN>" \\
-#   --region "$REGION"`,
+# Then add a scoped permission (e.g., allow only your API Gateway)
+API_ARN="arn:aws:execute-api:$REGION:<ACCOUNT_ID>:<API_ID>/*"
+aws lambda add-permission --function-name "$FUNCTION" --statement-id "AllowAPIGateway" --action "lambda:InvokeFunction" --principal apigateway.amazonaws.com --source-arn "$API_ARN" --region "$REGION"
+
+# Step 2b — if intentionally public: keep the permission, add a URL auth type
+aws lambda create-function-url-config --function-name "$FUNCTION" --auth-type AWS_IAM --region "$REGION"
+echo "For truly public endpoints use API Gateway with WAF + throttling in front of Lambda instead of a raw public resource policy."`,
     terraform: `\
-resource "aws_lambda_permission" "fix" {
+# For API Gateway-triggered Lambda (scoped, not public):
+resource "aws_lambda_permission" "allow_apigw" {
   function_name = "${resourceId}"
   statement_id  = "AllowAPIGateway"
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
-  source_arn    = var.api_gateway_arn
-}`,
+  source_arn    = "\${var.api_gateway_arn}/*"
+}
+
+# For a truly public function URL, use IAM auth or put API Gateway + WAF in front:
+# resource "aws_lambda_function_url" "public" {
+#   function_name      = "${resourceId}"
+#   authorization_type = "NONE"  # only if WAF + rate limiting exists upstream
+# }`,
   }),
 
   // serverless_lambda_no_admin_role — Lambda execution role has AdministratorAccess
   serverless_lambda_no_admin_role: ({ resourceId, region }) => ({
     console: [
-      `Open Lambda console → function "${resourceId}".`,
-      "Configuration → Permissions → Execution role.",
-      "Click the role link to open in IAM.",
-      "Detach AdministratorAccess → attach least-privilege policy.",
+      `Open Lambda console → function "${resourceId}" → Configuration → Permissions → Execution role → click role link.`,
+      "In IAM, check recent CloudTrail events for this role to see which AWS services this function actually calls.",
+      "Create a customer-managed policy with only those specific actions and resources.",
+      "Attach the new scoped policy → detach AdministratorAccess.",
     ],
     cli: `\
 FUNCTION="${resourceId}"
 ${reg(region)}
 
-# Get execution role
-ROLE_ARN=$(aws lambda get-function-configuration \\
-  --function-name "$FUNCTION" \\
-  --region "$REGION" \\
-  --query 'Role' --output text)
+# Get the execution role name
+ROLE_ARN=$(aws lambda get-function-configuration --function-name "$FUNCTION" --region "$REGION" --query 'Role' --output text)
 ROLE_NAME=$(echo "$ROLE_ARN" | awk -F/ '{print $NF}')
+echo "Execution role: $ROLE_NAME"
 
-# Detach admin policy
-aws iam detach-role-policy \\
-  --role-name "$ROLE_NAME" \\
-  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+# Check CloudTrail to see what services this function actually uses
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue="$ROLE_NAME" --region "$REGION" --query 'Events[].EventName' --output text | tr '\\t' '\\n' | sort -u
 
-# Attach least-privilege policy
-aws iam attach-role-policy \\
-  --role-name "$ROLE_NAME" \\
-  --policy-arn arn:aws:iam::aws:policy/AWSLambdaBasicExecutionRole`,
+# Create a scoped policy based on what you find above (replace the actions list)
+cat > /tmp/lambda-scoped.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Effect": "Allow", "Action": ["s3:GetObject", "dynamodb:PutItem"], "Resource": "*" },
+    { "Effect": "Allow", "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], "Resource": "arn:aws:logs:*:*:*" }
+  ]
+}
+EOF
+
+POLICY_ARN=$(aws iam create-policy --policy-name "$ROLE_NAME-scoped" --policy-document file:///tmp/lambda-scoped.json --query 'Policy.Arn' --output text)
+aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn "$POLICY_ARN"
+
+# Only after verifying the function works with the scoped policy:
+aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+echo "Verify the Lambda still works, then confirm the fix is complete."`,
     terraform: `\
 resource "aws_iam_role" "lambda_exec" {
   name = "${resourceId}-role"
@@ -4296,40 +4324,71 @@ resource "aws_iam_role" "lambda_exec" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "basic" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaBasicExecutionRole"
-}`,
+# Scoped policy — replace actions with what this function actually needs
+resource "aws_iam_role_policy" "scoped" {
+  role = aws_iam_role.lambda_exec.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Action = ["s3:GetObject", "dynamodb:PutItem"], Resource = "*" },
+      { Effect = "Allow", Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], Resource = "arn:aws:logs:*:*:*" }
+    ]
+  })
+}
+# Remove the aws_iam_role_policy_attachment for AdministratorAccess.`,
   }),
 
   // serverless_ecs_no_privileged — ECS container running in privileged mode
   serverless_ecs_no_privileged: ({ resourceId, region }) => ({
     console: [
-      `Open ECS console → Task Definitions → select "${resourceId}".`,
-      "Create new revision.",
-      "Edit container → uncheck 'Privileged'.",
-      "Register and update the service to use new revision.",
+      "First confirm WHY privileged mode is set — check with the team that owns this task definition.",
+      "If privileged is NOT actually required: ECS → Task Definitions → create new revision → edit container → uncheck Privileged → register → update service.",
+      "If privileged IS required (Docker-in-Docker, raw socket access, kernel module): create a new revision that removes privileged=true and instead adds only the specific Linux capabilities needed via 'linuxParameters.capabilities.add' (e.g., NET_ADMIN, SYS_PTRACE).",
+      "Update the service to use the new task definition revision.",
     ],
     cli: `\
 TASK_DEF="${resourceId}"
 ${reg(region)}
 
-# Get current task definition
-aws ecs describe-task-definition \\
-  --task-definition "$TASK_DEF" \\
-  --region "$REGION" \\
-  --query 'taskDefinition.containerDefinitions[].{Name:name,Privileged:privileged}'
+# Check which containers use privileged mode and why
+aws ecs describe-task-definition --task-definition "$TASK_DEF" --region "$REGION" --query 'taskDefinition.containerDefinitions[].{Name:name,Privileged:privileged,Capabilities:linuxParameters.capabilities}'
 
-# Register new revision with privileged=false
-# Edit the JSON and re-register:
-# aws ecs register-task-definition --cli-input-json file://fixed-taskdef.json`,
+# Export task definition JSON for editing
+aws ecs describe-task-definition --task-definition "$TASK_DEF" --region "$REGION" --query 'taskDefinition' > /tmp/taskdef.json
+
+# Edit /tmp/taskdef.json:
+# Option A (preferred): remove "privileged": true, add specific caps instead:
+#   "linuxParameters": {
+#     "capabilities": { "add": ["NET_ADMIN"], "drop": ["ALL"] }
+#   }
+# Option B: set "privileged": false if the container does not need elevated access at all
+
+# Re-register with the fixed definition (strip read-only fields first)
+python3 -c "
+import json, sys
+d = json.load(open('/tmp/taskdef.json'))
+for f in ['taskDefinitionArn','revision','status','registeredAt','registeredBy','requiresAttributes','compatibilities']:
+    d.pop(f, None)
+json.dump(d, sys.stdout, indent=2)
+" > /tmp/taskdef-fixed.json
+
+aws ecs register-task-definition --cli-input-json file:///tmp/taskdef-fixed.json --region "$REGION"`,
     terraform: `\
 resource "aws_ecs_task_definition" "fix" {
   family = "${resourceId}"
+
   container_definitions = jsonencode([{
-    name       = "app"
-    image      = var.image
-    privileged = false
+    name  = "app"
+    image = var.image
+
+    # Remove privileged = true.
+    # If specific capabilities are required, use linuxParameters:
+    linuxParameters = {
+      capabilities = {
+        add  = ["NET_ADMIN"]  # add only what is specifically needed
+        drop = ["ALL"]         # drop everything else
+      }
+    }
   }])
 }`,
   }),
@@ -7511,18 +7570,18 @@ resource "aws_cloudwatch_metric_alarm" "route_table_changes" {
     cli: `\
 ${acct(accountId)}
 
-aws accessanalyzer create-analyzer \\
-  --analyzer-name "cloudline-analyzer" \\
-  --type ACCOUNT
+# Create analyzer only if one does not already exist
+EXISTING=$(aws accessanalyzer list-analyzers --query 'analyzers[?name==\`cloudline-analyzer\`].arn' --output text)
+if [ -z "$EXISTING" ]; then
+  aws accessanalyzer create-analyzer --analyzer-name "cloudline-analyzer" --type ACCOUNT
+  echo "Analyzer created."
+else
+  echo "Analyzer already exists: $EXISTING"
+fi
 
 # List active findings
-ANALYZER_ARN=$(aws accessanalyzer list-analyzers \\
-  --query 'analyzers[?name==\`cloudline-analyzer\`].arn' \\
-  --output text)
-
-aws accessanalyzer list-findings \\
-  --analyzer-arn "$ANALYZER_ARN" \\
-  --filter '{"status":{"eq":["ACTIVE"]}}'`,
+ANALYZER_ARN=$(aws accessanalyzer list-analyzers --query 'analyzers[?name==\`cloudline-analyzer\`].arn' --output text)
+aws accessanalyzer list-findings --analyzer-arn "$ANALYZER_ARN" --filter '{"status":{"eq":["ACTIVE"]}}'`,
     terraform: `\
 resource "aws_accessanalyzer_analyzer" "fix" {
   analyzer_name = "cloudline-analyzer"
@@ -7812,113 +7871,172 @@ resource "aws_organizations_policy" "deny_root_keys" {
   }),
 
   // iam_no_inline_policies — IAM user has inline policies
-  iam_no_inline_policies: ({ resourceId }) => ({
+  iam_no_inline_policies: ({ resourceId, accountId }) => ({
     console: [
-      `Open IAM console → Users → select "${resourceId}".`,
-      "Permissions tab → expand each inline policy.",
-      "Click Remove on each inline policy.",
-      "Attach equivalent managed policies instead.",
+      `Open IAM console → Users → select "${resourceId}" → Permissions tab.`,
+      "Expand each inline policy and copy its JSON document.",
+      "Go to IAM → Policies → Create policy → paste the JSON (keep the same permissions — this is a customer-managed policy, not a broad AWS-managed one).",
+      'Name it clearly (e.g. "${resourceId}-s3-read") → Create policy.',
+      `Return to Users → "${resourceId}" → Add permissions → Attach policies → select the new policy.`,
+      "Back on the Permissions tab, expand the original inline policy → click Remove → confirm.",
+      "Repeat for each inline policy on this user.",
     ],
     cli: `\
 USERNAME="${resourceId}"
+ACCOUNT_ID="${accountId}"
 
-# List inline policies
-aws iam list-user-policies --user-name "$USERNAME"
+# Step 1 — list inline policies on this user
+INLINE_POLICIES=$(aws iam list-user-policies --user-name "$USERNAME" --query 'PolicyNames' --output text)
+echo "Inline policies: $INLINE_POLICIES"
 
-# For each inline policy, get it, create a managed version, then delete:
-# POLICY_NAME="<inline-policy-name>"
-# aws iam get-user-policy \\
-#   --user-name "$USERNAME" \\
-#   --policy-name "$POLICY_NAME"
+# Step 2 — for each inline policy: export it, create a customer-managed policy, attach it, then delete the inline
+for POLICY_NAME in $INLINE_POLICIES; do
+  echo "--- Processing: $POLICY_NAME"
 
-# aws iam create-policy \\
-#   --policy-name "$POLICY_NAME-managed" \\
-#   --policy-document file://policy.json
+  # Export the inline policy document
+  aws iam get-user-policy --user-name "$USERNAME" --policy-name "$POLICY_NAME" --query 'PolicyDocument' --output json > /tmp/$POLICY_NAME.json
 
-# aws iam attach-user-policy \\
-#   --user-name "$USERNAME" \\
-#   --policy-arn "arn:aws:iam::$ACCOUNT_ID:policy/$POLICY_NAME-managed"
+  # Create a customer-managed policy with identical permissions
+  MANAGED_ARN=$(aws iam create-policy --policy-name "$USERNAME-$POLICY_NAME" --policy-document file:///tmp/$POLICY_NAME.json --query 'Policy.Arn' --output text)
+  echo "Created managed policy: $MANAGED_ARN"
 
-# aws iam delete-user-policy \\
-#   --user-name "$USERNAME" \\
-#   --policy-name "$POLICY_NAME"
+  # Attach the new managed policy to the user
+  aws iam attach-user-policy --user-name "$USERNAME" --policy-arn "$MANAGED_ARN"
+  echo "Attached $MANAGED_ARN to $USERNAME"
 
-# Verify no inline policies remain
-aws iam list-user-policies --user-name "$USERNAME"`,
+  # Remove the inline policy
+  aws iam delete-user-policy --user-name "$USERNAME" --policy-name "$POLICY_NAME"
+  echo "Deleted inline policy: $POLICY_NAME"
+done
+
+# Verify — should return empty list
+echo "Remaining inline policies:"
+aws iam list-user-policies --user-name "$USERNAME" --query 'PolicyNames' --output text`,
     terraform: `\
-# User: ${resourceId}
-# Remove aws_iam_user_policy resources and replace with
-# aws_iam_user_policy_attachment using managed policies:
+# Replace aws_iam_user_policy (inline) with aws_iam_policy + attachment.
+# Keep the same Statement block — this is a customer-managed policy
+# scoped to this user's exact needs, not a broad AWS-managed policy.
 
-resource "aws_iam_policy" "user_policy" {
-  name = "${resourceId}-managed-policy"
+resource "aws_iam_policy" "fix" {
+  name        = "${resourceId}-managed"
+  description = "Customer-managed policy converted from inline for ${resourceId}"
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["<required-actions>"]
-      Resource = ["<specific-resources>"]
-    }]
+    Statement = [
+      # Paste the Statement array from the original inline policy here.
+      # Keep the same Actions and Resources — only the storage location changes.
+    ]
   })
 }
 
 resource "aws_iam_user_policy_attachment" "fix" {
   user       = "${resourceId}"
-  policy_arn = aws_iam_policy.user_policy.arn
-}`,
+  policy_arn = aws_iam_policy.fix.arn
+}
+
+# Remove any aws_iam_user_policy blocks that were here before.`,
   }),
 
-  // iam_no_admin_access — IAM user has AdministratorAccess
-  iam_no_admin_access: ({ resourceId }) => ({
+  // iam_no_admin_access — IAM user has AdministratorAccess permanently attached
+  iam_no_admin_access: ({ resourceId, accountId }) => ({
     console: [
-      `Open IAM console → Users → select "${resourceId}".`,
-      "Permissions tab → find AdministratorAccess.",
-      "Click Remove to detach it.",
-      "Attach a scoped policy with only the permissions needed.",
+      "NOTE: The goal is NOT to remove admin capability — it is to make admin access time-limited and auditable via a role.",
+      "IAM console → Roles → Create role → Trusted entity: AWS account → This account.",
+      "Check 'Require MFA' under conditions → Next.",
+      "Attach AdministratorAccess policy → Next → Name it 'CloudLineAdminRole' → Create role.",
+      `IAM → Users → select "${resourceId}" → Permissions → Add permissions → Attach policies.`,
+      "Create and attach a policy that allows only sts:AssumeRole on the new role ARN (see CLI tab for the policy JSON).",
+      `Remove the direct AdministratorAccess attachment from "${resourceId}".`,
+      `To use admin: "${resourceId}" runs 'aws sts assume-role ...' — CloudTrail logs every session.`,
     ],
     cli: `\
 USERNAME="${resourceId}"
+ACCOUNT_ID="${accountId}"
+ROLE_NAME="CloudLineAdminRole"
 
-# Detach AdministratorAccess
-aws iam detach-user-policy \\
-  --user-name "$USERNAME" \\
-  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+# Step 1 — create an admin role with a trust policy that allows this user to assume it (MFA required)
+cat > /tmp/trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "AWS": "arn:aws:iam::${accountId}:user/${resourceId}" },
+    "Action": "sts:AssumeRole",
+    "Condition": { "Bool": { "aws:MultiFactorAuthPresent": "true" } }
+  }]
+}
+EOF
 
-# Attach a scoped policy instead (replace with the appropriate policy)
-# aws iam attach-user-policy \\
-#   --user-name "$USERNAME" \\
-#   --policy-arn arn:aws:iam::aws:policy/PowerUserAccess
+aws iam create-role --role-name "$ROLE_NAME" --assume-role-policy-document file:///tmp/trust-policy.json
+aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+echo "Admin role created: arn:aws:iam::$ACCOUNT_ID:role/$ROLE_NAME"
+
+# Step 2 — grant the user permission to assume the role (but nothing else)
+cat > /tmp/assume-role-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": "sts:AssumeRole",
+    "Resource": "arn:aws:iam::${accountId}:role/CloudLineAdminRole"
+  }]
+}
+EOF
+
+aws iam create-policy --policy-name "$USERNAME-can-assume-admin" --policy-document file:///tmp/assume-role-policy.json
+POLICY_ARN=$(aws iam list-policies --query 'Policies[?PolicyName==\`'"$USERNAME-can-assume-admin"'\`].Arn' --output text)
+aws iam attach-user-policy --user-name "$USERNAME" --policy-arn "$POLICY_ARN"
+
+# Step 3 — remove the permanent AdministratorAccess from the user
+aws iam detach-user-policy --user-name "$USERNAME" --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 
 # Verify
-aws iam list-attached-user-policies \\
-  --user-name "$USERNAME"`,
+echo "User policies (should not include AdministratorAccess):"
+aws iam list-attached-user-policies --user-name "$USERNAME" --query 'AttachedPolicies[].PolicyName' --output text
+
+# Step 4 — how to use admin access going forward
+echo "To assume admin role (requires MFA):"
+echo "aws sts assume-role --role-arn arn:aws:iam::$ACCOUNT_ID:role/$ROLE_NAME --role-session-name admin-session --serial-number arn:aws:iam::$ACCOUNT_ID:mfa/$USERNAME --token-code <MFA_CODE>"`,
     terraform: `\
-# User: ${resourceId}
-# Remove the admin attachment and replace with scoped policy:
+data "aws_caller_identity" "current" {}
 
-# REMOVE this:
-# resource "aws_iam_user_policy_attachment" "admin" {
-#   user       = "${resourceId}"
-#   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-# }
+# Admin role — AdministratorAccess attached to a role, not a user
+resource "aws_iam_role" "admin" {
+  name = "CloudLineAdminRole"
 
-# ADD a scoped policy instead:
-resource "aws_iam_user_policy_attachment" "scoped" {
-  user       = "${resourceId}"
-  policy_arn = aws_iam_policy.least_privilege.arn
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = "arn:aws:iam::${accountId}:user/${resourceId}" }
+      Action    = "sts:AssumeRole"
+      Condition = { Bool = { "aws:MultiFactorAuthPresent" = "true" } }
+    }]
+  })
 }
 
-resource "aws_iam_policy" "least_privilege" {
-  name = "${resourceId}-scoped-policy"
+resource "aws_iam_role_policy_attachment" "admin" {
+  role       = aws_iam_role.admin.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
+# Grant the user permission to assume the admin role only
+resource "aws_iam_user_policy" "can_assume_admin" {
+  name = "${resourceId}-assume-admin"
+  user = "${resourceId}"
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["<only-required-actions>"]
-      Resource = ["<specific-resources>"]
+      Action   = "sts:AssumeRole"
+      Resource = aws_iam_role.admin.arn
     }]
   })
-}`,
+}
+
+# Remove the direct AdministratorAccess attachment:
+# resource "aws_iam_user_policy_attachment" "admin" { ... }  ← DELETE THIS`,
   }),
 
   // iam_key_rotation — Access key not rotated within 90 days
@@ -8133,36 +8251,43 @@ resource "aws_iam_role" "fix" {
   // iam_dual_access — IAM user has both console and API access
   iam_dual_access: ({ resourceId }) => ({
     console: [
-      `Open IAM console → Users → select "${resourceId}".`,
-      "Evaluate whether the user needs both access types.",
-      "If only console needed: Security credentials → Access keys → Deactivate/Delete.",
-      "If only programmatic needed: Security credentials → Console sign-in → Disable.",
-      "Best practice: use IAM roles for programmatic access.",
+      "If this user legitimately needs both (e.g., a developer who deploys manually AND automates): enforce MFA on console access and rotate access keys every 90 days. Consider replacing long-term keys with STS temporary credentials (e.g., aws-vault, IAM Identity Center).",
+      "If only console access is needed: IAM → Users → Security credentials → Access keys → Deactivate then Delete.",
+      "If only programmatic access is needed: IAM → Users → Security credentials → Console sign-in → Disable.",
+      "Best practice for automation: use IAM roles with STS AssumeRole instead of long-term access keys entirely.",
     ],
     cli: `\
 USERNAME="${resourceId}"
 
-# Check login profile (console access)
-aws iam get-login-profile --user-name "$USERNAME" 2>/dev/null
+# Audit what this user does with each credential type
+echo "=== Console last sign-in ==="
+aws iam get-user --user-name "$USERNAME" --query 'User.PasswordLastUsed'
 
-# Check access keys (programmatic access)
-aws iam list-access-keys --user-name "$USERNAME"
+echo "=== Access key usage ==="
+aws iam list-access-keys --user-name "$USERNAME" --query 'AccessKeyMetadata[].{KeyId:AccessKeyId,Status:Status,Created:CreateDate}'
+aws iam get-access-key-last-used --access-key-id $(aws iam list-access-keys --user-name "$USERNAME" --query 'AccessKeyMetadata[0].AccessKeyId' --output text) --query 'AccessKeyLastUsed'
 
-# Option A — Remove console access (keep API only):
-# aws iam delete-login-profile --user-name "$USERNAME"
+# If keeping both: enforce MFA for console (requires MFA-enforced policy)
+cat > /tmp/require-mfa.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "DenyWithoutMFA",
+    "Effect": "Deny",
+    "NotAction": ["iam:CreateVirtualMFADevice", "iam:EnableMFADevice", "sts:GetSessionToken"],
+    "Resource": "*",
+    "Condition": { "BoolIfExists": { "aws:MultiFactorAuthPresent": "false" } }
+  }]
+}
+EOF
+aws iam put-user-policy --user-name "$USERNAME" --policy-name "RequireMFA" --policy-document file:///tmp/require-mfa.json
+echo "MFA enforcement policy attached. User must set up MFA before using console."
 
-# Option B — Remove API access (keep console only):
-# aws iam update-access-key \\
-#   --user-name "$USERNAME" \\
-#   --access-key-id <KEY_ID> \\
-#   --status Inactive
-# aws iam delete-access-key \\
-#   --user-name "$USERNAME" \\
-#   --access-key-id <KEY_ID>
-
-# Verify
-aws iam get-login-profile --user-name "$USERNAME" 2>&1
-aws iam list-access-keys --user-name "$USERNAME"`,
+# Rotate access key if older than 90 days
+KEY_ID=$(aws iam list-access-keys --user-name "$USERNAME" --query 'AccessKeyMetadata[0].AccessKeyId' --output text)
+aws iam create-access-key --user-name "$USERNAME"
+echo "New key created. Update applications, then deactivate old key:"
+echo "aws iam update-access-key --user-name $USERNAME --access-key-id $KEY_ID --status Inactive"`,
     terraform: `\
 # User: ${resourceId}
 # Decide which access type to keep, remove the other.
@@ -8766,16 +8891,41 @@ resource "aws_vpc_endpoint" "apigw" {
   // apigw_cors_wildcard — API Gateway CORS allows all origins
   apigw_cors_wildcard: ({ resourceId }) => ({
     console: [
-      `Open API Gateway console → select API "${resourceId}".`,
-      "Resources → select method → Method Response.",
-      "Edit CORS headers: replace '*' with specific domains.",
+      `If API "${resourceId}" is intentionally public (consumed by browser clients from any origin): wildcard CORS is correct. Protect the API instead with authentication (Cognito/Lambda authorizer), API keys, WAF rate limiting, and request validation.`,
+      "If this is a private API only consumed by known origins: API Gateway console → select API → CORS settings → edit AllowOrigins → replace '*' with specific domains → re-deploy.",
     ],
     cli: `\
-echo "Update CORS for ${resourceId} to restrict Access-Control-Allow-Origin"`,
+API_ID="${resourceId}"
+
+# Check the API's current auth and usage plan setup
+aws apigateway get-rest-api --rest-api-id "$API_ID" --query '{Name:name,Endpoint:endpointConfiguration}'
+aws apigateway get-stages --rest-api-id "$API_ID" --query 'item[].{Stage:stageName,WAF:webAclArn,Logging:methodSettings}'
+
+# For a private API: update CORS to restrict origins (HTTP API v2)
+aws apigatewayv2 update-api --api-id "$API_ID" --cors-configuration 'AllowOrigins=["https://your-domain.com"],AllowMethods=["GET","POST"],AllowHeaders=["Content-Type","Authorization"]'
+
+# For a public API: add WAF to rate-limit
+echo "Attach a WAF WebACL with rate-based rules to the API stage:"
+echo "aws wafv2 associate-web-acl --web-acl-arn <WAF_ARN> --resource-arn arn:aws:apigateway:<region>::/restapis/$API_ID/stages/<STAGE>"`,
     terraform: `\
-# In API Gateway integration response headers:
-# Replace "*" with specific origin:
-# "Access-Control-Allow-Origin" = "'https://your-domain.com'"`,
+# For private API: restrict CORS origins
+resource "aws_apigatewayv2_api" "fix" {
+  name          = "${resourceId}"
+  protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = ["https://your-domain.com"]
+    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_headers = ["Content-Type", "Authorization"]
+    max_age       = 300
+  }
+}
+
+# For public API: keep * CORS but attach WAF
+resource "aws_wafv2_web_acl_association" "api" {
+  resource_arn = "arn:aws:apigateway:\${var.region}::/restapis/${resourceId}/stages/\${var.stage}"
+  web_acl_arn  = var.waf_acl_arn
+}`,
   }),
 
   // apigw_api_keys_required — API Gateway keys not required for usage plans
@@ -9698,34 +9848,71 @@ resource "aws_kms_key" "fix" {
 }`,
   }),
 
-  // kms_no_root_wildcard — KMS key policy grants root wildcard actions
+  // kms_no_root_wildcard — KMS key policy grants root wildcard without MFA condition
   kms_no_root_wildcard: ({ resourceId, region }) => ({
     console: [
-      `Open KMS console → select key "${resourceId}".`,
-      "Key policy → Edit.",
-      "Replace kms:* with specific actions per principal.",
-      "Save.",
+      `NOTE: Do NOT remove root access from the KMS key — root retaining kms:* is AWS best practice as a safety net. The issue is there is no MFA condition on the root statement.`,
+      `Open KMS console → select key "${resourceId}" → Key policy → Edit.`,
+      "Find the root account statement (Principal: arn:aws:iam::<account>:root).",
+      'Add a Condition block requiring MFA: { "Bool": { "aws:MultiFactorAuthPresent": "true" } }',
+      "Save changes.",
     ],
     cli: `\
 KEY_ID="${resourceId}"
 ${reg(region)}
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-echo "Scope down root kms:* to specific actions in key policy"`,
+# Get current key policy
+aws kms get-key-policy --key-id "$KEY_ID" --policy-name default --region "$REGION" --query 'Policy' --output text | python3 -m json.tool > /tmp/key-policy.json
+echo "Current policy saved to /tmp/key-policy.json"
+cat /tmp/key-policy.json
+
+# The root statement currently looks like:
+# { "Effect": "Allow", "Principal": {"AWS": "arn:aws:iam::$ACCOUNT_ID:root"}, "Action": "kms:*", "Resource": "*" }
+#
+# Add MFA condition — edit /tmp/key-policy.json to add:
+# "Condition": { "Bool": { "aws:MultiFactorAuthPresent": "true" } }
+#
+# Example using python3 to patch it:
+python3 - << 'PYEOF'
+import json
+with open('/tmp/key-policy.json') as f:
+    policy = json.load(f)
+import os
+account_id = os.popen("aws sts get-caller-identity --query Account --output text").read().strip()
+root_arn = f"arn:aws:iam::{account_id}:root"
+for stmt in policy.get('Statement', []):
+    principal = stmt.get('Principal', {})
+    if isinstance(principal, dict) and principal.get('AWS') == root_arn:
+        if 'Condition' not in stmt:
+            stmt['Condition'] = {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            print("Added MFA condition to root statement")
+with open('/tmp/key-policy-fixed.json', 'w') as f:
+    json.dump(policy, f, indent=2)
+PYEOF
+
+# Apply the fixed policy
+aws kms put-key-policy --key-id "$KEY_ID" --policy-name default --policy file:///tmp/key-policy-fixed.json --region "$REGION"
+echo "Policy updated. Root retains kms:* but now requires MFA."`,
     terraform: `\
+data "aws_caller_identity" "current" {}
+
 resource "aws_kms_key" "fix" {
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Sid       = "ScopedRoot"
-      Effect    = "Allow"
-      Principal = { AWS = "arn:aws:iam::\${data.aws_caller_identity.current.account_id}:root" }
-      Action    = [
-        "kms:Describe*", "kms:List*", "kms:Get*",
-        "kms:Enable*", "kms:Disable*",
-        "kms:Create*", "kms:Delete*", "kms:Put*",
-      ]
-      Resource = "*"
-    }]
+    Statement = [
+      {
+        # Root retains full access — required as AWS safety net.
+        # MFA condition enforces that root must authenticate with MFA
+        # before performing any key administration action.
+        Sid       = "RootAdminWithMFA"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:aws:iam::\${data.aws_caller_identity.current.account_id}:root" }
+        Action    = "kms:*"
+        Resource  = "*"
+        Condition = { Bool = { "aws:MultiFactorAuthPresent" = "true" } }
+      }
+    ]
   })
 }`,
   }),
@@ -10008,6 +10195,140 @@ resource "aws_s3_account_public_access_block" "fix" {
 resource "aws_guardduty_detector" "fix" {
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
+}`,
+  }),
+
+  // macie_not_enabled — AWS Macie not enabled
+  macie_not_enabled: ({ region }) => ({
+    console: [
+      "Open the Amazon Macie console.",
+      "Select your region from the top-right region selector.",
+      "Click 'Get started' (or 'Enable Macie' if shown).",
+      "Review the pricing page, then click 'Enable Macie'.",
+      "Once enabled, create a job: Jobs → Create job → select S3 buckets → configure schedule.",
+    ],
+    cli: `\
+${reg(region)}
+
+# Enable Macie in the region
+aws macie2 enable-macie --region "$REGION"
+
+# Verify Macie is ENABLED
+aws macie2 get-macie-session --region "$REGION" \\
+  --query 'status' --output text
+
+# Create a one-time classification job for all buckets
+aws macie2 create-classification-job \\
+  --name "cloudline-initial-scan" \\
+  --job-type ONE_TIME \\
+  --s3-job-definition '{"bucketDefinitions":[{"accountId":"'"$(aws sts get-caller-identity --query Account --output text)"'","buckets":[]}]}' \\
+  --region "$REGION"`,
+    terraform: `\
+resource "aws_macie2_account" "main" {
+  status                       = "ENABLED"
+  finding_publishing_frequency = "FIFTEEN_MINUTES"
+}
+
+resource "aws_macie2_classification_job" "initial_scan" {
+  depends_on = [aws_macie2_account.main]
+  name       = "cloudline-initial-scan"
+  job_type   = "ONE_TIME"
+
+  s3_job_definition {
+    bucket_definitions {
+      account_id = data.aws_caller_identity.current.account_id
+      buckets    = []  # empty = all buckets in account
+    }
+  }
+}`,
+  }),
+
+  // macie_sensitive_bucket_public_access
+  // — S3 bucket with Macie findings has public access
+  macie_sensitive_bucket_public_access: ({ resourceId }) => ({
+    console: [
+      `Open S3 console → select bucket "${resourceId}".`,
+      "Permissions tab → Block public access (bucket settings) → Edit.",
+      "Enable all four block options → Save changes → Confirm.",
+      "Permissions tab → Bucket policy → review and remove any public Allow statements.",
+      "Return to Macie console to verify the finding severity decreases after the next scan.",
+    ],
+    cli: `\
+BUCKET="${resourceId}"
+
+# Block all public access
+aws s3api put-public-access-block \\
+  --bucket "$BUCKET" \\
+  --public-access-block-configuration \\
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+# Remove any public bucket ACL
+aws s3api put-bucket-acl --bucket "$BUCKET" --acl private
+
+# Verify
+aws s3api get-public-access-block --bucket "$BUCKET"`,
+    terraform: `\
+resource "aws_s3_bucket_public_access_block" "fix" {
+  bucket                  = "${resourceId}"
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_acl" "fix" {
+  bucket = "${resourceId}"
+  acl    = "private"
+}`,
+  }),
+
+  // macie_sensitive_data_no_kms
+  // — S3 bucket with Macie findings lacks KMS encryption
+  macie_sensitive_data_no_kms: ({ resourceId }) => ({
+    console: [
+      `Open S3 console → select bucket "${resourceId}".`,
+      "Properties tab → Default encryption → Edit.",
+      "Select 'AWS Key Management Service key (SSE-KMS)'.",
+      "Choose an existing CMK or click 'Create a KMS key'.",
+      "Enable 'Bucket Key' to reduce KMS API costs.",
+      "Save changes.",
+    ],
+    cli: `\
+BUCKET="${resourceId}"
+# Replace with your CMK ARN or use 'aws/s3' for the managed key
+KMS_KEY_ID="arn:aws:kms:<region>:<account-id>:key/<key-id>"
+
+aws s3api put-bucket-encryption \\
+  --bucket "$BUCKET" \\
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "aws:kms",
+        "KMSMasterKeyID": "'"$KMS_KEY_ID"'"
+      },
+      "BucketKeyEnabled": true
+    }]
+  }'
+
+# Verify
+aws s3api get-bucket-encryption --bucket "$BUCKET"`,
+    terraform: `\
+resource "aws_kms_key" "s3_key" {
+  description             = "KMS key for S3 bucket ${resourceId}"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "fix" {
+  bucket = "${resourceId}"
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3_key.arn
+    }
+    bucket_key_enabled = true
+  }
 }`,
   }),
 };

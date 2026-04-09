@@ -1,4 +1,4 @@
-import type { Severity, Violation, ViolationStatus } from "@/types";
+import type { Severity } from "@/types";
 import type {
   IamNode,
   IamEdge,
@@ -44,26 +44,6 @@ function getWorstSeverity(violations: IamGraphViolation[]): Severity | null {
   return best;
 }
 
-function toViolation(v: IamGraphViolation, resource: string): Violation {
-  return {
-    check_id: v.check_id,
-    status: v.status as ViolationStatus,
-    severity: v.severity,
-    reason: v.reason,
-    resource,
-    domain: "identity",
-    compliance: {
-      cis_aws: [],
-      nist_800_53: [],
-      pci_dss: [],
-      hipaa: [],
-      soc2: [],
-    },
-    remediation_id: "",
-    risk_score: v.risk_score,
-  };
-}
-
 // --- Child descriptor ---
 interface ChildInfo {
   nodeId: string;
@@ -73,10 +53,7 @@ interface ChildInfo {
   animated: boolean;
 }
 
-function buildUserChildren(
-  user: IamGraphUser,
-  onSelect: (v: Violation) => void,
-): ChildInfo[] {
+function buildUserChildren(user: IamGraphUser): ChildInfo[] {
   const children: ChildInfo[] = [];
   const uid = user.name;
 
@@ -173,7 +150,6 @@ export function buildIamGraph(
   response: IamGraphResponse,
   collapsedIds: Set<string>,
   onToggleCollapse: (id: string) => void,
-  onSelect: (v: Violation) => void,
 ): IamGraphData {
   const nodes: IamNode[] = [];
   const edges: IamEdge[] = [];
@@ -194,7 +170,7 @@ export function buildIamGraph(
     for (const user of response.users) {
       const nodeId = `user-${user.name}`;
       const collapsed = collapsedIds.has(nodeId);
-      const allChildren = buildUserChildren(user, onSelect);
+      const allChildren = buildUserChildren(user);
       const visible = collapsed ? [] : allChildren;
       const childrenH =
         visible.length > 0

@@ -91,7 +91,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
-			"Lambda function '%s' resource policy allows public invocation",
+			"Lambda function '%s' resource policy allows public invocation — if intentionally public (webhook/API), add authentication, input validation, and rate limiting as compensating controls",
 			[fn.function_name],
 		),
 		"resource": fn.function_arn,
@@ -113,7 +113,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
-			"Lambda function '%s' execution role has AdministratorAccess",
+			"Lambda function '%s' execution role has AdministratorAccess — replace with a service-scoped role listing only the specific AWS services this function actually calls",
 			[fn.function_name],
 		),
 		"resource": fn.function_arn,
@@ -135,7 +135,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "critical",
 		"reason": sprintf(
-			"ECS task '%s' container '%s' runs in privileged mode",
+			"ECS task '%s' container '%s' runs in privileged mode — if required (Docker-in-Docker, system monitoring), use Linux cap_add to grant only the specific capabilities needed instead of full root",
 			[td.task_definition_arn, container.name],
 		),
 		"resource": td.task_definition_arn,

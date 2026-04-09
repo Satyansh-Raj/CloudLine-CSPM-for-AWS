@@ -77,3 +77,5 @@ export type {
   InventorySummary,
   InventoryParams,
 } from "./inventory";
+
+export type { MacieFinding, MacieFindingsParams } from "./macie";

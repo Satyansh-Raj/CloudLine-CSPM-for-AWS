@@ -256,73 +256,6 @@ function DetailPanel({
   );
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  );
-}
-
-// ── Account-Level Violations Panel ───────────────
-
-function AccountViolationsPanel({
-  violations,
-}: {
-  violations: IamGraphAccountViolation[];
-}) {
-  const [open, setOpen] = useState(true);
-  if (violations.length === 0) return null;
-
-  return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
-      >
-        <span className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-          <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-          Account-Level Violations
-          <span className="ml-1 text-xs font-medium text-red-500 bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded-full">
-            {violations.length}
-          </span>
-        </span>
-        <ChevronIcon open={open} />
-      </button>
-      {open && (
-        <div className="border-t border-gray-100 dark:border-white/5 divide-y divide-gray-100 dark:divide-white/5">
-          {violations.map((v, i) => (
-            <div
-              key={`acct-viol-${v.check_id}-${i}`}
-              className="px-4 py-2.5 flex items-start gap-3"
-            >
-              <SeverityBadge severity={v.severity} />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-800 dark:text-gray-200">
-                  {getCheckName(v.check_id)}
-                </p>
-                <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 break-all">
-                  {v.reason}
-                </p>
-                <p className="text-[10px] font-mono text-gray-400 dark:text-gray-600 mt-0.5 break-all">
-                  {v.resource}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Flow Canvas ───────────────────────────────────
 
 function FlowCanvas({
@@ -432,13 +365,8 @@ export default function IamGraphPage() {
 
   const graphData = useMemo(() => {
     if (!filteredResponse) return null;
-    return buildIamGraph(
-      filteredResponse,
-      collapsedIds,
-      onToggleCollapse,
-      onSelect,
-    );
-  }, [filteredResponse, collapsedIds, onToggleCollapse, onSelect]);
+    return buildIamGraph(filteredResponse, collapsedIds, onToggleCollapse);
+  }, [filteredResponse, collapsedIds, onToggleCollapse]);
 
   const hasData = !!apiData && apiData.users.length > 0;
 

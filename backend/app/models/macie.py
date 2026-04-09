@@ -48,6 +48,9 @@ class MacieFinding(_Flex):
     last_observed_at: str | None = None
     region: str = ""
     account_id: str = ""
+    detection_types: list[str] = Field(
+        default_factory=list
+    )
 
 
 class MacieData(_Flex):

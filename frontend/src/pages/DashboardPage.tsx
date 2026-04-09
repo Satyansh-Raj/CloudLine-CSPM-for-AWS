@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCompliance, useRiskSummary } from "@/hooks";
+import { useCompliance, useRiskSummary, useMacieFindings } from "@/hooks";
 import { useAccount } from "@/hooks/useAccount";
 import {
   KpiCards,
@@ -127,12 +127,48 @@ function ScanButton() {
   );
 }
 
+/* ── Macie summary card ─────────────────────────── */
+import type { MacieFinding } from "@/types/macie";
+
+function MacieSummaryCard({ findings }: { findings: MacieFinding[] }) {
+  const highCount = findings.filter((f) => f.severity === "High").length;
+
+  return (
+    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+      <h2 className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+        Sensitive Findings
+      </h2>
+      <div className="flex items-center gap-6">
+        <div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            {findings.length}
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            Total
+          </p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+            {highCount}
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            High
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Page ───────────────────────────────────────── */
 export default function DashboardPage() {
   const { selectedAccount } = useAccount();
   const accountId = selectedAccount || undefined;
   const compliance = useCompliance(accountId);
   const risk = useRiskSummary();
+  const macie = useMacieFindings(
+    accountId ? { account_id: accountId } : undefined,
+  );
 
   const isLoading = compliance.isLoading || risk.isLoading;
   const error = compliance.error || risk.error;
@@ -262,6 +298,9 @@ export default function DashboardPage() {
           <DomainPieChart byDomain={domainData} />
         </div>
       </div>
+
+      {/* Row 4 — Macie sensitive findings */}
+      <MacieSummaryCard findings={macie.data ?? []} />
     </div>
   );
 }

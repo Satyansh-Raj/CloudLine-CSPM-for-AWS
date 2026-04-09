@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useViolations } from "@/hooks";
+import { MacieFindingsPanel } from "@/components/macie";
 import type { Resource } from "@/types/inventory";
 import type { Violation } from "@/types";
 
@@ -254,6 +255,14 @@ export default function ResourceDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Macie findings — S3 only */}
+      {resource.service === "s3" && (
+        <MacieFindingsPanel
+          bucketName={resource.resource_name}
+          accountId={resource.account_id}
+        />
+      )}
 
       {/* Violations list */}
       <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">

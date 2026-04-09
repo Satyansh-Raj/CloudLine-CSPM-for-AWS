@@ -157,7 +157,7 @@ violations contains result if {
 		"status": "alarm",
 		"severity": "medium",
 		"reason": sprintf(
-			"API Gateway '%s' CORS configuration allows all origins (*)",
+			"API Gateway '%s' CORS allows all origins — acceptable for public APIs; protect with WAF rate limiting and authentication on the methods",
 			[api.id],
 		),
 		"resource": api.arn,

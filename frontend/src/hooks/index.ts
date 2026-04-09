@@ -16,3 +16,5 @@ export {
   useCreateJiraTicket,
   useDeleteJiraTicket,
 } from "./useCreateJiraTicket";
+
+export { useMacieFindings } from "./useMacieFindings";
