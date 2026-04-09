@@ -32,6 +32,7 @@ from app.dependencies import (
     get_account_store,
     get_boto3_session,
     get_evaluator,
+    get_macie_store,
     get_resource_store,
     get_session_factory,
     get_settings,
@@ -80,6 +81,7 @@ def _process_region(
     state_manager: StateManager,
     resource_store,
     now: str,
+    macie_store=None,
     account_id: str | None = None,
 ) -> dict:
     """Run evaluation + state management for ONE region.
@@ -291,6 +293,23 @@ def _process_region(
                         old.resource_arn,
                     )
 
+    # Persist Macie findings
+    if macie_store:
+        try:
+            _input_m = UnifiedAWSInput(**input_data)
+            if _input_m.macie:
+                macie_store.put_findings(
+                    _input_m.macie,
+                    account_id,
+                    region,
+                )
+        except Exception as _me:
+            logger.warning(
+                "Macie findings persist failed"
+                " (non-fatal): %s",
+                _me,
+            )
+
     # Resource inventory
     if resource_store:
         try:
@@ -451,6 +470,7 @@ def _scan_one_account(
     state_manager: StateManager,
     resource_store,
     now: str,
+    macie_store=None,
 ) -> tuple[dict, list]:
     """Scan all regions for a single AWS account.
 
@@ -527,6 +547,7 @@ def _scan_one_account(
                 resource_store=resource_store,
                 now=now,
                 account_id=account_id,
+                macie_store=macie_store,
             )
             for key in totals:
                 totals[key] += summary.get(key, 0)
@@ -549,6 +570,7 @@ def _run_scan(
     evaluator: PolicyEvaluator,
     state_manager: StateManager,
     resource_store: ResourceStore | None = None,
+    macie_store=None,
 ):
     """Run scan in background thread.
 
@@ -609,6 +631,7 @@ def _run_scan(
                     state_manager=state_manager,
                     resource_store=resource_store,
                     now=now,
+                    macie_store=macie_store,
                 )
             )
             for key in totals:
@@ -641,6 +664,7 @@ def _run_scan(
                             state_manager=state_manager,
                             resource_store=resource_store,
                             now=now,
+                            macie_store=macie_store,
                         )
                     )
                     for key in totals:
@@ -737,6 +761,7 @@ async def trigger_scan(
     resource_store: ResourceStore = Depends(
         get_resource_store
     ),
+    macie_store=Depends(get_macie_store),
 ):
     """Trigger a full scan asynchronously.
 
@@ -754,6 +779,7 @@ async def trigger_scan(
         evaluator,
         state_manager,
         resource_store,
+        macie_store,
     )
     return {
         "scan_id": scan_id,

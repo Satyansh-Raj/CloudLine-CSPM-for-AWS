@@ -113,6 +113,30 @@ create_composite_table "compliance-trends"
 create_composite_table "event-correlation"
 create_composite_table "target-accounts"
 
+# ---- macie-findings (2 GSIs: bucket-index, severity-index) ----
+if table_exists "macie-findings"; then
+    echo "Table macie-findings already exists, skipping."
+else
+    echo "Creating table: macie-findings"
+    aws dynamodb create-table \
+        --table-name "macie-findings" \
+        --attribute-definitions \
+            AttributeName=pk,AttributeType=S \
+            AttributeName=sk,AttributeType=S \
+            AttributeName=bucket_name,AttributeType=S \
+            AttributeName=severity,AttributeType=S \
+            AttributeName=first_observed_at,AttributeType=S \
+        --key-schema \
+            AttributeName=pk,KeyType=HASH \
+            AttributeName=sk,KeyType=RANGE \
+        --global-secondary-indexes \
+            'IndexName=bucket-index,KeySchema=[{AttributeName=bucket_name,KeyType=HASH},{AttributeName=first_observed_at,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+            'IndexName=severity-index,KeySchema=[{AttributeName=severity,KeyType=HASH},{AttributeName=first_observed_at,KeyType=RANGE}],Projection={ProjectionType=ALL}' \
+        --billing-mode PAY_PER_REQUEST \
+        --endpoint-url "$ENDPOINT"
+    echo "Created: macie-findings (2 GSIs)"
+fi
+
 # Enable TTL on tables that need it
 for TTL_TABLE in "event-correlation" "resource-inventory"; do
     aws dynamodb update-time-to-live \

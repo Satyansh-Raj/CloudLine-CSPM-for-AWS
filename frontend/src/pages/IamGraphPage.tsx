@@ -29,11 +29,7 @@ import { SeverityBadge, StatusBadge } from "@/components/shared";
 import { getCheckName } from "@/constants/checkNames";
 import { getComplianceMapping } from "@/constants/complianceMappings";
 import type { Violation } from "@/types";
-import type {
-  IamNode,
-  IamEdge,
-  IamGraphAccountViolation,
-} from "@/types/iamGraph";
+import type { IamNode, IamEdge } from "@/types/iamGraph";
 
 // Stable nodeTypes — must be outside component
 const nodeTypes = {
@@ -529,11 +525,6 @@ export default function IamGraphPage() {
           )}
         </div>
       </div>
-
-      {/* Account-level violations (password policy, root checks) */}
-      {apiData?.account_violations && apiData.account_violations.length > 0 && (
-        <AccountViolationsPanel violations={apiData.account_violations} />
-      )}
 
       {/* Canvas */}
       <div

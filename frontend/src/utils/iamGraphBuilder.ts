@@ -146,22 +146,6 @@ function buildUserChildren(
     });
   }
 
-  // Violations
-  for (const v of user.violations) {
-    const isAlarm = v.status === "alarm";
-    children.push({
-      nodeId: `chk-${uid}-${v.check_id}`,
-      type: "checkNode",
-      data: {
-        checkId: v.check_id,
-        violation: toViolation(v, user.arn),
-        onSelect,
-      },
-      edgeColor: isAlarm ? "#ef4444" : "#22c55e",
-      animated: isAlarm,
-    });
-  }
-
   return children;
 }
 

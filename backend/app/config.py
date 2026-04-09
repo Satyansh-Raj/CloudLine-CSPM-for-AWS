@@ -129,6 +129,7 @@ class Settings(BaseSettings):
         "resource-inventory"
     )
     dynamodb_accounts_table: str = "target-accounts"
+    dynamodb_macie_table: str = "macie-findings"
     # SNS (gracefully skips when empty)
     sns_alert_topic_arn: str = ""
 

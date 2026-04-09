@@ -24,14 +24,13 @@ from app.routers import (
     accounts,
     compliance,
     drift,
-
     iam_graph,
     inventory,
     jira,
+    macie,
     policies,
     risk,
     scans,
-
     violations,
     websocket,
 )
@@ -189,6 +188,9 @@ app.include_router(
     inventory.router, prefix="/api/v1"
 )
 
+app.include_router(
+    macie.router, prefix="/api/v1"
+)
 app.include_router(
     jira.router, prefix="/api/v1"
 )

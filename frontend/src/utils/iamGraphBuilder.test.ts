@@ -154,7 +154,7 @@ describe("buildIamGraph", () => {
     expect(svcNodes).toHaveLength(2);
   });
 
-  it("creates checkNode for violations", () => {
+  it("violations no longer create checkNodes in graph", () => {
     const resp = makeResponse({
       users: [
         makeUser("alice", {
@@ -172,7 +172,7 @@ describe("buildIamGraph", () => {
     });
     const { nodes } = buildIamGraph(resp, new Set(), noop, noopSelect);
     const chkNodes = nodes.filter((n) => n.type === "checkNode");
-    expect(chkNodes).toHaveLength(1);
+    expect(chkNodes).toHaveLength(0);
   });
 
   it("no duplicate node IDs", () => {
@@ -325,7 +325,7 @@ describe("buildIamGraph", () => {
     }
   });
 
-  it("alarm violation edges are animated", () => {
+  it("violations no longer create edges in graph", () => {
     const resp = makeResponse({
       users: [
         makeUser("alice", {
@@ -350,12 +350,7 @@ describe("buildIamGraph", () => {
     });
     const { edges } = buildIamGraph(resp, new Set(), noop, noopSelect);
     const chkEdges = edges.filter((e) => e.target.startsWith("chk-"));
-    const alarmEdge = chkEdges.find((e) => e.target.includes("iam_user_mfa"));
-    const okEdge = chkEdges.find((e) =>
-      e.target.includes("iam_root_access_keys"),
-    );
-    expect(alarmEdge?.animated).toBe(true);
-    expect(okEdge?.animated).toBe(false);
+    expect(chkEdges).toHaveLength(0);
   });
 
   it("user data includes count badges", () => {

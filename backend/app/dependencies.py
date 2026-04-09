@@ -13,6 +13,7 @@ from app.engine.opa_client import (
 )
 from app.jira.client import JiraClient
 from app.pipeline.account_store import AccountStore
+from app.pipeline.macie_store import MacieFindingStore
 from app.pipeline.resource_store import ResourceStore
 from app.pipeline.session_factory import (
     AWSSessionFactory,
@@ -89,6 +90,17 @@ def get_account_store() -> AccountStore:
     return AccountStore(
         session=session,
         table_name=settings.dynamodb_accounts_table,
+        endpoint_url=settings.dynamodb_endpoint,
+    )
+
+
+@lru_cache
+def get_macie_store() -> MacieFindingStore:
+    """Singleton MacieFindingStore for Macie findings."""
+    session = get_boto3_session()
+    return MacieFindingStore(
+        session=session,
+        table_name=settings.dynamodb_macie_table,
         endpoint_url=settings.dynamodb_endpoint,
     )
 
