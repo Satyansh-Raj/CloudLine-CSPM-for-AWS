@@ -342,6 +342,7 @@ class ResourceClassifier:
         records: list[ResourceRecord],
         data_classifier,
         compliance_mapper,
+        macie_data=None,
     ) -> None:
         """Enrich records with data classification and
         compliance mapping.
@@ -360,6 +361,8 @@ class ResourceClassifier:
             records: ResourceRecord list (mutated).
             data_classifier: DataClassifier instance.
             compliance_mapper: ComplianceMapper instance.
+            macie_data: Pre-collected MacieData for S3
+                bucket classification priority (optional).
         """
         for rec in records:
             try:
@@ -369,6 +372,7 @@ class ResourceClassifier:
                         resource_id=rec.resource_id,
                         resource_name=rec.resource_name,
                         tags=rec.tags,
+                        macie_data=macie_data,
                     )
                 )
                 result = compliance_mapper.map(

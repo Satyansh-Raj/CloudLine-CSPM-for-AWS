@@ -311,6 +311,7 @@ def _process_region(
                     resource_records,
                     data_clf,
                     mapper,
+                    macie_data=input_model.macie,
                 )
             except Exception as _dc_err:
                 logger.warning(

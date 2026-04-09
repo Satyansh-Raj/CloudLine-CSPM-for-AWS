@@ -22,6 +22,7 @@ from app.collectors.lambda_collector import (
 from app.collectors.logging_collector import (
     LoggingCollector,
 )
+from app.collectors.macie import MacieCollector
 from app.collectors.rds import RDSCollector
 from app.collectors.s3 import S3Collector
 from app.collectors.vpc import VPCCollector
@@ -49,6 +50,7 @@ REGIONAL_COLLECTORS = {
     "dynamodb": DynamoDBCollector,
     "apigateway": APIGatewayCollector,
     "containers": ContainerCollector,
+    "macie": MacieCollector,
 }
 
 # Full map preserved for backward compatibility.

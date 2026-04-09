@@ -9,6 +9,9 @@ import logging
 
 from pydantic import BaseModel
 
+from app.inventory.data_classifier import (
+    DataClassification,
+)
 from app.models.violation import ComplianceMapping
 
 logger = logging.getLogger(__name__)
@@ -110,6 +113,22 @@ _SENSITIVITY_TAG_KEYS = {
 
 DEFAULT_DATA_SENSITIVITY = 20
 
+# DataClassification sensitivity → base score (0-100)
+_DC_SENSITIVITY_SCORES: dict[str, int] = {
+    "critical": 100,
+    "high": 80,
+    "medium": 50,
+    "low": 20,
+    "unknown": DEFAULT_DATA_SENSITIVITY,
+}
+
+# DataClassification confidence → score multiplier
+_CONFIDENCE_MULTIPLIERS: dict[str, float] = {
+    "high": 1.0,    # macie or tag findings
+    "medium": 0.7,  # heuristic or schema
+    "low": 0.5,     # fallback / unknown
+}
+
 
 class RiskDimensions(BaseModel):
     """Five-dimensional risk score result.
@@ -155,6 +174,7 @@ class RiskScorer:
         violation,
         resource_data: dict,
         service: str,
+        classification: DataClassification | None = None,
     ) -> RiskDimensions:
         """Compute all 5 dimensions and composite score.
 
@@ -162,6 +182,10 @@ class RiskScorer:
             violation: Violation model or None.
             resource_data: Raw AWS resource data dict.
             service: AWS service name (s3, ec2, etc).
+            classification: Pre-computed DataClassification
+                from DataClassifier. When provided, used
+                for data_sensitivity with confidence
+                multipliers instead of tag scanning.
 
         Returns:
             RiskDimensions with all scores populated.
@@ -185,7 +209,7 @@ class RiskScorer:
             resource_data, service
         )
         data_sens = self.compute_data_sensitivity(
-            resource_data
+            resource_data, classification
         )
 
         dims = RiskDimensions(
@@ -333,20 +357,42 @@ class RiskScorer:
         return DEFAULT_BLAST_RADIUS
 
     def compute_data_sensitivity(
-        self, resource_data: dict
+        self,
+        resource_data: dict,
+        classification: DataClassification | None = None,
     ) -> int:
-        """Score data sensitivity from resource tags.
+        """Score data sensitivity from a DataClassification
+        or fall back to resource tag scanning.
 
-        Searches resource_data recursively for Tags/tags
-        arrays with AWS Key/Value pairs. Looks for
-        classification tag keys and maps values.
+        When classification is provided, uses its
+        sensitivity level and confidence to compute a
+        scaled score:
+            score = base_score × confidence_multiplier
+
+        When classification is None, falls back to
+        searching resource_data recursively for Tags/tags
+        arrays with AWS Key/Value pairs.
 
         Args:
             resource_data: Raw AWS resource data.
+            classification: Pre-computed DataClassification
+                from DataClassifier (optional).
 
         Returns:
             Integer score (0-100).
         """
+        # Classification path (Macie / tag / heuristic)
+        if classification is not None:
+            base = _DC_SENSITIVITY_SCORES.get(
+                classification.sensitivity,
+                DEFAULT_DATA_SENSITIVITY,
+            )
+            multiplier = _CONFIDENCE_MULTIPLIERS.get(
+                classification.confidence, 0.7
+            )
+            return round(base * multiplier)
+
+        # Tag-based fallback
         if not resource_data:
             return DEFAULT_DATA_SENSITIVITY
 

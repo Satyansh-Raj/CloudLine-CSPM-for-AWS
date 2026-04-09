@@ -15,6 +15,8 @@ import boto3
 import botocore.exceptions
 from pydantic import BaseModel
 
+from app.models.macie import MacieData
+
 logger = logging.getLogger(__name__)
 
 # ── Signal word lists ──────────────────────────────
@@ -251,6 +253,57 @@ def _classify_from_tags(
     )
 
 
+def _classify_from_macie_data(
+    bucket_name: str,
+    macie_data: MacieData,
+) -> DataClassification | None:
+    """Classify an S3 bucket using pre-collected Macie data.
+
+    Looks up the bucket in macie_data.by_bucket, fetches
+    the relevant MacieFinding objects, and maps finding
+    types to data_type labels via _MACIE_TYPE_MAP.
+
+    Args:
+        bucket_name: S3 bucket name to look up.
+        macie_data: Pre-collected MacieData from
+            MacieCollector.
+
+    Returns:
+        DataClassification(source="macie") if findings
+        exist for this bucket, otherwise None.
+    """
+    finding_ids = set(
+        macie_data.by_bucket.get(bucket_name, [])
+    )
+    if not finding_ids:
+        return None
+
+    findings = [
+        f
+        for f in macie_data.findings
+        if f.finding_id in finding_ids
+    ]
+
+    found_types: list[str] = []
+    for f in findings:
+        for keyword, dt in _MACIE_TYPE_MAP.items():
+            if keyword in f.type:
+                if dt not in found_types:
+                    found_types.append(dt)
+                break
+
+    if not found_types:
+        return None
+
+    sensitivity = _highest_sensitivity(found_types)
+    return DataClassification(
+        sensitivity=sensitivity,
+        data_types=found_types,
+        confidence="high",
+        source="macie",
+    )
+
+
 # ── DataClassifier ─────────────────────────────────
 
 
@@ -270,20 +323,34 @@ class DataClassifier:
         self,
         bucket_name: str,
         tags: dict,
+        macie_data: MacieData | None = None,
     ) -> DataClassification:
-        """Classify an S3 bucket by sampling object keys.
+        """Classify an S3 bucket using a 3-tier priority.
 
-        Checks tags first, then samples up to 100 object
-        keys for signal-word pattern matching.
+        Priority order (highest → lowest confidence):
+          1. Pre-collected Macie findings (source=macie)
+          2. AWS resource tags (source=tag)
+          3. S3 object key sampling (source=heuristic)
 
         Args:
             bucket_name: S3 bucket name.
             tags: AWS resource tags dict.
+            macie_data: Pre-collected MacieData from
+                MacieCollector. When provided and enabled,
+                Macie findings take precedence over tags.
 
         Returns:
             DataClassification for this bucket.
         """
-        # Tag-based check (highest confidence)
+        # 1. Macie (highest confidence)
+        if macie_data is not None and macie_data.enabled:
+            macie_result = _classify_from_macie_data(
+                bucket_name, macie_data
+            )
+            if macie_result is not None:
+                return macie_result
+
+        # 2. Tag-based check (high confidence)
         tag_result = _classify_from_tags(tags)
         if tag_result is not None:
             return tag_result
@@ -566,6 +633,7 @@ class DataClassifier:
         resource_id: str,
         resource_name: str,
         tags: dict,
+        macie_data: MacieData | None = None,
     ) -> DataClassification:
         """Dispatch to the correct classifier method.
 
@@ -581,13 +649,15 @@ class DataClassifier:
             resource_id: AWS resource ARN.
             resource_name: Human-readable name.
             tags: AWS resource tags dict.
+            macie_data: Pre-collected MacieData from
+                MacieCollector (used for S3 buckets only).
 
         Returns:
             DataClassification for this resource.
         """
         if resource_type == "s3_bucket":
             return self.classify_s3_bucket(
-                resource_name, tags
+                resource_name, tags, macie_data
             )
         if resource_type == "rds_instance":
             return self.classify_rds_instance(
