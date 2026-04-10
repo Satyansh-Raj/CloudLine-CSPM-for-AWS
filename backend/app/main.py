@@ -37,6 +37,7 @@ from app.routers import (
 from app.routers.auth_router import (
     router as auth_router,
 )
+from app.routers.users import router as users_router
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +176,9 @@ async def security_headers(
 
 app.include_router(
     auth_router, prefix="/api/v1"
+)
+app.include_router(
+    users_router, prefix="/api/v1"
 )
 app.include_router(
     accounts.router, prefix="/api/v1"

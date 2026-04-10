@@ -18,3 +18,5 @@ export {
 } from "./useCreateJiraTicket";
 
 export { useMacieFindings } from "./useMacieFindings";
+export { useAuth } from "./useAuth";
+export { usePermission } from "./usePermission";

@@ -32,3 +32,21 @@ export {
 } from "./inventory";
 export { getRegions, type RegionsResponse } from "./regions";
 export { getMacieFindings } from "./macie";
+export {
+  login,
+  logout,
+  refreshToken,
+  getMe,
+  changePassword,
+  requestPasswordReset,
+} from "./auth";
+export {
+  listUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  listResetRequests,
+  approveReset,
+  type CreateUserRequest,
+  type UpdateUserRequest,
+} from "./users";
