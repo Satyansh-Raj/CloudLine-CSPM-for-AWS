@@ -34,6 +34,9 @@ from app.routers import (
     violations,
     websocket,
 )
+from app.routers.auth_router import (
+    router as auth_router,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,14 +47,25 @@ async def lifespan(app: FastAPI):
     import threading
     from uuid import uuid4
 
+    from app.auth.bootstrap import bootstrap_admin
     from app.dependencies import (
         get_boto3_session,
         get_evaluator,
         get_resource_store,
         get_settings as _get_settings,
         get_state_manager,
+        get_user_store,
     )
     from app.routers.scans import _run_scan
+
+    # Bootstrap Admin user on first startup
+    try:
+        bootstrap_admin(get_user_store(), settings)
+    except Exception as exc:
+        logger.warning(
+            "bootstrap_admin failed (non-fatal): %s",
+            exc,
+        )
 
     if not settings.aws_account_id:
         logger.warning(
@@ -159,6 +173,9 @@ async def security_headers(
     )
     return response
 
+app.include_router(
+    auth_router, prefix="/api/v1"
+)
 app.include_router(
     accounts.router, prefix="/api/v1"
 )

@@ -107,8 +107,20 @@ class Settings(BaseSettings):
             file_secret_settings,
         )
 
-    # Authentication
+    # Legacy API key (kept for backward compat)
     api_key: str = "change-me-in-env"
+
+    # JWT Authentication
+    jwt_secret: str = ""
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 7
+    auth_enabled: bool = False
+
+    # User management
+    dynamodb_users_table: str = "cloudline-users"
+    admin_bootstrap_email: str = ""
+    admin_bootstrap_password: str = ""
 
     # OPA — mode selects CLI (local) vs HTTP (Docker)
     opa_mode: str = "cli"
@@ -204,6 +216,45 @@ def _auto_generate_api_key() -> str:
         "Bearer %s", key
     )
     return key
+
+
+def _auto_generate_jwt_secret() -> str:
+    """Generate a JWT signing secret, save to .env.
+
+    Called on first startup when JWT_SECRET is not
+    configured. Persisted so restarts reuse it.
+    """
+    secret = secrets.token_hex(32)
+    env_path = (
+        Path(__file__).resolve().parent.parent / ".env"
+    )
+
+    if env_path.exists():
+        content = env_path.read_text()
+        if "JWT_SECRET=" in content:
+            lines = content.splitlines()
+            lines = [
+                f"JWT_SECRET={secret}"
+                if line.startswith("JWT_SECRET=")
+                else line
+                for line in lines
+            ]
+            env_path.write_text(
+                "\n".join(lines) + "\n"
+            )
+        else:
+            with open(env_path, "a") as f:
+                f.write(f"JWT_SECRET={secret}\n")
+    else:
+        env_path.write_text(
+            f"JWT_SECRET={secret}\n"
+        )
+
+    logger.info(
+        "Auto-generated JWT secret saved to %s",
+        env_path,
+    )
+    return secret
 
 
 settings = Settings()

@@ -12,6 +12,7 @@ from app.engine.opa_client import (
     create_opa_client,
 )
 from app.jira.client import JiraClient
+from app.auth.user_store import UserStore
 from app.pipeline.account_store import AccountStore
 from app.pipeline.macie_store import MacieFindingStore
 from app.pipeline.resource_store import ResourceStore
@@ -101,6 +102,17 @@ def get_macie_store() -> MacieFindingStore:
     return MacieFindingStore(
         session=session,
         table_name=settings.dynamodb_macie_table,
+        endpoint_url=settings.dynamodb_endpoint,
+    )
+
+
+@lru_cache
+def get_user_store() -> UserStore:
+    """Singleton UserStore for the cloudline-users table."""
+    session = get_boto3_session()
+    return UserStore(
+        session=session,
+        table_name=settings.dynamodb_users_table,
         endpoint_url=settings.dynamodb_endpoint,
     )
 

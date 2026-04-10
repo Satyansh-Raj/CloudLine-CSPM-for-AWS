@@ -145,4 +145,25 @@ for TTL_TABLE in "event-correlation" "resource-inventory"; do
         --endpoint-url "$ENDPOINT" 2>/dev/null || true
 done
 
+# ---- cloudline-users (GSI: email-index) ----
+if table_exists "cloudline-users"; then
+    echo "Table cloudline-users already exists, skipping."
+else
+    echo "Creating table: cloudline-users"
+    aws dynamodb create-table \
+        --table-name "cloudline-users" \
+        --attribute-definitions \
+            AttributeName=pk,AttributeType=S \
+            AttributeName=sk,AttributeType=S \
+            AttributeName=email,AttributeType=S \
+        --key-schema \
+            AttributeName=pk,KeyType=HASH \
+            AttributeName=sk,KeyType=RANGE \
+        --global-secondary-indexes \
+            'IndexName=email-index,KeySchema=[{AttributeName=email,KeyType=HASH}],Projection={ProjectionType=ALL}' \
+        --billing-mode PAY_PER_REQUEST \
+        --endpoint-url "$ENDPOINT"
+    echo "Created: cloudline-users (email-index GSI)"
+fi
+
 echo "All DynamoDB tables initialized."
