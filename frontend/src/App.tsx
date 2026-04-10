@@ -8,7 +8,9 @@ import { lazy, Suspense } from "react";
 import { AlertProvider } from "@/context/AlertContext";
 import { AccountProvider } from "@/context/AccountContext";
 import { RegionProvider } from "@/context/RegionContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { Layout } from "@/components/layout";
+import { ProtectedRoute } from "@/components/auth";
 import {
   DashboardPage,
   ViolationsPage,
@@ -21,6 +23,9 @@ import {
   ResourceDetailPage,
   CompliancePage,
   ResolvedDetailPage,
+  LoginPage,
+  ForcePasswordChangePage,
+  UserManagementPage,
 } from "@/pages";
 
 const IamGraphPage = lazy(() => import("@/pages/IamGraphPage"));
@@ -36,71 +41,88 @@ const queryClient = new QueryClient({
 
 const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/account/change-password",
+    element: <ForcePasswordChangePage />,
+  },
+  {
     path: "/",
-    element: <Layout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: "dashboard",
-        element: <DashboardPage />,
-      },
-      {
-        path: "violations",
-        element: <ViolationsPage />,
-      },
-      {
-        path: "violations/:checkId/:resource",
-        element: <ViolationDetailPage />,
-      },
-      {
-        path: "trends",
-        element: <TrendsPage />,
-      },
-
-      {
-        path: "policies",
-        element: <PoliciesPage />,
-      },
-      {
-        path: "resolved",
-        element: <ResolvedIssuesPage />,
-      },
-      {
-        path: "resolved/:checkId/:resource",
-        element: <ResolvedDetailPage />,
-      },
-      {
-        path: "inventory",
-        element: <InventoryPage />,
-      },
-      {
-        path: "inventory/:category",
-        element: <CategoryResourcesPage />,
-      },
-      {
-        path: "inventory/detail",
-        element: <ResourceDetailPage />,
-      },
-      {
-        path: "compliance",
-        element: <CompliancePage />,
-      },
-      {
-        path: "iam-graph",
-        element: (
-          <Suspense
-            fallback={
-              <div className="p-8 animate-pulse text-sm text-gray-400">
-                Loading IAM Graph…
-              </div>
-            }
-          >
-            <IamGraphPage />
-          </Suspense>
-        ),
+        path: "/",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/dashboard" replace />,
+          },
+          {
+            path: "dashboard",
+            element: <DashboardPage />,
+          },
+          {
+            path: "violations",
+            element: <ViolationsPage />,
+          },
+          {
+            path: "violations/:checkId/:resource",
+            element: <ViolationDetailPage />,
+          },
+          {
+            path: "trends",
+            element: <TrendsPage />,
+          },
+          {
+            path: "policies",
+            element: <PoliciesPage />,
+          },
+          {
+            path: "resolved",
+            element: <ResolvedIssuesPage />,
+          },
+          {
+            path: "resolved/:checkId/:resource",
+            element: <ResolvedDetailPage />,
+          },
+          {
+            path: "inventory",
+            element: <InventoryPage />,
+          },
+          {
+            path: "inventory/:category",
+            element: <CategoryResourcesPage />,
+          },
+          {
+            path: "inventory/detail",
+            element: <ResourceDetailPage />,
+          },
+          {
+            path: "compliance",
+            element: <CompliancePage />,
+          },
+          {
+            path: "iam-graph",
+            element: (
+              <Suspense
+                fallback={
+                  <div className="p-8 animate-pulse text-sm text-gray-400">
+                    Loading IAM Graph…
+                  </div>
+                }
+              >
+                <IamGraphPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "users",
+            element: <UserManagementPage />,
+          },
+        ],
       },
     ],
   },
@@ -110,11 +132,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
-        <AccountProvider>
-          <RegionProvider>
-            <RouterProvider router={router} />
-          </RegionProvider>
-        </AccountProvider>
+        <AuthProvider>
+          <AccountProvider>
+            <RegionProvider>
+              <RouterProvider router={router} />
+            </RegionProvider>
+          </AccountProvider>
+        </AuthProvider>
       </AlertProvider>
     </QueryClientProvider>
   );

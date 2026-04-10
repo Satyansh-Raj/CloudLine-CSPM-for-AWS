@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Query
 
+from app.auth.dependencies import require_any_authenticated
 from app.dependencies import (
     get_settings,
     get_state_manager,
@@ -11,6 +12,7 @@ from app.pipeline.state_manager import StateManager
 
 router = APIRouter(
     tags=["risk"],
+    dependencies=[Depends(require_any_authenticated)],
 )
 
 _scorer = RiskScorer()

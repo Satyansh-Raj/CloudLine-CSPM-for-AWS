@@ -5,6 +5,7 @@ import time
 
 from fastapi import APIRouter, Depends, Query
 
+from app.auth.dependencies import require_any_authenticated
 from app.collectors.iam import IAMCollector
 from app.dependencies import (
     get_boto3_session,
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     tags=["iam-graph"],
+    dependencies=[Depends(require_any_authenticated)],
 )
 
 _CACHE_TTL = 300  # 5 minutes

@@ -47,6 +47,24 @@ vi.mock("@/api/scans", () => ({
   triggerScan: (...args: unknown[]) => mockTriggerScan(...args),
 }));
 
+// Default: admin can manage_users
+vi.mock("@/hooks/usePermission", () => ({
+  usePermission: () => ({
+    role: "admin",
+    can: (action: string) =>
+      [
+        "view_all",
+        "manage_accounts",
+        "manage_users",
+        "trigger_scan",
+        "remediate_violation",
+        "create_jira_ticket",
+        "approve_password_reset",
+        "change_own_password",
+      ].includes(action),
+  }),
+}));
+
 import Sidebar from "../Sidebar";
 
 function renderSidebar() {
@@ -80,6 +98,11 @@ describe("Sidebar", () => {
     const links = screen.getAllByRole("link");
     const accountsLink = links.find((l) => l.textContent?.includes("Accounts"));
     expect(accountsLink).toBeUndefined();
+  });
+
+  it("shows User Management link for admin", () => {
+    renderSidebar();
+    expect(screen.getByText("User Management")).toBeInTheDocument();
   });
 
   it("shows version", () => {

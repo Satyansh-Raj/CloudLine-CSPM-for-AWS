@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, Depends, Query
 
+from app.auth.dependencies import require_any_authenticated
 from app.dependencies import (
     get_settings,
     get_state_manager,
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     tags=["violations"],
+    dependencies=[Depends(require_any_authenticated)],
 )
 
 

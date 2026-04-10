@@ -12,3 +12,6 @@ export { default as CategoryResourcesPage } from "./CategoryResourcesPage";
 export { default as ResourceDetailPage } from "./ResourceDetailPage";
 export { default as CompliancePage } from "./CompliancePage";
 export { default as ResolvedDetailPage } from "./ResolvedDetailPage";
+export { default as LoginPage } from "./LoginPage";
+export { default as ForcePasswordChangePage } from "./ForcePasswordChangePage";
+export { default as UserManagementPage } from "./UserManagementPage";

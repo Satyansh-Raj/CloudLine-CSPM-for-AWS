@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useAccount } from "@/hooks/useAccount";
+import { usePermission } from "@/hooks/usePermission";
 import { createAccount } from "@/api/accounts";
 import { triggerScan } from "@/api/scans";
 import type { TargetAccount } from "@/types/account";
@@ -206,6 +207,24 @@ function AccountsIcon() {
     </svg>
   );
 }
+function UsersIcon() {
+  return (
+    <svg
+      className="w-[18px] h-[18px]"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+        d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+      />
+    </svg>
+  );
+}
+
 const iconMap: Record<string, ReactNode> = {
   grid: <GridIcon />,
   alert: <AlertIcon />,
@@ -217,11 +236,13 @@ const iconMap: Record<string, ReactNode> = {
   policy: <PolicyIcon />,
   accounts: <AccountsIcon />,
   shield: <ShieldIcon />,
+  users: <UsersIcon />,
 };
 
 export default function Sidebar() {
   const { selectedAccount, accounts, setSelectedAccount, refresh } =
     useAccount();
+  const { can } = usePermission();
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -588,6 +609,36 @@ export default function Sidebar() {
             )}
           </NavLink>
         ))}
+        {can("manage_users") && (
+          <NavLink
+            to="/users"
+            className={({ isActive }) =>
+              `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                isActive
+                  ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20"
+                  : "text-gray-500 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 border border-transparent"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={
+                    isActive
+                      ? "text-blue-500 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors"
+                  }
+                >
+                  {iconMap["users"]}
+                </span>
+                User Management
+                {isActive && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
+                )}
+              </>
+            )}
+          </NavLink>
+        )}
       </nav>
 
       {/* Version */}

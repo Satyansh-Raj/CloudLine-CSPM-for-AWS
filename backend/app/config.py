@@ -115,7 +115,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
-    auth_enabled: bool = False
+    auth_enabled: bool = True
 
     # User management
     dynamodb_users_table: str = "cloudline-users"

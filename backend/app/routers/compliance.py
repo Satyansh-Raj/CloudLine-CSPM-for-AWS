@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth.dependencies import require_any_authenticated
 from app.compliance.mappings import (
     ComplianceMappingRegistry,
     get_registry,
@@ -18,6 +19,7 @@ from app.pipeline.state_manager import StateManager
 
 router = APIRouter(
     tags=["compliance"],
+    dependencies=[Depends(require_any_authenticated)],
 )
 
 # Total security checks defined in OPA policies.

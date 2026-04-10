@@ -20,6 +20,14 @@ vi.mock("@/hooks/useAccount", () => ({
   }),
 }));
 
+// Mock usePermission — Sidebar conditionally renders User Management link
+vi.mock("@/hooks/usePermission", () => ({
+  usePermission: () => ({
+    role: "viewer",
+    can: () => false,
+  }),
+}));
+
 import Layout from "../Layout";
 
 function Wrapper({ children }: { children: ReactNode }) {
