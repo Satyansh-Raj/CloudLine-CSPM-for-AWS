@@ -166,4 +166,7 @@ else
     echo "Created: cloudline-users (email-index GSI)"
 fi
 
+# ---- cloudline-audit-log (pk=user_id, sk=ts#jti) ----
+create_composite_table "cloudline-audit-log"
+
 echo "All DynamoDB tables initialized."

@@ -7,6 +7,15 @@ Endpoints:
     POST /auth/logout          — client-side logout
     POST /auth/change-password — change own password
     POST /auth/request-reset   — request Admin approval
+
+Security features:
+    - Login lockout: 10 consecutive failures →
+      is_active=False. Admin must reactivate.
+    - Rate limiting: configured in main.py via
+      slowapi middleware on this router.
+    - Password complexity: enforced on change-password.
+    - Audit logging: every login attempt is written
+      to the cloudline-audit-log table.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -15,11 +24,15 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Request,
     status,
 )
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+from app.auth.audit_log import AuditLogStore
 from app.auth.jwt_handler import (
     InvalidTokenError,
     create_access_token,
@@ -34,19 +47,31 @@ from app.auth.models import (
 )
 from app.auth.password import (
     hash_password,
+    validate_password_complexity,
     verify_password,
 )
 from app.auth.user_store import UserStore
 from app.config import Settings
-from app.dependencies import get_settings, get_user_store
+from app.dependencies import (
+    get_audit_log_store,
+    get_settings,
+    get_user_store,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# Limiter instance — app.state.limiter is attached
+# in main.py so the middleware can enforce it.
+limiter = Limiter(key_func=get_remote_address)
 
 # auto_error=False so we can return 401 with a
 # custom message rather than the FastAPI default.
 _oauth2 = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login", auto_error=False
 )
+
+# Number of consecutive failures before lockout.
+_LOCKOUT_THRESHOLD = 10
 
 
 class _RefreshRequest(BaseModel):
@@ -100,6 +125,14 @@ def _decode_access(
         ) from exc
 
 
+def _client_ip(request: Request) -> str:
+    """Extract client IP, respecting X-Forwarded-For."""
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 # ── Login ─────────────────────────────────────────
 
 
@@ -110,25 +143,70 @@ def _decode_access(
 )
 async def login(
     req: LoginRequest,
+    request: Request,
     store: UserStore = Depends(get_user_store),
     cfg: Settings = Depends(get_settings),
+    audit: AuditLogStore = Depends(
+        get_audit_log_store
+    ),
 ) -> TokenPair:
-    """Authenticate user and return a token pair."""
+    """Authenticate user and return a token pair.
+
+    On 10 consecutive failures the account is locked
+    (is_active=False). Admin must reactivate via the
+    User Management page.
+    """
+    ip = _client_ip(request)
+    ua = request.headers.get("User-Agent", "")
+    now_ts = datetime.now(tz=timezone.utc).isoformat()
+
     user = store.get_user_by_email(req.email)
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
-    if not verify_password(
-        req.password, user.password_hash
-    ):
+
+    # Unknown email — fail without incrementing any
+    # counter (no account to lock).
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
 
-    now_ts = datetime.now(tz=timezone.utc).isoformat()
+    # Locked account — fail immediately.
+    if not user.is_active:
+        audit.log_login(
+            user_id=user.sk,
+            ip=ip,
+            user_agent=ua,
+            success=False,
+            ts=now_ts,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
+
+    # Wrong password — increment counter, maybe lock.
+    if not verify_password(
+        req.password, user.password_hash
+    ):
+        new_count = store.increment_failed_login_count(
+            user.sk
+        )
+        audit.log_login(
+            user_id=user.sk,
+            ip=ip,
+            user_agent=ua,
+            success=False,
+            ts=now_ts,
+        )
+        if new_count >= _LOCKOUT_THRESHOLD:
+            store.update_user(user.sk, is_active=False)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
+
+    # Correct password — reset failure counter.
+    store.reset_failed_login_count(user.sk)
     store.update_last_login(user.sk, now_ts)
 
     access_token = create_access_token(
@@ -146,6 +224,25 @@ async def login(
             days=cfg.refresh_token_expire_days
         ),
     )
+
+    # Decode to extract jti for audit log.
+    try:
+        payload = decode_token(
+            access_token, cfg.jwt_secret, "access"
+        )
+        jti = payload.jti
+    except InvalidTokenError:
+        jti = ""
+
+    audit.log_login(
+        user_id=user.sk,
+        ip=ip,
+        user_agent=ua,
+        success=True,
+        ts=now_ts,
+        jti=jti,
+    )
+
     return TokenPair(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -264,6 +361,7 @@ async def change_password(
 ) -> dict:
     """Change the current user's password.
 
+    Enforces complexity: ≥12 chars, ≥1 digit, ≥1 symbol.
     When reset_allowed=True (Admin-approved reset),
     the current_password check is skipped. Reset
     flags are cleared on success.
@@ -277,6 +375,7 @@ async def change_password(
         )
 
     try:
+        validate_password_complexity(req.new_password)
         new_hash = hash_password(req.new_password)
     except ValueError as exc:
         raise HTTPException(

@@ -1,4 +1,4 @@
-"""Password hashing utilities using bcrypt via passlib.
+"""Password hashing utilities using bcrypt directly.
 
 Usage:
     from app.auth.password import hash_password, verify_password
@@ -7,14 +7,39 @@ Usage:
     ok = verify_password("my-secure-password", hashed)
 """
 
-from passlib.context import CryptContext
+import re
+
+import bcrypt
 
 MIN_PASSWORD_LENGTH = 12
+_SYMBOL_RE = re.compile(r"[!@#$%^&*()\-_=+\[\]{}|;:'\",.<>?/\\`~]")
 
-_ctx = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-)
+
+def validate_password_complexity(plaintext: str) -> None:
+    """Enforce password complexity rules.
+
+    Rules: min 12 chars, ≥1 digit, ≥1 symbol.
+
+    Args:
+        plaintext: Password to validate.
+
+    Raises:
+        ValueError: On any rule violation.
+    """
+    if len(plaintext) < MIN_PASSWORD_LENGTH:
+        raise ValueError(
+            f"Password too short: minimum "
+            f"{MIN_PASSWORD_LENGTH} characters required"
+        )
+    if not any(c.isdigit() for c in plaintext):
+        raise ValueError(
+            "Password must contain at least one digit"
+        )
+    if not _SYMBOL_RE.search(plaintext):
+        raise ValueError(
+            "Password must contain at least one "
+            "symbol (!@#$%^&* etc.)"
+        )
 
 
 def hash_password(plaintext: str) -> str:
@@ -35,7 +60,10 @@ def hash_password(plaintext: str) -> str:
             f"Password too short: minimum "
             f"{MIN_PASSWORD_LENGTH} characters required"
         )
-    return _ctx.hash(plaintext)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(
+        plaintext.encode(), salt
+    ).decode()
 
 
 def verify_password(
@@ -54,4 +82,6 @@ def verify_password(
     """
     if not plaintext:
         return False
-    return _ctx.verify(plaintext, hashed)
+    return bcrypt.checkpw(
+        plaintext.encode(), hashed.encode()
+    )

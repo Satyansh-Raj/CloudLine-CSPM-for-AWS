@@ -59,6 +59,7 @@ class User(BaseModel):
     reset_requested_at: str | None = None
     reset_approved_by: str | None = None
     reset_allowed: bool = False
+    failed_login_count: int = 0
 
 
 class LoginRequest(BaseModel):

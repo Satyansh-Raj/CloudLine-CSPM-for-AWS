@@ -12,6 +12,7 @@ from app.engine.opa_client import (
     create_opa_client,
 )
 from app.jira.client import JiraClient
+from app.auth.audit_log import AuditLogStore
 from app.auth.user_store import UserStore
 from app.pipeline.account_store import AccountStore
 from app.pipeline.macie_store import MacieFindingStore
@@ -113,6 +114,17 @@ def get_user_store() -> UserStore:
     return UserStore(
         session=session,
         table_name=settings.dynamodb_users_table,
+        endpoint_url=settings.dynamodb_endpoint,
+    )
+
+
+@lru_cache
+def get_audit_log_store() -> AuditLogStore:
+    """Singleton AuditLogStore for login audit log."""
+    session = get_boto3_session()
+    return AuditLogStore(
+        session=session,
+        table_name=settings.dynamodb_audit_table,
         endpoint_url=settings.dynamodb_endpoint,
     )
 

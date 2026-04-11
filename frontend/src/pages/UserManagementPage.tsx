@@ -4,22 +4,135 @@ import {
   createUser,
   approveReset,
   listResetRequests,
+  getLoginHistory,
 } from "@/api/users";
-import type {
-  CreateUserRequest,
-} from "@/api/users";
+import type { CreateUserRequest, LoginEvent } from "@/api/users";
 import type { User, UserRole } from "@/types/auth";
 
 type Tab = "users" | "reset_requests";
+
+function LoginHistoryModal({
+  user,
+  onClose,
+}: {
+  user: User;
+  onClose: () => void;
+}) {
+  const [events, setEvents] = useState<LoginEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getLoginHistory(user.sk)
+      .then(setEvents)
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false));
+  }, [user.sk]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Login history for ${user.full_name}`}
+        className="w-[560px] max-h-[80vh] flex flex-col rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/5">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Login History
+            </h2>
+            <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+              {user.full_name} · {user.email}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-2">
+          {loading ? (
+            <div className="py-10 text-center text-[13px] text-gray-400">
+              Loading…
+            </div>
+          ) : events.length === 0 ? (
+            <div className="py-10 text-center text-[13px] text-gray-400">
+              No login events recorded.
+            </div>
+          ) : (
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-white/[0.02]">
+                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                    Time
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                    IP
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                    Result
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                    User Agent
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((ev, i) => (
+                  <tr
+                    key={i}
+                    className="border-t border-gray-100 dark:border-white/5"
+                  >
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {new Date(ev.ts).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400 font-mono">
+                      {ev.ip}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`font-medium ${
+                          ev.success
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-500 dark:text-red-400"
+                        }`}
+                      >
+                        {ev.success ? "Success" : "Failed"}
+                      </span>
+                    </td>
+                    <td
+                      className="px-3 py-2 text-gray-400 truncate max-w-[180px]"
+                      title={ev.user_agent}
+                    >
+                      {ev.user_agent || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function RoleBadge({ role }: { role: UserRole }) {
   const colors: Record<UserRole, string> = {
     admin:
       "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300",
-    operator:
-      "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
-    viewer:
-      "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400",
+    operator: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
+    viewer: "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400",
   };
   return (
     <span
@@ -152,14 +265,12 @@ export default function UserManagementPage() {
   const [resets, setResets] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [historyUser, setHistoryUser] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const [us, rs] = await Promise.all([
-        listUsers(),
-        listResetRequests(),
-      ]);
+      const [us, rs] = await Promise.all([listUsers(), listResetRequests()]);
       setUsers(us);
       setResets(rs);
     } finally {
@@ -254,6 +365,7 @@ export default function UserManagementPage() {
                     <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
                       Status
                     </th>
+                    <th className="px-4 py-2.5" />
                   </tr>
                 </thead>
                 <tbody>
@@ -282,12 +394,21 @@ export default function UserManagementPage() {
                           {u.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setHistoryUser(u)}
+                          className="px-2.5 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                        >
+                          History
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {users.length === 0 && (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         className="px-4 py-8 text-center text-gray-400"
                       >
                         No users found.
@@ -299,6 +420,13 @@ export default function UserManagementPage() {
             </div>
           )}
         </div>
+      )}
+
+      {historyUser && (
+        <LoginHistoryModal
+          user={historyUser}
+          onClose={() => setHistoryUser(null)}
+        />
       )}
 
       {/* Reset Requests Tab */}
@@ -347,9 +475,7 @@ export default function UserManagementPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
-                          onClick={() =>
-                            void handleApproveReset(u.sk)
-                          }
+                          onClick={() => void handleApproveReset(u.sk)}
                           className="px-3 py-1 text-[12px] rounded-lg bg-green-600 text-white font-medium hover:bg-green-700"
                         >
                           Approve

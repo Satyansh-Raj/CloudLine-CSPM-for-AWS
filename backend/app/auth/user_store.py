@@ -309,6 +309,63 @@ class UserStore:
             )
             return False
 
+    def increment_failed_login_count(
+        self, user_id: str
+    ) -> int:
+        """Atomically increment failed_login_count.
+
+        Returns:
+            New counter value, or 0 on error.
+        """
+        try:
+            resp = self.table.update_item(
+                Key={"pk": _PK, "sk": user_id},
+                UpdateExpression=(
+                    "ADD failed_login_count :inc"
+                ),
+                ExpressionAttributeValues={
+                    ":inc": 1
+                },
+                ReturnValues="UPDATED_NEW",
+            )
+            return int(
+                resp.get("Attributes", {}).get(
+                    "failed_login_count", 0
+                )
+            )
+        except Exception as e:
+            logger.error(
+                "increment_failed_login_count "
+                "error: %s", e
+            )
+            return 0
+
+    def reset_failed_login_count(
+        self, user_id: str
+    ) -> bool:
+        """Reset failed_login_count to 0.
+
+        Returns:
+            True on success, False on error.
+        """
+        try:
+            self.table.update_item(
+                Key={"pk": _PK, "sk": user_id},
+                UpdateExpression=(
+                    "SET failed_login_count = :zero"
+                ),
+                ExpressionAttributeValues={
+                    ":zero": 0
+                },
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                "reset_failed_login_count error: "
+                "%s", e
+            )
+            return False
+
     def update_last_login(
         self, user_id: str, timestamp: str
     ) -> bool:

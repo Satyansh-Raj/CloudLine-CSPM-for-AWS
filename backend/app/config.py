@@ -142,6 +142,7 @@ class Settings(BaseSettings):
     )
     dynamodb_accounts_table: str = "target-accounts"
     dynamodb_macie_table: str = "macie-findings"
+    dynamodb_audit_table: str = "cloudline-audit-log"
     # SNS (gracefully skips when empty)
     sns_alert_topic_arn: str = ""
 

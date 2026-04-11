@@ -18,11 +18,15 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from app.auth.audit_log import AuditLogStore
 from app.auth.dependencies import require_admin
 from app.auth.models import User, UserRole
 from app.auth.password import hash_password
 from app.auth.user_store import UserStore
-from app.dependencies import get_user_store
+from app.dependencies import (
+    get_audit_log_store,
+    get_user_store,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -243,6 +247,31 @@ def delete_user(
             detail=f"Failed to deactivate {user_id}",
         )
     return {"user_id": user_id, "status": "deactivated"}
+
+
+@router.get("/{user_id}/login-history")
+def get_login_history(
+    user_id: str,
+    _admin: User = Depends(require_admin),
+    store: UserStore = Depends(get_user_store),
+    audit: AuditLogStore = Depends(
+        get_audit_log_store
+    ),
+) -> list[dict]:
+    """Return recent login events for a user.
+
+    Args:
+        user_id: Target user's UUID.
+
+    Raises:
+        404 if user not found.
+    """
+    if store.get_user_by_id(user_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    return audit.get_recent_logins(user_id)
 
 
 @router.post("/{user_id}/approve-reset")

@@ -10,7 +10,7 @@ import { AccountProvider } from "@/context/AccountContext";
 import { RegionProvider } from "@/context/RegionContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { Layout } from "@/components/layout";
-import { ProtectedRoute } from "@/components/auth";
+import { ProtectedRoute, SessionExpiryWarning } from "@/components/auth";
 import {
   DashboardPage,
   ViolationsPage,
@@ -136,6 +136,7 @@ function App() {
           <AccountProvider>
             <RegionProvider>
               <RouterProvider router={router} />
+              <SessionExpiryWarning />
             </RegionProvider>
           </AccountProvider>
         </AuthProvider>

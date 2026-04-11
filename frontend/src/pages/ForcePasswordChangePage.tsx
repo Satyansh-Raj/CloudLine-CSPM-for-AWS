@@ -41,8 +41,7 @@ export default function ForcePasswordChangePage() {
             Change Password
           </h1>
           <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-5">
-            Your password reset has been approved. Please set a new
-            password.
+            Your password reset has been approved. Please set a new password.
           </p>
 
           {error && (
@@ -70,6 +69,9 @@ export default function ForcePasswordChangePage() {
                 required
                 className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
               />
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                Min 12 chars · at least 1 digit · at least 1 symbol
+              </p>
             </div>
             <div>
               <label
