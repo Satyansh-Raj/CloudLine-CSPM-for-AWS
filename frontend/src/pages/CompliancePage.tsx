@@ -22,6 +22,16 @@ const FRAMEWORK_LABELS: Record<string, string> = {
   owasp: "OWASP Top 10",
 };
 
+// Short labels used inside the compact card (avoids overflow on small viewports)
+const FRAMEWORK_CARD_LABELS: Record<string, string> = {
+  cis_aws: "CIS AWS v1.5",
+  nist_800_53: "NIST 800-53",
+  pci_dss: "PCI DSS v4.0",
+  hipaa: "HIPAA",
+  soc2: "SOC 2",
+  owasp: "OWASP Top 10",
+};
+
 const ALL_FRAMEWORKS = [
   "cis_aws",
   "nist_800_53",
@@ -80,18 +90,20 @@ function FrameworkCard({
   const isZero = compliant === 0 && non_compliant === 0;
   const safePieData = isZero ? [{ name: "empty", value: 1 }] : pieData;
 
+  const cardLabel = FRAMEWORK_CARD_LABELS[id] ?? label;
+
   return (
     <button
       type="button"
       data-testid={`framework-card-${id}`}
       onClick={onClick}
       className={`
-        aspect-square w-full
+        w-full
         flex flex-col items-center justify-center
-        gap-3 text-center
+        gap-2 text-center
         bg-white dark:bg-[#111]
         border rounded-2xl p-3 shadow-sm
-        transition-all duration-200 overflow-hidden
+        transition-all duration-200
         hover:border-gray-200
         dark:hover:border-white/10
         ${
@@ -102,17 +114,17 @@ function FrameworkCard({
       `}
     >
       {/* Header */}
-      <div className="flex items-center gap-1">
-        <span className="text-blue-500 dark:text-blue-400">
+      <div className="flex items-center gap-1 min-w-0">
+        <span className="text-blue-500 dark:text-blue-400 shrink-0">
           <ShieldIcon />
         </span>
-        <span className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
-          {label}
+        <span className="text-[13px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
+          {cardLabel}
         </span>
       </div>
 
       {/* Donut chart */}
-      <div className="w-32 h-32 shrink-0">
+      <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-24 lg:h-24 xl:w-28 xl:h-28 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -144,10 +156,10 @@ function FrameworkCard({
       </div>
 
       {/* Score + counts */}
-      <span className="text-3xl font-bold text-gray-900 dark:text-white leading-none">
+      <span className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-none">
         {score_percent.toFixed(1)}%
       </span>
-      <div className="flex flex-col gap-0.5 text-sm">
+      <div className="flex flex-col gap-0.5 text-xs sm:text-sm">
         <span className="text-green-600 dark:text-green-400">
           {compliant} compliant
         </span>
@@ -366,7 +378,7 @@ function LoadingSkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="aspect-square bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5"
+          className="h-48 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5"
         />
       ))}
     </div>
