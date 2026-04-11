@@ -4,12 +4,16 @@ import logging
 
 from fastapi import APIRouter, Depends, Query
 
+from app.auth.dependencies import require_any_authenticated
 from app.dependencies import get_macie_store
 from app.pipeline.macie_store import MacieFindingStore
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["macie"])
+router = APIRouter(
+    tags=["macie"],
+    dependencies=[Depends(require_any_authenticated)],
+)
 
 
 @router.get("/macie/findings")

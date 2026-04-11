@@ -11,6 +11,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth.dependencies import require_admin_or_operator
 from app.dependencies import (
     get_jira_client,
     get_settings,
@@ -25,7 +26,10 @@ from app.pipeline.state_manager import StateManager
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["jira"])
+router = APIRouter(
+    tags=["jira"],
+    dependencies=[Depends(require_admin_or_operator)],
+)
 
 
 @router.post(

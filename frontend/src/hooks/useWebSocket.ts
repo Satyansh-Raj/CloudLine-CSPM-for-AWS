@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAlerts } from "./useAlerts";
+import { AUTH_KEY } from "@/context/AuthContext";
 import type { WsMessage } from "@/types";
 
 const PING_INTERVAL = 30_000;
@@ -11,9 +12,25 @@ function getWsUrl(): string {
   const wsUrl = import.meta.env.VITE_WS_URL || "/ws";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const host = window.location.host;
-  return wsUrl.startsWith("/")
+  const base = wsUrl.startsWith("/")
     ? `${protocol}//${host}${wsUrl}/v1/events`
     : `${wsUrl}/v1/events`;
+
+  // Append access token so the server can authenticate the WS upgrade.
+  const stored = localStorage.getItem(AUTH_KEY);
+  if (stored) {
+    try {
+      const { accessToken } = JSON.parse(stored) as {
+        accessToken?: string;
+      };
+      if (accessToken) {
+        return `${base}?token=${encodeURIComponent(accessToken)}`;
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }
+  return base;
 }
 
 const INVALIDATION_KEYS = [

@@ -17,11 +17,13 @@ from fastapi import (
 )
 from pydantic import BaseModel, Field
 
+from app.auth.dependencies import require_any_authenticated
 from app.config import Settings
 from app.dependencies import get_settings
 
 router = APIRouter(
     tags=["policies"],
+    dependencies=[Depends(require_any_authenticated)],
 )
 
 # --- Constants ---

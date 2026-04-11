@@ -28,6 +28,17 @@ vi.mock("@/hooks/usePermission", () => ({
   }),
 }));
 
+// Mock useAuth — Header now renders user menu
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    user: null,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+    refreshMe: vi.fn(),
+  }),
+}));
+
 import Layout from "../Layout";
 
 function Wrapper({ children }: { children: ReactNode }) {

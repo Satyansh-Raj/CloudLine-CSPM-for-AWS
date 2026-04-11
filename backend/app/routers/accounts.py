@@ -15,6 +15,11 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.auth.dependencies import (
+    require_admin,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.dependencies import (
     get_account_store,
     get_session_factory,
@@ -75,6 +80,7 @@ def create_account(
     session_factory: AWSSessionFactory = Depends(
         get_session_factory
     ),
+    _user: User = Depends(require_admin),
 ) -> dict:
     """Add a target account for cross-account scanning.
 
@@ -126,6 +132,7 @@ def create_account(
 @router.get("/accounts")
 def list_accounts(
     store: AccountStore = Depends(get_account_store),
+    _user: User = Depends(require_any_authenticated),
 ) -> list[dict]:
     """Return all active target accounts."""
     accounts = store.list_active()
@@ -136,6 +143,7 @@ def list_accounts(
 def get_account(
     account_id: str,
     store: AccountStore = Depends(get_account_store),
+    _user: User = Depends(require_any_authenticated),
 ) -> dict:
     """Return a single target account by ID.
 
@@ -156,6 +164,7 @@ def update_account(
     account_id: str,
     req: AccountUpdateRequest,
     store: AccountStore = Depends(get_account_store),
+    _user: User = Depends(require_admin),
 ) -> dict:
     """Update alias and/or regions for a target account.
 
@@ -188,6 +197,7 @@ def update_account(
 def deactivate_account(
     account_id: str,
     store: AccountStore = Depends(get_account_store),
+    _user: User = Depends(require_admin),
 ) -> dict:
     """Deactivate a target account (soft delete).
 

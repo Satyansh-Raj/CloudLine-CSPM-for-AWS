@@ -8,6 +8,7 @@ import boto3
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
+from app.auth.dependencies import require_any_authenticated
 from app.dependencies import (
     get_boto3_session,
     get_resource_store,
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     tags=["inventory"],
+    dependencies=[Depends(require_any_authenticated)],
 )
 
 

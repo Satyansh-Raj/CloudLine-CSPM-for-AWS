@@ -52,6 +52,11 @@ from app.pipeline.models import (
     ViolationState,
 )
 from app.pipeline.resource_store import ResourceStore
+from app.auth.dependencies import (
+    require_admin_or_operator,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.pipeline.risk_scorer import RiskScorer
 from app.pipeline.state_manager import StateManager
 from app.compliance.mappings import get_registry as _get_compliance_registry
@@ -762,6 +767,7 @@ async def trigger_scan(
         get_resource_store
     ),
     macie_store=Depends(get_macie_store),
+    _user: User = Depends(require_admin_or_operator),
 ):
     """Trigger a full scan asynchronously.
 
@@ -788,7 +794,10 @@ async def trigger_scan(
 
 
 @router.get("/scans/{scan_id}")
-def get_scan_result(scan_id: str):
+def get_scan_result(
+    scan_id: str,
+    _user: User = Depends(require_any_authenticated),
+):
     """Get the result of a background scan."""
     result = _scan_results.get(scan_id)
     if result is None:

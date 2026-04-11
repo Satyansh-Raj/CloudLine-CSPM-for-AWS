@@ -10,6 +10,7 @@ import {
   RiskScoreMeter,
   ComplianceSection,
 } from "@/components/shared";
+import { RoleGate } from "@/components/auth";
 import { getCheckName } from "@/constants/checkNames";
 import { getComplianceMapping } from "@/constants/complianceMappings";
 import RemediationTabs from "@/components/violations/RemediationTabs";
@@ -288,11 +289,13 @@ export default function ViolationDetailPage() {
                 {violation.domain.replace(/_/g, " ")}
               </p>
             )}
-            <JiraSection
-              violation={violation}
-              accountId={accountId}
-              region={region}
-            />
+            <RoleGate allow={["admin", "operator"]}>
+              <JiraSection
+                violation={violation}
+                accountId={accountId}
+                region={region}
+              />
+            </RoleGate>
           </div>
 
           {/* Details grid */}

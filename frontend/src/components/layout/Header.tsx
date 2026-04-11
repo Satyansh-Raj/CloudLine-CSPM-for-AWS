@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAlerts } from "@/hooks/useAlerts";
+import { useAuth } from "@/hooks/useAuth";
 import { DriftAlertFeed } from "@/components/alerts";
 
 function BellIcon() {
@@ -57,12 +58,27 @@ function MoonIcon() {
 
 export default function Header() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [dark, setDark] = useState(
     () => localStorage.getItem("theme") === "dark",
   );
   const [feedOpen, setFeedOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { unreadCount, status } = useAlerts();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -142,6 +158,63 @@ export default function Header() {
         >
           {dark ? <SunIcon /> : <MoonIcon />}
         </button>
+
+        {/* User menu */}
+        {user && (
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="User menu"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+            >
+              <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[11px] font-semibold shrink-0">
+                {user.full_name?.[0]?.toUpperCase() ?? "U"}
+              </span>
+              <span className="hidden sm:block max-w-[120px] truncate">
+                {user.email}
+              </span>
+              <span
+                className={`hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${
+                  user.role === "admin"
+                    ? "bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300"
+                    : user.role === "operator"
+                      ? "bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300"
+                      : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400"
+                }`}
+              >
+                {user.role}
+              </span>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 mt-1 w-52 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-neutral-900 shadow-lg py-1 z-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/account/change-password");
+                  }}
+                  className="w-full text-left px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+                >
+                  Change Password
+                </button>
+                <div className="border-t border-gray-100 dark:border-white/5 mt-1 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                      navigate("/login");
+                    }}
+                    className="w-full text-left px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );
