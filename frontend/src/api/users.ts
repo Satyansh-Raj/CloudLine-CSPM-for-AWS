@@ -45,6 +45,15 @@ export async function approveReset(userId: string): Promise<void> {
   await apiClient.post(`/v1/users/${userId}/approve-reset`);
 }
 
+export async function setUserPassword(
+  userId: string,
+  newPassword: string,
+): Promise<void> {
+  await apiClient.post(`/v1/users/${userId}/set-password`, {
+    new_password: newPassword,
+  });
+}
+
 export interface LoginEvent {
   ip: string;
   user_agent: string;

@@ -5,7 +5,9 @@ import {
   approveReset,
   listResetRequests,
   getLoginHistory,
+  setUserPassword,
 } from "@/api/users";
+import type { ApiError } from "@/api/client";
 import type { CreateUserRequest, LoginEvent } from "@/api/users";
 import type { User, UserRole } from "@/types/auth";
 
@@ -170,8 +172,8 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
       await createUser(req);
       onCreated();
       onClose();
-    } catch {
-      setError("Failed to create user.");
+    } catch (err) {
+      setError((err as ApiError).message ?? "Failed to create user.");
     } finally {
       setSaving(false);
     }
@@ -220,14 +222,19 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
             required
             className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
           />
-          <input
-            type="password"
-            placeholder="Initial Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-          />
+          <div>
+            <input
+              type="password"
+              placeholder="Initial Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+            />
+            <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+              Min 12 chars · at least 1 digit · at least 1 symbol
+            </p>
+          </div>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as UserRole)}
@@ -259,6 +266,124 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
   );
 }
 
+interface SetPasswordModalProps {
+  user: User;
+  onClose: () => void;
+}
+
+function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (newPassword !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await setUserPassword(user.sk, newPassword);
+      setSuccess(true);
+    } catch (err) {
+      setError((err as ApiError).message ?? "Failed to set password.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Set password for ${user.full_name}`}
+        className="w-96 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl p-5"
+      >
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+          Set Password
+        </h2>
+        <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-4">
+          {user.full_name} · {user.email}
+        </p>
+
+        {error && (
+          <div
+            role="alert"
+            className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+          >
+            {error}
+          </div>
+        )}
+
+        {success ? (
+          <div className="py-4 text-center">
+            <p className="text-[13px] text-green-600 dark:text-green-400 font-medium mb-4">
+              Password updated successfully.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-1.5 text-[13px] rounded-lg bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+              />
+              <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                Min 12 chars · at least 1 digit · at least 1 symbol
+              </p>
+            </div>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+            />
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Set Password"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function UserManagementPage() {
   const [tab, setTab] = useState<Tab>("users");
   const [users, setUsers] = useState<User[]>([]);
@@ -266,6 +391,7 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [historyUser, setHistoryUser] = useState<User | null>(null);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -395,13 +521,22 @@ export default function UserManagementPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setHistoryUser(u)}
-                          className="px-2.5 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
-                        >
-                          History
-                        </button>
+                        <div className="flex gap-1.5 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setPasswordUser(u)}
+                            className="px-2.5 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                          >
+                            Set Password
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setHistoryUser(u)}
+                            className="px-2.5 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                          >
+                            History
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -426,6 +561,13 @@ export default function UserManagementPage() {
         <LoginHistoryModal
           user={historyUser}
           onClose={() => setHistoryUser(null)}
+        />
+      )}
+
+      {passwordUser && (
+        <SetPasswordModal
+          user={passwordUser}
+          onClose={() => setPasswordUser(null)}
         />
       )}
 

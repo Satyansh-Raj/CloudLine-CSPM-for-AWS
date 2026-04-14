@@ -21,7 +21,10 @@ from pydantic import BaseModel
 from app.auth.audit_log import AuditLogStore
 from app.auth.dependencies import require_admin
 from app.auth.models import User, UserRole
-from app.auth.password import hash_password
+from app.auth.password import (
+    hash_password,
+    validate_password_complexity,
+)
 from app.auth.user_store import UserStore
 from app.dependencies import (
     get_audit_log_store,
@@ -48,6 +51,12 @@ class UserUpdateRequest(BaseModel):
     full_name: str | None = None
     role: UserRole | None = None
     is_active: bool | None = None
+
+
+class UserSetPasswordRequest(BaseModel):
+    """Body for admin-initiated password reset."""
+
+    new_password: str
 
 
 def _user_to_dict(user: User) -> dict:
@@ -272,6 +281,46 @@ def get_login_history(
             detail=f"User {user_id} not found",
         )
     return audit.get_recent_logins(user_id)
+
+
+@router.post("/{user_id}/set-password")
+def set_user_password(
+    user_id: str,
+    req: UserSetPasswordRequest,
+    _admin: User = Depends(require_admin),
+    store: UserStore = Depends(get_user_store),
+) -> dict:
+    """Admin sets a new password for any user.
+
+    Raises:
+        404 if user not found.
+        400 if password fails complexity rules.
+        500 on persistence failure.
+    """
+    if store.get_user_by_id(user_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    try:
+        validate_password_complexity(req.new_password)
+        pw_hash = hash_password(req.new_password)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    if not store.update_password_hash(user_id, pw_hash):
+        raise HTTPException(
+            status_code=(
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+            detail="Failed to update password",
+        )
+    return {
+        "user_id": user_id,
+        "status": "password_updated",
+    }
 
 
 @router.post("/{user_id}/approve-reset")

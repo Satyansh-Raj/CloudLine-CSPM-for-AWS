@@ -369,17 +369,51 @@ resource "aws_cloudtrail" "fix" {
   }),
 
   // cloudtrail_log_validation — CloudTrail log file validation disabled
-  cloudtrail_log_validation: ({ resourceId, region }) => ({
+  cloudtrail_log_validation: ({ resourceId, region, accountId }) => ({
     console: [
-      `Open CloudTrail console → Trails → select "${resourceId}".`,
-      "General details → Edit.",
-      "Enable 'Log file validation'.",
-      "Save.",
+      `Open S3 console → find the CloudTrail log bucket for "${resourceId}".`,
+      "Permissions → Bucket Policy → add CloudTrail service write permission.",
+      "See AWS docs: 'Amazon S3 bucket policy for CloudTrail'.",
+      `Then open CloudTrail console → Trails → select "${resourceId}".`,
+      "General details → Edit → Enable 'Log file validation' → Save.",
     ],
     cli: `\
 TRAIL="${resourceId}"
 ${reg(region)}
+${acct(accountId)}
 
+# Step 1: Get the S3 bucket used by this trail
+BUCKET=$(aws cloudtrail describe-trails \\
+  --trail-name-list "$TRAIL" \\
+  --region "$REGION" \\
+  --query 'trailList[0].S3BucketName' --output text)
+
+# Step 2: Fix S3 bucket policy (CloudTrail service needs write access)
+POLICY=$(printf '{
+  "Version":"2012-10-17",
+  "Statement":[
+    {
+      "Sid":"AWSCloudTrailAclCheck",
+      "Effect":"Allow",
+      "Principal":{"Service":"cloudtrail.amazonaws.com"},
+      "Action":"s3:GetBucketAcl",
+      "Resource":"arn:aws:s3:::%s"
+    },
+    {
+      "Sid":"AWSCloudTrailWrite",
+      "Effect":"Allow",
+      "Principal":{"Service":"cloudtrail.amazonaws.com"},
+      "Action":"s3:PutObject",
+      "Resource":"arn:aws:s3:::%s/AWSLogs/%s/*",
+      "Condition":{
+        "StringEquals":{"s3:x-amz-acl":"bucket-owner-full-control"}
+      }
+    }
+  ]
+}' "$BUCKET" "$BUCKET" "$ACCOUNT_ID")
+aws s3api put-bucket-policy --bucket "$BUCKET" --policy "$POLICY"
+
+# Step 3: Enable log file validation
 aws cloudtrail update-trail \\
   --name "$TRAIL" \\
   --enable-log-file-validation \\
@@ -652,17 +686,51 @@ resource "aws_cloudtrail" "fix" {
   }),
 
   // cloudtrail_insights — CloudTrail Insights not enabled
-  cloudtrail_insights: ({ resourceId, region }) => ({
+  cloudtrail_insights: ({ resourceId, region, accountId }) => ({
     console: [
-      `Open CloudTrail console → Trails → select "${resourceId}".`,
-      "Insights → Edit.",
-      "Enable Insights events (API call rate, API error rate).",
-      "Save.",
+      `Open S3 console → find the CloudTrail log bucket for "${resourceId}".`,
+      "Permissions → Bucket Policy → add CloudTrail service write permission.",
+      "See AWS docs: 'Amazon S3 bucket policy for CloudTrail'.",
+      `Then open CloudTrail console → Trails → select "${resourceId}".`,
+      "Insights → Edit → Enable API call rate and API error rate → Save.",
     ],
     cli: `\
 TRAIL="${resourceId}"
 ${reg(region)}
+${acct(accountId)}
 
+# Step 1: Get the S3 bucket used by this trail
+BUCKET=$(aws cloudtrail describe-trails \\
+  --trail-name-list "$TRAIL" \\
+  --region "$REGION" \\
+  --query 'trailList[0].S3BucketName' --output text)
+
+# Step 2: Fix S3 bucket policy (CloudTrail Insights need write access)
+POLICY=$(printf '{
+  "Version":"2012-10-17",
+  "Statement":[
+    {
+      "Sid":"AWSCloudTrailAclCheck",
+      "Effect":"Allow",
+      "Principal":{"Service":"cloudtrail.amazonaws.com"},
+      "Action":"s3:GetBucketAcl",
+      "Resource":"arn:aws:s3:::%s"
+    },
+    {
+      "Sid":"AWSCloudTrailWrite",
+      "Effect":"Allow",
+      "Principal":{"Service":"cloudtrail.amazonaws.com"},
+      "Action":"s3:PutObject",
+      "Resource":"arn:aws:s3:::%s/AWSLogs/%s/*",
+      "Condition":{
+        "StringEquals":{"s3:x-amz-acl":"bucket-owner-full-control"}
+      }
+    }
+  ]
+}' "$BUCKET" "$BUCKET" "$ACCOUNT_ID")
+aws s3api put-bucket-policy --bucket "$BUCKET" --policy "$POLICY"
+
+# Step 3: Enable Insights
 aws cloudtrail put-insight-selectors \\
   --trail-name "$TRAIL" \\
   --insight-selectors '[
@@ -709,16 +777,23 @@ resource "aws_cloudtrail" "fix" {
   cloudtrail_retention_365: ({ resourceId, region }) => ({
     console: [
       "Open CloudWatch console → Log groups.",
-      `Select the CloudTrail log group for "${resourceId}".`,
+      `If "/aws/cloudtrail/${resourceId}" does not exist, create it first via Actions → Create log group.`,
+      `Select the log group "/aws/cloudtrail/${resourceId}".`,
       "Actions → Edit retention → set to 365 days or more.",
     ],
     cli: `\
 TRAIL="${resourceId}"
 ${reg(region)}
+LOG_GROUP="/aws/cloudtrail/$TRAIL"
 
-# Set CloudWatch log group retention
+# Step 1: Create log group if it does not exist
+aws logs create-log-group \\
+  --log-group-name "$LOG_GROUP" \\
+  --region "$REGION" 2>/dev/null || true
+
+# Step 2: Set retention to 365 days
 aws logs put-retention-policy \\
-  --log-group-name "/aws/cloudtrail/$TRAIL" \\
+  --log-group-name "$LOG_GROUP" \\
   --retention-in-days 365 \\
   --region "$REGION"`,
     terraform: `\
@@ -3374,16 +3449,66 @@ resource "aws_s3_bucket_public_access_block" "config" {
   }),
 
   // config_rules_deployed — No AWS Config rules deployed
-  config_rules_deployed: ({ region }) => ({
+  config_rules_deployed: ({ region, accountId }) => ({
     console: [
-      "Open AWS Config console → Rules → Add rule.",
+      "Open AWS Config console → you will be prompted to set up AWS Config.",
+      "Complete the setup wizard: record all resources, create a delivery S3 bucket.",
+      "After setup completes, go to Rules → Add rule.",
       "Select AWS managed rules (e.g. s3-bucket-public-read-prohibited).",
       "Configure and save.",
     ],
     cli: `\
 ${reg(region)}
+${acct(accountId)}
 
-# Add essential Config rules
+# Step 1: Create Config service-linked role (safe if already exists)
+aws iam create-service-linked-role \\
+  --aws-service-name config.amazonaws.com 2>/dev/null || true
+
+# Step 2: Create S3 delivery bucket for Config
+CONFIG_BUCKET="aws-config-$ACCOUNT_ID-$REGION"
+aws s3 mb "s3://$CONFIG_BUCKET" --region "$REGION" 2>/dev/null || true
+aws s3api put-bucket-policy --bucket "$CONFIG_BUCKET" --policy '{
+  "Version":"2012-10-17",
+  "Statement":[
+    {
+      "Sid":"AWSConfigBucketPermissionsCheck",
+      "Effect":"Allow",
+      "Principal":{"Service":"config.amazonaws.com"},
+      "Action":"s3:GetBucketAcl",
+      "Resource":"arn:aws:s3:::'"$CONFIG_BUCKET"'"
+    },
+    {
+      "Sid":"AWSConfigBucketDelivery",
+      "Effect":"Allow",
+      "Principal":{"Service":"config.amazonaws.com"},
+      "Action":"s3:PutObject",
+      "Resource":"arn:aws:s3:::'"$CONFIG_BUCKET"'/AWSLogs/'"$ACCOUNT_ID"'/Config/*",
+      "Condition":{
+        "StringEquals":{"s3:x-amz-acl":"bucket-owner-full-control"}
+      }
+    }
+  ]
+}'
+
+# Step 3: Create configuration recorder
+ROLE_ARN="arn:aws:iam::$ACCOUNT_ID:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"
+aws configservice put-configuration-recorder \\
+  --configuration-recorder name=default,roleARN="$ROLE_ARN" \\
+  --recording-group allSupported=true,includeGlobalResourceTypes=true \\
+  --region "$REGION"
+
+# Step 4: Create delivery channel
+aws configservice put-delivery-channel \\
+  --delivery-channel name=default,s3BucketName="$CONFIG_BUCKET" \\
+  --region "$REGION"
+
+# Step 5: Start the recorder
+aws configservice start-configuration-recorder \\
+  --configuration-recorder-name default \\
+  --region "$REGION"
+
+# Step 6: Add essential Config rules
 for RULE in s3-bucket-public-read-prohibited encrypted-volumes iam-root-access-key-check; do
   aws configservice put-config-rule \\
     --config-rule '{
