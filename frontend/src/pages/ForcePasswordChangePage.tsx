@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { changePassword } from "@/api/auth";
+import type { ApiError } from "@/api/client";
 
 export default function ForcePasswordChangePage() {
   const { refreshMe } = useAuth();
   const navigate = useNavigate();
 
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,11 +25,11 @@ export default function ForcePasswordChangePage() {
 
     setSubmitting(true);
     try {
-      await changePassword("", newPassword);
+      await changePassword(currentPassword, newPassword);
       await refreshMe();
       navigate("/dashboard", { replace: true });
-    } catch {
-      setError("Failed to change password. Please try again.");
+    } catch (err) {
+      setError((err as ApiError).message ?? "Failed to change password.");
     } finally {
       setSubmitting(false);
     }
@@ -41,7 +43,7 @@ export default function ForcePasswordChangePage() {
             Change Password
           </h1>
           <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-5">
-            Your password reset has been approved. Please set a new password.
+            Enter your current password and choose a new one.
           </p>
 
           {error && (
@@ -54,6 +56,22 @@ export default function ForcePasswordChangePage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label
+                htmlFor="current-password"
+                className="block text-[12px] font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
+                Current Password
+              </label>
+              <input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+              />
+            </div>
             <div>
               <label
                 htmlFor="new-password"

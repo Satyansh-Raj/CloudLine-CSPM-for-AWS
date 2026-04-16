@@ -6,6 +6,7 @@ import {
   listResetRequests,
   getLoginHistory,
   setUserPassword,
+  deleteUser,
 } from "@/api/users";
 import type { ApiError } from "@/api/client";
 import type { CreateUserRequest, LoginEvent } from "@/api/users";
@@ -392,6 +393,7 @@ export default function UserManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [historyUser, setHistoryUser] = useState<User | null>(null);
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -411,6 +413,19 @@ export default function UserManagementPage() {
   async function handleApproveReset(userId: string) {
     await approveReset(userId);
     await fetchUsers();
+  }
+
+  async function handleDeleteUser(userId: string) {
+    if (!confirm("Deactivate this user?")) return;
+    setDeleteError(null);
+    try {
+      await deleteUser(userId);
+      await fetchUsers();
+    } catch (err) {
+      setDeleteError(
+        (err as { message?: string }).message ?? "Failed to deactivate user.",
+      );
+    }
   }
 
   return (
@@ -469,6 +484,15 @@ export default function UserManagementPage() {
               + Add User
             </button>
           </div>
+
+          {deleteError && (
+            <div
+              role="alert"
+              className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+            >
+              {deleteError}
+            </div>
+          )}
 
           {loading ? (
             <div className="py-12 text-center text-[13px] text-gray-400">
@@ -536,6 +560,15 @@ export default function UserManagementPage() {
                           >
                             History
                           </button>
+                          {u.is_active && (
+                            <button
+                              type="button"
+                              onClick={() => void handleDeleteUser(u.sk)}
+                              className="px-2.5 py-1 text-[11px] rounded-lg border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                            >
+                              Deactivate
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

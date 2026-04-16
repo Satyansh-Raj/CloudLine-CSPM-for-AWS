@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -22,17 +21,13 @@ export const AUTH_STORAGE_KEY = "cloudline.auth.v1";
 // ── Request interceptor: attach access token ──────
 apiClient.interceptors.request.use((config) => {
   try {
-    const stored = localStorage.getItem(
-      AUTH_STORAGE_KEY,
-    );
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
     if (stored) {
       const { accessToken } = JSON.parse(stored) as {
         accessToken?: string;
       };
       if (accessToken) {
-        config.headers[
-          "Authorization"
-        ] = `Bearer ${accessToken}`;
+        config.headers["Authorization"] = `Bearer ${accessToken}`;
       }
     }
   } catch {
@@ -53,15 +48,13 @@ async function _doRefresh(): Promise<string> {
   if (!refreshToken) throw new Error("No refresh token");
 
   // Use bare axios to avoid triggering our interceptor.
-  const resp = await axios.post(
-    `${API_BASE_URL}/v1/auth/refresh`,
-    { refresh_token: refreshToken },
-  );
-  const { access_token, refresh_token: newRefresh } =
-    resp.data as {
-      access_token: string;
-      refresh_token: string;
-    };
+  const resp = await axios.post(`${API_BASE_URL}/v1/auth/refresh`, {
+    refresh_token: refreshToken,
+  });
+  const { access_token, refresh_token: newRefresh } = resp.data as {
+    access_token: string;
+    refresh_token: string;
+  };
   localStorage.setItem(
     AUTH_STORAGE_KEY,
     JSON.stringify({
@@ -89,33 +82,25 @@ apiClient.interceptors.response.use(
       | (typeof error.config & { _retry?: boolean })
       | undefined;
 
-    if (
-      error.response?.status === 401 &&
-      original &&
-      !original._retry
-    ) {
+    if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
       try {
         const newToken = await _singleFlightRefresh();
-        original.headers[
-          "Authorization"
-        ] = `Bearer ${newToken}`;
+        original.headers["Authorization"] = `Bearer ${newToken}`;
+        // Notify SessionExpiryWarning to reschedule
+        // its timer for the new token's expiry.
+        window.dispatchEvent(new CustomEvent("auth:token-refreshed"));
         return apiClient(original);
       } catch {
         // Refresh failed — signal global logout.
-        window.dispatchEvent(
-          new CustomEvent("auth:logout"),
-        );
+        window.dispatchEvent(new CustomEvent("auth:logout"));
       }
     }
 
     // Normalize error shape (existing behavior).
     const apiError: ApiError = {
       status: error.response?.status ?? 0,
-      message:
-        error.response?.data?.detail ??
-        error.message ??
-        "Unknown error",
+      message: error.response?.data?.detail ?? error.message ?? "Unknown error",
       detail: error.response?.data,
     };
     return Promise.reject(apiError);

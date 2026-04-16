@@ -17,9 +17,7 @@ const WARN_BEFORE_MS = 2 * 60 * 1000; // 2 minutes
 function decodeJwtExp(token: string): number | null {
   try {
     const payload = token.split(".")[1];
-    const json = atob(
-      payload.replace(/-/g, "+").replace(/_/g, "/"),
-    );
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
     const { exp } = JSON.parse(json) as { exp?: number };
     return typeof exp === "number" ? exp * 1000 : null;
   } catch {
@@ -47,6 +45,14 @@ export default function SessionExpiryWarning() {
   const [visible, setVisible] = useState(false);
   const [extending, setExtending] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearLogoutTimer() {
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = null;
+    }
+  }
 
   const scheduleWarning = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -69,33 +75,44 @@ export default function SessionExpiryWarning() {
     }, msUntilWarn);
   }, []);
 
-  // Schedule on mount; reschedule whenever
-  // localStorage changes (new token after refresh).
+  // Schedule on mount; reschedule on cross-tab token
+  // changes (storage event) and same-tab silent refreshes
+  // (auth:token-refreshed custom event from apiClient).
   useEffect(() => {
     scheduleWarning();
 
     const onStorage = (e: StorageEvent) => {
       if (e.key === AUTH_KEY) {
+        clearLogoutTimer();
         setVisible(false);
         scheduleWarning();
       }
     };
+
+    const onTokenRefreshed = () => {
+      clearLogoutTimer();
+      setVisible(false);
+      scheduleWarning();
+    };
+
     window.addEventListener("storage", onStorage);
+    window.addEventListener("auth:token-refreshed", onTokenRefreshed);
 
     return () => {
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("auth:token-refreshed", onTokenRefreshed);
       if (timerRef.current) clearTimeout(timerRef.current);
+      clearLogoutTimer();
     };
   }, [scheduleWarning]);
 
   async function handleExtend() {
+    clearLogoutTimer();
     setExtending(true);
     try {
       const tokens = getStoredTokens();
       if (!tokens) return;
-      const newPair = await refreshTokenApi(
-        tokens.refreshToken,
-      );
+      const newPair = await refreshTokenApi(tokens.refreshToken);
       localStorage.setItem(
         AUTH_KEY,
         JSON.stringify({
@@ -115,6 +132,20 @@ export default function SessionExpiryWarning() {
 
   function handleDismiss() {
     setVisible(false);
+    // Schedule forced logout when the token actually
+    // expires so dismissing doesn't silently extend
+    // the session forever.
+    const tokens = getStoredTokens();
+    if (tokens) {
+      const expMs = decodeJwtExp(tokens.accessToken);
+      if (expMs) {
+        const msUntilExpiry = Math.max(0, expMs - Date.now());
+        clearLogoutTimer();
+        logoutTimerRef.current = setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("auth:logout"));
+        }, msUntilExpiry);
+      }
+    }
   }
 
   if (!visible) return null;
@@ -128,9 +159,7 @@ export default function SessionExpiryWarning() {
     >
       <div className="pointer-events-auto w-full max-w-sm bg-white dark:bg-neutral-900 border border-amber-200 dark:border-amber-500/30 rounded-2xl shadow-2xl p-5">
         <div className="flex items-start gap-3">
-          <span className="text-amber-500 text-xl leading-none mt-0.5">
-            ⚠
-          </span>
+          <span className="text-amber-500 text-xl leading-none mt-0.5">⚠</span>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold text-gray-900 dark:text-white">
               Session expiring soon
