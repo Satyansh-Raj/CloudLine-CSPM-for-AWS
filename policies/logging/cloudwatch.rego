@@ -14,7 +14,7 @@ alarm_exists_for_pattern(pattern) if {
 # Rule cloudwatch_root_usage_alarm — Alarm must exist for root account usage
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("root_account_usage")
+	not alarm_exists_for_pattern("RootUsage")
 	result := {
 		"check_id": "cloudwatch_root_usage_alarm",
 		"status": "alarm",
@@ -31,7 +31,7 @@ violations contains result if {
 # Rule cloudwatch_unauthorized_api_alarm — Alarm for unauthorized API calls
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("unauthorized_api_calls")
+	not alarm_exists_for_pattern("UnauthorizedAPI")
 	result := {
 		"check_id": "cloudwatch_unauthorized_api_alarm",
 		"status": "alarm",
@@ -48,7 +48,7 @@ violations contains result if {
 # Rule cloudwatch_no_mfa_login_alarm — Alarm for console login without MFA
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("console_login_no_mfa")
+	not alarm_exists_for_pattern("ConsoleNoMFA")
 	result := {
 		"check_id": "cloudwatch_no_mfa_login_alarm",
 		"status": "alarm",
@@ -65,7 +65,7 @@ violations contains result if {
 # Rule cloudwatch_iam_policy_alarm — Alarm for IAM policy changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("iam_policy_changes")
+	not alarm_exists_for_pattern("IAMChanges")
 	result := {
 		"check_id": "cloudwatch_iam_policy_alarm",
 		"status": "alarm",
@@ -82,7 +82,7 @@ violations contains result if {
 # Rule cloudwatch_cloudtrail_alarm — Alarm for CloudTrail configuration changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("cloudtrail_config_changes")
+	not alarm_exists_for_pattern("CloudTrailChanges")
 	result := {
 		"check_id": "cloudwatch_cloudtrail_alarm",
 		"status": "alarm",
@@ -99,7 +99,7 @@ violations contains result if {
 # Rule cloudwatch_s3_policy_alarm — Alarm for S3 bucket policy changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("s3_bucket_policy_changes")
+	not alarm_exists_for_pattern("S3PolicyChanges")
 	result := {
 		"check_id": "cloudwatch_s3_policy_alarm",
 		"status": "alarm",
@@ -116,7 +116,7 @@ violations contains result if {
 # Rule cloudwatch_vpc_changes_alarm — Alarm for VPC changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("vpc_changes")
+	not alarm_exists_for_pattern("VPCChanges")
 	result := {
 		"check_id": "cloudwatch_vpc_changes_alarm",
 		"status": "alarm",
@@ -133,7 +133,7 @@ violations contains result if {
 # Rule cloudwatch_sg_changes_alarm — Alarm for security group changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("security_group_changes")
+	not alarm_exists_for_pattern("SGChanges")
 	result := {
 		"check_id": "cloudwatch_sg_changes_alarm",
 		"status": "alarm",
@@ -150,7 +150,7 @@ violations contains result if {
 # Rule cloudwatch_nacl_changes_alarm — Alarm for NACL changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("nacl_changes")
+	not alarm_exists_for_pattern("NACLChanges")
 	result := {
 		"check_id": "cloudwatch_nacl_changes_alarm",
 		"status": "alarm",
@@ -167,7 +167,7 @@ violations contains result if {
 # Rule cloudwatch_igw_changes_alarm — Alarm for Internet Gateway changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("internet_gateway_changes")
+	not alarm_exists_for_pattern("IGWChanges")
 	result := {
 		"check_id": "cloudwatch_igw_changes_alarm",
 		"status": "alarm",
@@ -269,7 +269,7 @@ violations contains result if {
 # Rule cloudwatch_failed_login_alarm — Alarm for failed console sign-in attempts
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("failed_console_logins")
+	not alarm_exists_for_pattern("FailedLogins")
 	result := {
 		"check_id": "cloudwatch_failed_login_alarm",
 		"status": "alarm",
@@ -286,7 +286,7 @@ violations contains result if {
 # Rule cloudwatch_cmk_deletion_alarm — Alarm for CMK deletion or disable events
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("kms_key_deletion_disable")
+	not alarm_exists_for_pattern("KMSKeyChanges")
 	result := {
 		"check_id": "cloudwatch_cmk_deletion_alarm",
 		"status": "alarm",
@@ -303,7 +303,7 @@ violations contains result if {
 # Rule cloudwatch_config_changes_alarm — Alarm for AWS Config changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("config_changes")
+	not alarm_exists_for_pattern("ConfigChanges")
 	result := {
 		"check_id": "cloudwatch_config_changes_alarm",
 		"status": "alarm",
@@ -320,7 +320,7 @@ violations contains result if {
 # Rule cloudwatch_org_changes_alarm — Alarm for AWS Organizations changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("organizations_changes")
+	not alarm_exists_for_pattern("OrgChanges")
 	result := {
 		"check_id": "cloudwatch_org_changes_alarm",
 		"status": "alarm",
@@ -358,7 +358,7 @@ violations contains result if {
 # Rule cloudwatch_route_table_alarm — Alarm for Route Table changes
 # ---------------------------------------------------------------------------
 violations contains result if {
-	not alarm_exists_for_pattern("route_table_changes")
+	not alarm_exists_for_pattern("RouteChanges")
 	result := {
 		"check_id": "cloudwatch_route_table_alarm",
 		"status": "alarm",

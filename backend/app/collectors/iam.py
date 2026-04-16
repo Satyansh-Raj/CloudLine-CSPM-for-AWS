@@ -798,7 +798,7 @@ class IAMCollector(BaseCollector):
                 "accessanalyzer"
             )
             resp = client.list_analyzers(
-                Type="ACCOUNT"
+                type="ACCOUNT"
             )
             analyzers = [
                 {
