@@ -5848,34 +5848,47 @@ resource "aws_flow_log" "all_traffic" {
   // secretsmanager_auto_rotation — Secrets not in Secrets Manager
   secretsmanager_auto_rotation: ({ resourceId, region }) => ({
     console: [
-      "Open Secrets Manager console → Store a new secret.",
-      "Select 'Other type of secret' → enter key-value pairs.",
-      `Name: ${resourceId || "myapp/secret"}.`,
-      "Configure rotation (optional) → Store.",
-      "Update your application to retrieve via SDK instead of env vars.",
+      "Open Secrets Manager → select the secret.",
+      "Click 'Edit rotation' → enable automatic rotation.",
+      "Choose rotation interval (30 days recommended).",
+      "Select or create a Lambda rotation function for the secret type.",
+      "Save — AWS will rotate the secret on the next scheduled interval.",
     ],
     cli: `\
 SECRET_NAME="${resourceId || "myapp/secret"}"
 ${reg(region)}
 
-# Store the secret (replace <VALUE> with the actual secret value)
-aws secretsmanager create-secret \\
-  --name "$SECRET_NAME" \\
-  --description "Migrated by CloudLine remediation" \\
-  --secret-string '{"key":"<VALUE>"}' \\
+# Step 1: Check current rotation status
+aws secretsmanager describe-secret \\
+  --secret-id "$SECRET_NAME" --region "$REGION" \\
+  --query '{RotationEnabled:RotationEnabled,LambdaARN:RotationLambdaARN}'
+
+# Step 2: Create a rotation Lambda (required before enabling rotation).
+# AWS provides templates via the Serverless Application Repository:
+#   https://serverlessrepo.aws.amazon.com/applications?category=Security
+# Deploy one matching your secret type, then set ROTATION_LAMBDA_ARN below.
+
+ROTATION_LAMBDA_ARN="<arn:aws:lambda:REGION:ACCOUNT:function:ROTATION_FUNCTION>"
+
+# Step 3: Grant Secrets Manager permission to invoke the Lambda
+aws lambda add-permission \\
+  --function-name "$ROTATION_LAMBDA_ARN" \\
+  --principal secretsmanager.amazonaws.com \\
+  --statement-id AllowSecretsManagerInvoke \\
+  --action lambda:InvokeFunction \\
   --region "$REGION"
 
-# Get the secret ARN
-aws secretsmanager describe-secret \\
+# Step 4: Enable rotation on the secret
+aws secretsmanager rotate-secret \\
   --secret-id "$SECRET_NAME" \\
-  --region "$REGION" \\
-  --query ARN --output text
+  --rotation-lambda-arn "$ROTATION_LAMBDA_ARN" \\
+  --rotation-rules AutomaticallyAfterDays=30 \\
+  --region "$REGION"
 
-# Enable 30-day automatic rotation (requires a rotation Lambda)
-# aws secretsmanager rotate-secret \\
-#   --secret-id "$SECRET_NAME" \\
-#   --rotation-rules AutomaticallyAfterDays=30 \\
-#   --region "$REGION"`,
+# Verify rotation is enabled
+aws secretsmanager describe-secret \\
+  --secret-id "$SECRET_NAME" --region "$REGION" \\
+  --query '{RotationEnabled:RotationEnabled,NextRotationDate:NextRotationDate}'`,
     terraform: `\
 resource "aws_secretsmanager_secret" "fix" {
   name                    = "${resourceId || "myapp/secret"}"
@@ -8438,30 +8451,19 @@ echo "=== Console last sign-in ==="
 aws iam get-user --user-name "$USERNAME" --query 'User.PasswordLastUsed'
 
 echo "=== Access key usage ==="
-aws iam list-access-keys --user-name "$USERNAME" --query 'AccessKeyMetadata[].{KeyId:AccessKeyId,Status:Status,Created:CreateDate}'
-aws iam get-access-key-last-used --access-key-id $(aws iam list-access-keys --user-name "$USERNAME" --query 'AccessKeyMetadata[0].AccessKeyId' --output text) --query 'AccessKeyLastUsed'
+aws iam list-access-keys --user-name "$USERNAME" \
+  --query 'AccessKeyMetadata[].{KeyId:AccessKeyId,Status:Status,Created:CreateDate}'
 
-# If keeping both: enforce MFA for console (requires MFA-enforced policy)
-cat > /tmp/require-mfa.json << 'EOF'
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Sid": "DenyWithoutMFA",
-    "Effect": "Deny",
-    "NotAction": ["iam:CreateVirtualMFADevice", "iam:EnableMFADevice", "sts:GetSessionToken"],
-    "Resource": "*",
-    "Condition": { "BoolIfExists": { "aws:MultiFactorAuthPresent": "false" } }
-  }]
-}
-EOF
-aws iam put-user-policy --user-name "$USERNAME" --policy-name "RequireMFA" --policy-document file:///tmp/require-mfa.json
-echo "MFA enforcement policy attached. User must set up MFA before using console."
+# Best practice: automation users should use programmatic access only.
+# Remove console access (login profile) — keeps access keys intact.
+echo "Removing console login profile for $USERNAME ..."
+aws iam delete-login-profile --user-name "$USERNAME"
+echo "Console access removed. Programmatic (API key) access is unchanged."
 
-# Rotate access key if older than 90 days
-KEY_ID=$(aws iam list-access-keys --user-name "$USERNAME" --query 'AccessKeyMetadata[0].AccessKeyId' --output text)
-aws iam create-access-key --user-name "$USERNAME"
-echo "New key created. Update applications, then deactivate old key:"
-echo "aws iam update-access-key --user-name $USERNAME --access-key-id $KEY_ID --status Inactive"`,
+# Verify console access is gone
+aws iam get-login-profile --user-name "$USERNAME" 2>&1 | grep -q NoSuchEntity \
+  && echo "Confirmed: no console login profile exists." \
+  || echo "WARNING: login profile still exists — check manually."`,
     terraform: `\
 # User: ${resourceId}
 # Decide which access type to keep, remove the other.
