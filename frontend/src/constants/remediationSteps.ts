@@ -372,8 +372,9 @@ resource "aws_cloudtrail" "fix" {
   cloudtrail_log_validation: ({ resourceId, region, accountId }) => ({
     console: [
       `Open S3 console → find the CloudTrail log bucket for "${resourceId}".`,
-      "Permissions → Bucket Policy → add CloudTrail service write permission.",
-      "See AWS docs: 'Amazon S3 bucket policy for CloudTrail'.",
+      "Permissions → Bucket Policy → verify CloudTrail service statements exist.",
+      "Required: AWSCloudTrailAclCheck (s3:GetBucketAcl) and AWSCloudTrailWrite (s3:PutObject).",
+      "IMPORTANT: preserve any existing statements (e.g. DenyHTTP) — do not replace the whole policy.",
       `Then open CloudTrail console → Trails → select "${resourceId}".`,
       "General details → Edit → Enable 'Log file validation' → Save.",
     ],
@@ -388,41 +389,89 @@ BUCKET=$(aws cloudtrail describe-trails \\
   --region "$REGION" \\
   --query 'trailList[0].S3BucketName' --output text)
 
-# Step 2: Fix S3 bucket policy (CloudTrail service needs write access)
-POLICY=$(printf '{
-  "Version":"2012-10-17",
-  "Statement":[
-    {
-      "Sid":"AWSCloudTrailAclCheck",
-      "Effect":"Allow",
-      "Principal":{"Service":"cloudtrail.amazonaws.com"},
-      "Action":"s3:GetBucketAcl",
-      "Resource":"arn:aws:s3:::%s"
-    },
-    {
-      "Sid":"AWSCloudTrailWrite",
-      "Effect":"Allow",
-      "Principal":{"Service":"cloudtrail.amazonaws.com"},
-      "Action":"s3:PutObject",
-      "Resource":"arn:aws:s3:::%s/AWSLogs/%s/*",
-      "Condition":{
-        "StringEquals":{"s3:x-amz-acl":"bucket-owner-full-control"}
-      }
-    }
-  ]
-}' "$BUCKET" "$BUCKET" "$ACCOUNT_ID")
-aws s3api put-bucket-policy --bucket "$BUCKET" --policy "$POLICY"
+# Step 2: Merge CloudTrail statements into the existing bucket policy.
+# This preserves any existing statements (e.g. DenyHTTP) already on the bucket.
+EXISTING=$(aws s3api get-bucket-policy --bucket "$BUCKET" \\
+  --query Policy --output text 2>/dev/null || echo '{"Version":"2012-10-17","Statement":[]}')
+
+MERGED=$(python3 - <<'PYEOF'
+import json, sys, os
+
+existing = json.loads(os.environ.get('EXISTING', '{"Version":"2012-10-17","Statement":[]}'))
+bucket   = os.environ['BUCKET']
+acct     = os.environ['ACCOUNT_ID']
+
+new_stmts = [
+  {
+    "Sid": "AWSCloudTrailAclCheck",
+    "Effect": "Allow",
+    "Principal": {"Service": "cloudtrail.amazonaws.com"},
+    "Action": "s3:GetBucketAcl",
+    "Resource": f"arn:aws:s3:::{bucket}"
+  },
+  {
+    "Sid": "AWSCloudTrailWrite",
+    "Effect": "Allow",
+    "Principal": {"Service": "cloudtrail.amazonaws.com"},
+    "Action": "s3:PutObject",
+    "Resource": f"arn:aws:s3:::{bucket}/AWSLogs/{acct}/*",
+    "Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}
+  }
+]
+
+# Remove any stale CloudTrail statements, then append fresh ones
+keep_sids = {"AWSCloudTrailAclCheck", "AWSCloudTrailWrite"}
+stmts = [s for s in existing.get("Statement", []) if s.get("Sid") not in keep_sids]
+stmts.extend(new_stmts)
+existing["Statement"] = stmts
+print(json.dumps(existing))
+PYEOF
+)
+
+export EXISTING BUCKET ACCOUNT_ID
+MERGED=$(python3 - <<'PYEOF'
+import json, sys, os
+existing = json.loads(os.environ['EXISTING'])
+bucket   = os.environ['BUCKET']
+acct     = os.environ['ACCOUNT_ID']
+new_stmts = [
+  {"Sid":"AWSCloudTrailAclCheck","Effect":"Allow",
+   "Principal":{"Service":"cloudtrail.amazonaws.com"},
+   "Action":"s3:GetBucketAcl",
+   "Resource":f"arn:aws:s3:::{bucket}"},
+  {"Sid":"AWSCloudTrailWrite","Effect":"Allow",
+   "Principal":{"Service":"cloudtrail.amazonaws.com"},
+   "Action":"s3:PutObject",
+   "Resource":f"arn:aws:s3:::{bucket}/AWSLogs/{acct}/*",
+   "Condition":{"StringEquals":{"s3:x-amz-acl":"bucket-owner-full-control"}}}
+]
+keep = {"AWSCloudTrailAclCheck","AWSCloudTrailWrite"}
+stmts = [s for s in existing.get("Statement",[]) if s.get("Sid") not in keep]
+stmts.extend(new_stmts)
+existing["Statement"] = stmts
+print(json.dumps(existing))
+PYEOF
+)
+aws s3api put-bucket-policy --bucket "$BUCKET" --policy "$MERGED"
 
 # Step 3: Enable log file validation
 aws cloudtrail update-trail \\
   --name "$TRAIL" \\
   --enable-log-file-validation \\
-  --region "$REGION"`,
+  --region "$REGION"
+
+# Verify
+aws cloudtrail get-trail --name "$TRAIL" --region "$REGION" \\
+  --query 'Trail.LogFileValidationEnabled'`,
     terraform: `\
 resource "aws_cloudtrail" "fix" {
   name                       = "${resourceId}"
   enable_log_file_validation = true
-}`,
+}
+
+# Also ensure the S3 bucket policy includes CloudTrail write access.
+# Use aws_s3_bucket_policy with a merged policy that preserves
+# any existing statements (e.g. DenyHTTP).`,
   }),
 
   // cloudtrail_s3_private — CloudTrail S3 log bucket publicly accessible
