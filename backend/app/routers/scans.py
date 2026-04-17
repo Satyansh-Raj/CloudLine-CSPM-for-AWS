@@ -74,6 +74,65 @@ _scan_results: dict[str, dict] = {}
 _event_loop: asyncio.AbstractEventLoop | None = None
 
 
+def _internal_table_names(settings) -> set[str]:
+    """Return all DynamoDB table names owned by
+    CloudLine itself.
+
+    Both the configured names (e.g. 'violation-state')
+    and their 'cloudline-' prefixed equivalents
+    (e.g. 'cloudline-violation-state') are included
+    so that production deployments using a prefix
+    convention are also covered.
+    """
+    base: set[str] = {
+        settings.dynamodb_state_table,
+        settings.dynamodb_trends_table,
+        settings.dynamodb_correlation_table,
+        settings.dynamodb_inventory_table,
+        settings.dynamodb_accounts_table,
+        settings.dynamodb_macie_table,
+        settings.dynamodb_users_table,
+        settings.dynamodb_audit_table,
+        settings.dynamodb_config_table,
+    }
+    prefixed = {
+        f"cloudline-{n}"
+        for n in base
+        if not n.startswith("cloudline-")
+    }
+    return base | prefixed
+
+
+def _strip_internal_tables(
+    input_data: dict, settings
+) -> dict:
+    """Return a copy of input_data with CloudLine's
+    own DynamoDB tables removed from the scan payload.
+
+    Prevents the scanner from flagging its own
+    infrastructure as violations.
+    """
+    dynamo = input_data.get("dynamodb")
+    if not dynamo:
+        return input_data
+    excluded = _internal_table_names(settings)
+    filtered_tables = [
+        t for t in dynamo.get("tables", [])
+        if t.get("table_name") not in excluded
+    ]
+    if len(filtered_tables) == len(
+        dynamo.get("tables", [])
+    ):
+        return input_data
+    return {
+        **input_data,
+        "dynamodb": {
+            **dynamo,
+            "tables": filtered_tables,
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
 # Per-region processing helpers
 # ---------------------------------------------------------------------------
@@ -102,6 +161,11 @@ def _process_region(
     """
     if account_id is None:
         account_id = settings.aws_account_id
+    # Remove CloudLine's own tables before OPA
+    # evaluation to prevent self-flagging.
+    input_data = _strip_internal_tables(
+        input_data, settings
+    )
     pk = f"{account_id}#{region}"
     persisted = 0
     stale_resolved = 0
@@ -230,7 +294,7 @@ def _process_region(
         _get_compliance_registry()._mappings.keys()
     )
     existing_states = state_manager.query_by_account(
-        account_id, region, limit=2000
+        account_id, region, limit=5000
     )
     for old in existing_states:
         # Purge only check_ids that are unknown to the
@@ -375,6 +439,17 @@ def _process_region(
                 if r.region == region
             }
 
+            # Build lookup of violation states by
+            # resource_arn to resolve them when a
+            # resource is deactivated (belt-and-
+            # suspenders alongside the check-level
+            # cleanup above).
+            states_by_arn: dict[str, list] = {}
+            for s in existing_states:
+                states_by_arn.setdefault(
+                    s.resource_arn, []
+                ).append(s)
+
             existing = resource_store.query_by_account(
                 account_id, region, limit=5000,
             )
@@ -395,6 +470,25 @@ def _process_region(
                         ex.resource_type,
                         ex.resource_id,
                     )
+                    # Resolve open violations for this
+                    # deactivated resource.
+                    for s in states_by_arn.get(
+                        ex.resource_id, []
+                    ):
+                        if s.status == "alarm":
+                            if state_manager.update_status(
+                                account_id,
+                                region,
+                                s.check_id,
+                                s.resource_arn,
+                                new_status="ok",
+                                reason=(
+                                    "Resource deactivated"
+                                    " — no longer exists"
+                                    " in AWS"
+                                ),
+                            ):
+                                stale_resolved += 1
         except Exception as e:
             logger.warning(
                 "Inventory classification failed"
