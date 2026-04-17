@@ -11,6 +11,7 @@ import {
 } from "@xyflow/react";
 import { useIamGraph } from "@/hooks";
 import { useAccount } from "@/hooks/useAccount";
+import { AccountBadge } from "@/components/shared";
 import {
   buildIamGraph,
   getInitialCollapsedIds,
@@ -390,9 +391,12 @@ export default function IamGraphPage() {
         }
       >
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-            IAM Graph
-          </h2>
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+              IAM Graph
+            </h2>
+            {!isFullscreen && <AccountBadge />}
+          </div>
           {!isFullscreen && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               IAM permission surface — users, policies, effective permissions

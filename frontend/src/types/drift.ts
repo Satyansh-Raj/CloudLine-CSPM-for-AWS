@@ -22,6 +22,7 @@ export interface DriftAlertParams {
   severity?: string;
   check_id?: string;
   limit?: number;
+  account_id?: string;
 }
 
 export interface DriftAlertsResponse {

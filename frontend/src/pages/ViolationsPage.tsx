@@ -8,6 +8,7 @@ import {
   ViolationFilters,
   type FilterValues,
 } from "@/components/violations";
+import { AccountBadge } from "@/components/shared";
 import { toViolationPath } from "@/utils/violationUrl";
 import type { Violation } from "@/types";
 
@@ -64,9 +65,12 @@ export default function ViolationsPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-        Violations
-      </h2>
+      <div className="flex items-baseline gap-3">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+          Violations
+        </h2>
+        <AccountBadge />
+      </div>
 
       {/* Filters */}
       <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-4 shadow-sm">

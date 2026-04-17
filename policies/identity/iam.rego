@@ -390,13 +390,17 @@ violations contains result if {
 # Rule iam_support_role — Support role for incident response must exist
 # ---------------------------------------------------------------------------
 violations contains result if {
-	roles := [r | some r in input.iam.roles; contains(lower(r.role_name), "support")]
-	count(roles) == 0
+	roles_with_support := [r |
+		some r in input.iam.roles
+		some p in r.attached_policies
+		p.PolicyName == "AWSSupportAccess"
+	]
+	count(roles_with_support) == 0
 	result := {
 		"check_id": "iam_support_role",
 		"status": "alarm",
 		"severity": "low",
-		"reason": "No IAM role with 'support' in name found — incident response may be impaired",
+		"reason": "No IAM role with AWSSupportAccess policy attached — incident response may be impaired",
 		"resource": concat("", ["arn:aws:iam::", input.account_id, ":role/"]),
 		"domain": "identity",
 		"service": "iam",

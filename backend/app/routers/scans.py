@@ -23,6 +23,7 @@ from fastapi import (
     APIRouter,
     BackgroundTasks,
     Depends,
+    Query,
 )
 
 from app.collectors.orchestrator import (
@@ -576,6 +577,7 @@ def _run_scan(
     state_manager: StateManager,
     resource_store: ResourceStore | None = None,
     macie_store=None,
+    account_id: str | None = None,
 ):
     """Run scan in background thread.
 
@@ -646,6 +648,13 @@ def _run_scan(
         else:
             # ── Multi-account mode ────────────────────
             session_factory = get_session_factory()
+
+            # Scope to specific account when requested
+            if account_id:
+                active_accounts = [
+                    a for a in active_accounts
+                    if a.account_id == account_id
+                ]
 
             for account in active_accounts:
                 try:
@@ -768,6 +777,13 @@ async def trigger_scan(
     ),
     macie_store=Depends(get_macie_store),
     _user: User = Depends(require_admin_or_operator),
+    account_id: str | None = Query(
+        None,
+        description=(
+            "Scope scan to a specific AWS account ID. "
+            "If omitted, all active accounts are scanned."
+        ),
+    ),
 ):
     """Trigger a full scan asynchronously.
 
@@ -786,6 +802,7 @@ async def trigger_scan(
         state_manager,
         resource_store,
         macie_store,
+        account_id,
     )
     return {
         "scan_id": scan_id,

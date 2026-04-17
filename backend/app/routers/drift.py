@@ -43,6 +43,10 @@ def list_drift_alerts(
         le=1000,
         description="Max results to return",
     ),
+    account_id: str | None = Query(
+        None,
+        description="Filter by AWS account ID",
+    ),
     state_manager: StateManager = Depends(
         get_state_manager
     ),
@@ -75,6 +79,13 @@ def list_drift_alerts(
             "ok", limit=limit
         )
         states = alarms + oks
+
+    # Filter to specific account when requested
+    if account_id:
+        states = [
+            s for s in states
+            if s.pk.split("#")[0] == account_id
+        ]
 
     alerts = [
         _state_to_alert(s) for s in states

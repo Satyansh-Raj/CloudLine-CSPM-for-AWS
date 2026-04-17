@@ -1,24 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { getAccounts } from "@/api/accounts";
 import type { TargetAccount } from "@/types/account";
 import { AccountContext } from "./accountContextValue";
 
-export function AccountProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const [selectedAccount, setSelectedAccountState] =
-    useState<string>("");
-  const [accounts, setAccounts] = useState<
-    TargetAccount[]
-  >([]);
+export function AccountProvider({ children }: { children: ReactNode }) {
+  const [selectedAccount, setSelectedAccountState] = useState<string>(
+    () => localStorage.getItem("cloudline_selected_account") ?? "",
+  );
+  const [accounts, setAccounts] = useState<TargetAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -42,12 +32,14 @@ export function AccountProvider({
     };
   }, [refreshKey]);
 
-  const setSelectedAccount = useCallback(
-    (accountId: string) => {
-      setSelectedAccountState(accountId);
-    },
-    [],
-  );
+  const setSelectedAccount = useCallback((accountId: string) => {
+    if (accountId) {
+      localStorage.setItem("cloudline_selected_account", accountId);
+    } else {
+      localStorage.removeItem("cloudline_selected_account");
+    }
+    setSelectedAccountState(accountId);
+  }, []);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -61,18 +53,10 @@ export function AccountProvider({
       setSelectedAccount,
       refresh,
     }),
-    [
-      selectedAccount,
-      accounts,
-      isLoading,
-      setSelectedAccount,
-      refresh,
-    ],
+    [selectedAccount, accounts, isLoading, setSelectedAccount, refresh],
   );
 
   return (
-    <AccountContext.Provider value={value}>
-      {children}
-    </AccountContext.Provider>
+    <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
   );
 }

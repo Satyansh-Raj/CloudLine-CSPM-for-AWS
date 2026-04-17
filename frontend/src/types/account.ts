@@ -1,3 +1,14 @@
+export interface PreflightRequest {
+  account_id: string;
+  account_name: string;
+}
+
+export interface PreflightResponse {
+  external_id: string;
+  bash_script: string;
+  cloudformation_template: string;
+}
+
 export interface TargetAccount {
   account_id: string;
   account_name: string;

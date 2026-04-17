@@ -452,6 +452,21 @@ class IAMCollector(BaseCollector):
                         }
                     except Exception:
                         pass
+                    attached = []
+                    try:
+                        p_pages = client.get_paginator(
+                            "list_attached_role_policies"
+                        )
+                        for p_page in p_pages.paginate(
+                            RoleName=r["RoleName"]
+                        ):
+                            attached.extend(
+                                p_page.get(
+                                    "AttachedPolicies", []
+                                )
+                            )
+                    except Exception:
+                        pass
                     roles.append(
                         {
                             "role_name": r[
@@ -465,6 +480,7 @@ class IAMCollector(BaseCollector):
                                     {},
                                 )
                             ),
+                            "attached_policies": attached,
                             "tags": tags,
                         }
                     )

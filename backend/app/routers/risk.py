@@ -51,6 +51,10 @@ def list_risk_scores(
         le=500,
         description="Max results to return",
     ),
+    account_id: str | None = Query(
+        None,
+        description="Filter by AWS account ID",
+    ),
     state_manager: StateManager = Depends(
         get_state_manager
     ),
@@ -62,8 +66,11 @@ def list_risk_scores(
     account/region. Filters by min_score, category,
     and domain.
     """
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
     states = state_manager.query_by_account(
-        settings.aws_account_id,
+        effective_account,
         settings.aws_region,
         limit=limit * 2,
     )
@@ -100,6 +107,10 @@ def list_risk_scores(
 
 @router.get("/risk/summary")
 def risk_summary(
+    account_id: str | None = Query(
+        None,
+        description="Filter by AWS account ID",
+    ),
     state_manager: StateManager = Depends(
         get_state_manager
     ),
@@ -111,8 +122,11 @@ def risk_summary(
     average score by domain, and top 5 highest risk.
     Scoped to the current account/region.
     """
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
     states = state_manager.query_by_account(
-        settings.aws_account_id,
+        effective_account,
         settings.aws_region,
         limit=500,
     )

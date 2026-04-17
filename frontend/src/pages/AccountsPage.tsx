@@ -1,40 +1,167 @@
 import { useState } from "react";
 import { useAccount } from "@/hooks/useAccount";
 import {
+  preflight,
   createAccount,
   deleteAccount,
 } from "@/api/accounts";
+import type { PreflightResponse } from "@/types/account";
+
+type Step = 1 | 2 | 3;
+type ScriptTab = "bash" | "cf";
+
+const STEPS = [
+  "Generate",
+  "Run Script",
+  "Connect",
+];
+
+function StepIndicator({ current }: { current: Step }) {
+  return (
+    <div className="flex items-center gap-2 mb-5">
+      {STEPS.map((label, i) => {
+        const n = (i + 1) as Step;
+        const active = n === current;
+        const done = n < current;
+        return (
+          <div
+            key={label}
+            className="flex items-center gap-2"
+          >
+            <div
+              className={[
+                "w-6 h-6 rounded-full flex items-center",
+                "justify-center text-xs font-bold",
+                active
+                  ? "bg-blue-600 text-white"
+                  : done
+                    ? "bg-blue-200 dark:bg-blue-900"
+                      + " text-blue-700 dark:text-blue-300"
+                    : "bg-gray-100 dark:bg-white/5"
+                      + " text-gray-400",
+              ].join(" ")}
+            >
+              {done ? "✓" : n}
+            </div>
+            <span
+              className={[
+                "text-xs font-medium",
+                active
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-400 dark:text-gray-600",
+              ].join(" ")}
+            >
+              {label}
+            </span>
+            {i < STEPS.length - 1 && (
+              <div className="w-6 h-px bg-gray-200 dark:bg-white/10 mx-1" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <button
+      onClick={copy}
+      className={[
+        "text-xs px-2 py-1 rounded font-medium transition-colors",
+        copied
+          ? "bg-green-100 dark:bg-green-900/30"
+            + " text-green-700 dark:text-green-400"
+          : "bg-gray-100 dark:bg-white/5"
+            + " text-gray-500 dark:text-gray-400"
+            + " hover:bg-gray-200 dark:hover:bg-white/10",
+      ].join(" ")}
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
 
 export default function AccountsPage() {
-  const { accounts, isLoading, refresh } =
-    useAccount();
+  const { accounts, isLoading, refresh } = useAccount();
 
-  const [name, setName] = useState("");
+  const [step, setStep] = useState<Step>(1);
+  const [accountName, setAccountName] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [preflightData, setPreflightData] =
+    useState<PreflightResponse | null>(null);
+  const [scriptTab, setScriptTab] =
+    useState<ScriptTab>("bash");
+  const [confirmed, setConfirmed] = useState(false);
   const [roleArn, setRoleArn] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleAdd() {
-    if (!name || !accountId || !roleArn) return;
+  function resetWizard() {
+    setStep(1);
+    setAccountName("");
+    setAccountId("");
+    setPreflightData(null);
+    setScriptTab("bash");
+    setConfirmed(false);
+    setRoleArn("");
+    setError(null);
+  }
+
+  async function handleGenerate() {
+    if (!accountName || !accountId) return;
     setSubmitting(true);
+    setError(null);
     try {
-      await createAccount({
-        account_name: name,
+      const data = await preflight({
         account_id: accountId,
-        role_arn: roleArn,
+        account_name: accountName,
       });
-      setName("");
-      setAccountId("");
-      setRoleArn("");
-      refresh();
+      setPreflightData(data);
+      setRoleArn(
+        `arn:aws:iam::${accountId}:role/CloudLineScanner`,
+      );
+      setStep(2);
+    } catch {
+      setError("Failed to generate setup scripts.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleRemove(id: string) {
-    await deleteAccount(id);
-    refresh();
+  async function handleConnect() {
+    if (!roleArn || !preflightData) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await createAccount({
+        account_id: accountId,
+        account_name: accountName,
+        role_arn: roleArn,
+        external_id: preflightData.external_id,
+      });
+      resetWizard();
+      refresh();
+    } catch {
+      setError(
+        "Failed to connect account. Verify the role ARN"
+        + " and trust policy.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleRemove(id: string) {
+    deleteAccount(id).then(refresh);
   }
 
   return (
@@ -43,61 +170,188 @@ export default function AccountsPage() {
         Accounts
       </h2>
 
-      {/* Add account form */}
+      {/* Wizard card */}
       <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-3">
-          Add Target Account
-        </p>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[140px]">
-            <input
-              type="text"
-              placeholder="Account Name"
-              value={name}
-              onChange={(e) =>
-                setName(e.target.value)
+        <StepIndicator current={step} />
+
+        {/* Step 1 — Generate */}
+        {step === 1 && (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+              Enter account details
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex-1 min-w-[140px]">
+                <input
+                  type="text"
+                  placeholder="Account Name"
+                  value={accountName}
+                  onChange={(e) =>
+                    setAccountName(e.target.value)
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <input
+                  type="text"
+                  placeholder="AWS Account ID"
+                  value={accountId}
+                  onChange={(e) =>
+                    setAccountId(e.target.value)
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
+                />
+              </div>
+            </div>
+            {error && (
+              <p className="text-xs text-red-500">
+                {error}
+              </p>
+            )}
+            <button
+              onClick={handleGenerate}
+              disabled={
+                submitting || !accountName || !accountId
               }
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
-            />
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {submitting
+                ? "Generating…"
+                : "Generate Setup Scripts"}
+            </button>
           </div>
-          <div className="flex-1 min-w-[140px]">
+        )}
+
+        {/* Step 2 — Run Script */}
+        {step === 2 && preflightData && (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+              Run the setup script in your AWS account
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              External ID:{" "}
+              <span className="font-mono text-gray-700 dark:text-gray-300">
+                {preflightData.external_id}
+              </span>
+            </p>
+
+            {/* Tab selector */}
+            <div className="flex gap-1 p-1 bg-gray-100 dark:bg-white/5 rounded-lg w-fit">
+              {(["bash", "cf"] as ScriptTab[]).map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setScriptTab(tab)}
+                    className={[
+                      "px-3 py-1 text-xs font-medium rounded-md transition-colors",
+                      scriptTab === tab
+                        ? "bg-white dark:bg-black"
+                          + " text-gray-900 dark:text-white"
+                          + " shadow-sm"
+                        : "text-gray-500 dark:text-gray-400",
+                    ].join(" ")}
+                  >
+                    {tab === "bash"
+                      ? "Bash / CLI"
+                      : "CloudFormation"}
+                  </button>
+                ),
+              )}
+            </div>
+
+            {/* Script block */}
+            <div className="relative">
+              <div className="absolute top-2 right-2 z-10">
+                <CopyButton
+                  text={
+                    scriptTab === "bash"
+                      ? preflightData.bash_script
+                      : preflightData
+                          .cloudformation_template
+                  }
+                />
+              </div>
+              <pre className="text-xs font-mono bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl p-4 overflow-x-auto max-h-64 whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                {scriptTab === "bash"
+                  ? preflightData.bash_script
+                  : preflightData.cloudformation_template}
+              </pre>
+            </div>
+
+            {/* Confirmation */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(e) =>
+                  setConfirmed(e.target.checked)
+                }
+                className="w-4 h-4 rounded border-gray-300 text-blue-600"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                I've run the script successfully
+              </span>
+            </label>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStep(1)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                disabled={!confirmed}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3 — Connect */}
+        {step === 3 && (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+              Enter the role ARN to connect
+            </p>
             <input
               type="text"
-              placeholder="Account ID"
-              value={accountId}
-              onChange={(e) =>
-                setAccountId(e.target.value)
-              }
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
-            />
-          </div>
-          <div className="flex-[2] min-w-[200px]">
-            <input
-              type="text"
-              placeholder="Role ARN"
+              placeholder="arn:aws:iam::123456789012:role/CloudLineScanner"
               value={roleArn}
-              onChange={(e) =>
-                setRoleArn(e.target.value)
-              }
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
+              onChange={(e) => setRoleArn(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none font-mono"
             />
+            {error && (
+              <p className="text-xs text-red-500">
+                {error}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStep(2)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleConnect}
+                disabled={submitting || !roleArn}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {submitting
+                  ? "Connecting…"
+                  : "Connect Account"}
+              </button>
+            </div>
           </div>
-          <button
-            onClick={handleAdd}
-            disabled={
-              submitting
-              || !name
-              || !accountId
-              || !roleArn
-            }
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Add Account
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* Loading */}
+      {/* Loading skeleton */}
       {isLoading && (
         <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm animate-pulse space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -113,9 +367,8 @@ export default function AccountsPage() {
       {!isLoading && accounts.length === 0 && (
         <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-8 text-center shadow-sm">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No target accounts configured. Add an
-            account above to enable cross-account
-            scanning.
+            No target accounts configured. Use the wizard
+            above to add one.
           </p>
         </div>
       )}

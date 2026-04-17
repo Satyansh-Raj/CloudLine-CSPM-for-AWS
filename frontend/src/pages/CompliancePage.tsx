@@ -4,6 +4,7 @@ import { useCompliance } from "@/hooks/useCompliance";
 import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
 import { useAccount } from "@/hooks/useAccount";
+import { AccountBadge } from "@/components/shared";
 import { getControlName } from "@/constants/controlNames";
 import type {
   FrameworkSummary,
@@ -409,9 +410,12 @@ export default function CompliancePage() {
       {/* Page header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Compliance
-          </h2>
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Compliance
+            </h2>
+            <AccountBadge />
+          </div>
           <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
             Framework posture across your AWS environment
           </p>

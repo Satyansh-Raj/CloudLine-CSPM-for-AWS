@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useInventorySummary } from "@/hooks/useInventory";
 import { useAccount } from "@/hooks/useAccount";
+import { AccountBadge } from "@/components/shared";
 
 /* ---------- category icons ---------- */
 
@@ -38,12 +39,15 @@ export default function InventoryPage() {
     <div className="space-y-6">
       {/* Heading + total stat */}
       <div className="flex items-baseline justify-between">
-        <h2
-          className="text-xl font-bold text-gray-900
-            dark:text-white tracking-tight"
-        >
-          Inventory
-        </h2>
+        <div className="flex items-baseline gap-3">
+          <h2
+            className="text-xl font-bold text-gray-900
+              dark:text-white tracking-tight"
+          >
+            Inventory
+          </h2>
+          <AccountBadge />
+        </div>
         {summary && (
           <span
             className="text-sm text-gray-500

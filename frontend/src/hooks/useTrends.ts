@@ -41,12 +41,18 @@ const PERIOD_DAYS: Record<Period, number> = {
   "90d": 90,
 };
 
-export function useTrends(period: Period) {
+export function useTrends(period: Period, accountId?: string) {
   const days = PERIOD_DAYS[period];
-  const { data: alertData, isLoading: alertsLoading, error: alertsError } =
-    useDriftAlerts({ limit: 1000 });
-  const { data: complianceData, isLoading: compLoading, error: compError } =
-    useCompliance();
+  const {
+    data: alertData,
+    isLoading: alertsLoading,
+    error: alertsError,
+  } = useDriftAlerts({ limit: 1000, account_id: accountId || undefined });
+  const {
+    data: complianceData,
+    isLoading: compLoading,
+    error: compError,
+  } = useCompliance();
 
   const trends = useMemo(() => {
     if (!alertData?.alerts) return [];

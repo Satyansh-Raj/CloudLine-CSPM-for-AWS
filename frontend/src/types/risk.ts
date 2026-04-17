@@ -14,6 +14,7 @@ export interface RiskScoreParams {
   category?: RiskCategory;
   domain?: string;
   limit?: number;
+  account_id?: string;
 }
 
 export interface RiskScoresResponse {

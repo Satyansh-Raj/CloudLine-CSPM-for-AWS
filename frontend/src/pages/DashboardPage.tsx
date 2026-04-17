@@ -9,6 +9,7 @@ import {
   TopViolationsTable,
   DomainPieChart,
 } from "@/components/dashboard";
+import { AccountBadge } from "@/components/shared";
 import { triggerScan } from "@/api";
 
 /* ── Skeleton card ──────────────────────────────── */
@@ -55,13 +56,14 @@ function ErrorCard({ message }: { message: string }) {
 
 /* ── Scan trigger button ────────────────────────── */
 function ScanButton() {
+  const { selectedAccount } = useAccount();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   async function handleScan() {
     setLoading(true);
     try {
-      await triggerScan();
+      await triggerScan(selectedAccount || undefined);
       setDone(true);
       setTimeout(() => setDone(false), 4000);
       window.location.reload();
@@ -165,7 +167,7 @@ export default function DashboardPage() {
   const { selectedAccount } = useAccount();
   const accountId = selectedAccount || undefined;
   const compliance = useCompliance(accountId);
-  const risk = useRiskSummary();
+  const risk = useRiskSummary(accountId);
   const macie = useMacieFindings(
     accountId ? { account_id: accountId } : undefined,
   );
@@ -269,6 +271,9 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
             Dashboard
           </h2>
+          <div className="mt-1">
+            <AccountBadge />
+          </div>
         </div>
         <ScanButton />
       </div>
