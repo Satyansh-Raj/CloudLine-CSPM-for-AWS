@@ -39,7 +39,7 @@ const columns = [
         <span className="text-sm font-medium text-ink-black dark:text-canvas-cream">
           {getCheckName(info.getValue())}
         </span>
-        <span className="block text-[10px] font-mono text-slate-gray/70 dark:text-slate-gray/50">
+        <span className="block mt-0.5 text-[10px] font-mono text-slate-gray/70 dark:text-slate-gray/50">
           {info.getValue()}
         </span>
       </div>
@@ -109,7 +109,7 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-slate-gray uppercase tracking-wider cursor-pointer select-none hover:bg-ghost-cream dark:hover:bg-white/5"
+                    className="px-10 py-3 text-left text-xs font-medium text-slate-gray uppercase tracking-wider cursor-pointer select-none hover:bg-ghost-cream dark:hover:bg-white/5"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-1">
@@ -147,7 +147,7 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="px-4 py-3 whitespace-nowrap text-sm text-ink-black dark:text-canvas-cream"
+                      className="px-10 py-3 whitespace-nowrap text-sm text-ink-black dark:text-canvas-cream"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

@@ -5,7 +5,6 @@ import {
   RiskScoreMeter,
   ComplianceSection,
   EyebrowLabel,
-  GhostHeadline,
 } from "@/components/shared";
 import { getCheckName } from "@/constants/checkNames";
 import { getComplianceMapping } from "@/constants/complianceMappings";
@@ -125,20 +124,16 @@ export default function ResolvedDetailPage() {
         <>
           {/* Header card */}
           <div className="relative overflow-hidden bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
-            <GhostHeadline>DONE</GhostHeadline>
             <img
               src="/resolved.png"
               alt="Resolved"
-              className="absolute -top-[0.85rem] right-[5.75rem] w-36 h-36 object-contain"
+              className="absolute -top-1 right-[5.75rem] w-36 h-36 object-contain"
               style={{ transform: "rotate(-30deg)" }}
             />
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <SeverityBadge severity={violation.severity} />
               <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-pill bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400">
                 Resolved
-              </span>
-              <span className="ml-auto text-[10px] font-mono text-slate-gray/70">
-                {violation.check_id}
               </span>
             </div>
             <EyebrowLabel>Resolved Issue</EyebrowLabel>

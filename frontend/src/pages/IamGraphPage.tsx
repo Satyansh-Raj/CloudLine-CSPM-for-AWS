@@ -68,14 +68,14 @@ function Legend() {
         "absolute top-3 left-3 z-10 pointer-events-none",
         "bg-lifted-cream/95 dark:bg-[#1c1c1b]/95 backdrop-blur-sm",
         "border border-ghost-cream dark:border-white/5",
-        "rounded-hero px-3 py-2.5 shadow-elev-1",
+        "rounded-hero px-4 py-3 shadow-elev-1",
         "text-[10px] text-slate-gray dark:text-gray-400",
       ].join(" ")}
     >
       <p className="font-semibold text-[9px] uppercase tracking-wider text-slate-gray/70 dark:text-gray-600 mb-2">
         Legend
       </p>
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <LegendRow color="bg-ink-black" label="Account" />
         <LegendRow color="bg-slate-gray" label="User" />
         <LegendRow color="bg-dust-taupe" label="Policy" />

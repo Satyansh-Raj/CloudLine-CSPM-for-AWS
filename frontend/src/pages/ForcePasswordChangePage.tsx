@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { changePassword } from "@/api/auth";
 import type { ApiError } from "@/api/client";
-import GhostHeadline from "@/components/shared/GhostHeadline";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 export default function ForcePasswordChangePage() {
@@ -40,9 +39,7 @@ export default function ForcePasswordChangePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas-cream dark:bg-ink-black px-4">
       <div className="w-full max-w-sm">
-        <div className="relative overflow-hidden bg-lifted-cream dark:bg-ink-black rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
-          <GhostHeadline className="-bottom-4 -right-4">PASS</GhostHeadline>
-
+        <div className="bg-lifted-cream dark:bg-ink-black rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
           <EyebrowLabel className="mb-3">Account Security</EyebrowLabel>
           <h1 className="text-base font-semibold text-ink-black dark:text-canvas-cream mb-1">
             Change Password

@@ -801,7 +801,7 @@ export default function PoliciesPage() {
                                     "flex" +
                                     " items-center" +
                                     " justify-between" +
-                                    " px-3 py-1.5" +
+                                    " px-10 py-1.5" +
                                     " bg-gray-800" +
                                     " dark:bg-white/5" +
                                     " border-b" +
@@ -843,7 +843,7 @@ export default function PoliciesPage() {
                                   </button>
                                 </div>
                                 {sourceLoading && !sourceCache[p.check_id] ? (
-                                  <div className="px-4 py-3">
+                                  <div className="px-10 py-3">
                                     <div
                                       className={
                                         "h-3 w-32" +
@@ -856,7 +856,7 @@ export default function PoliciesPage() {
                                 ) : (
                                   <pre
                                     className={
-                                      "px-4 py-3" +
+                                      "px-10 py-3" +
                                       " text-xs" +
                                       " leading-relaxed" +
                                       " font-mono" +

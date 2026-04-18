@@ -17,9 +17,7 @@ function typeIcon(type: string): string {
 }
 
 function typeBg(type: string): string {
-  return type === "violation_new"
-    ? "bg-red-500"
-    : "bg-green-500";
+  return type === "violation_new" ? "bg-red-500" : "bg-green-500";
 }
 
 function AlertItem({
@@ -32,10 +30,8 @@ function AlertItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-2 hover:bg-canvas-cream dark:hover:bg-white/[0.04] transition-colors ${
-        !alert.read
-          ? "bg-ghost-cream dark:bg-white/5"
-          : ""
+      className={`w-full text-left px-7 py-2 hover:bg-canvas-cream dark:hover:bg-white/[0.04] transition-colors ${
+        !alert.read ? "bg-ghost-cream dark:bg-white/5" : ""
       }`}
     >
       <div className="flex items-start gap-2">
@@ -49,9 +45,7 @@ function AlertItem({
             <span className="text-sm font-medium text-ink-black dark:text-canvas-cream">
               {alert.data.check_id}
             </span>
-            <SeverityBadge
-              severity={alert.data.severity}
-            />
+            <SeverityBadge severity={alert.data.severity} />
           </div>
           <p className="text-xs text-slate-gray truncate mt-0.5">
             {alert.data.resource_arn}
@@ -69,25 +63,17 @@ interface Props {
   onNavigate?: (path: string) => void;
 }
 
-export default function DriftAlertFeed({
-  onNavigate,
-}: Props) {
-  const { alerts, markRead, markAllRead, status } =
-    useAlerts();
+export default function DriftAlertFeed({ onNavigate }: Props) {
+  const { alerts, markRead, markAllRead, status } = useAlerts();
 
   function handleAlertClick(alert: WsAlert) {
     markRead(alert.id);
-    onNavigate?.(
-      toViolationPath(
-        alert.data.check_id,
-        alert.data.resource_arn,
-      ),
-    );
+    onNavigate?.(toViolationPath(alert.data.check_id, alert.data.resource_arn));
   }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-ghost-cream dark:border-white/5">
+      <div className="flex items-center justify-between px-7 py-2 border-b border-ghost-cream dark:border-white/5">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream">
             Live Alerts
@@ -114,7 +100,7 @@ export default function DriftAlertFeed({
       </div>
       <div className="flex-1 overflow-y-auto divide-y divide-ghost-cream dark:divide-white/5">
         {alerts.length === 0 ? (
-          <div className="p-4 text-center text-sm text-slate-gray">
+          <div className="px-7 py-4 text-center text-sm text-slate-gray">
             No alerts yet
           </div>
         ) : (

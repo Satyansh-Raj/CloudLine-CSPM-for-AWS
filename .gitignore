@@ -43,6 +43,9 @@ frontend/src/test/
 frontend/src/utils/__tests__/
 frontend/src/components/shared/__tests__/
 
+# Ignore test folders
+**/__tests__/
+
 # ── Linters / Formatters ────────────────────────
 .ruff_cache/
 

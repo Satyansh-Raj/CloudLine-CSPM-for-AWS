@@ -10,7 +10,6 @@ import {
   RiskScoreMeter,
   ComplianceSection,
   EyebrowLabel,
-  GhostHeadline,
 } from "@/components/shared";
 import { RoleGate } from "@/components/auth";
 import { getCheckName } from "@/constants/checkNames";
@@ -137,7 +136,7 @@ function JiraSection({
             resource_id: violation.resource ?? "",
           })
         }
-        className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-btn px-4 py-2 text-sm font-medium transition-colors"
+        className="flex items-center gap-2 bg-ink-black hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-canvas-cream rounded-btn px-4 py-2 text-sm font-medium transition-opacity"
       >
         {isPending ? (
           <>
@@ -270,8 +269,7 @@ export default function ViolationDetailPage() {
       ) : (
         <>
           {/* Header card */}
-          <div className="relative overflow-hidden bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
-            <GhostHeadline>ISSUE</GhostHeadline>
+          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <SeverityBadge severity={violation.severity} />
               <StatusBadge status={violation.status} />

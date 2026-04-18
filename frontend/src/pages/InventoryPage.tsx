@@ -1,11 +1,7 @@
 import { Link } from "react-router-dom";
 import { useInventorySummary } from "@/hooks/useInventory";
 import { useAccount } from "@/hooks/useAccount";
-import {
-  AccountBadge,
-  EyebrowLabel,
-  GhostHeadline,
-} from "@/components/shared";
+import { AccountBadge, EyebrowLabel } from "@/components/shared";
 
 const CATEGORY_ICONS: Record<string, string> = {
   backup: "/icons/backup.png",
@@ -36,8 +32,7 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       {/* Heading */}
-      <div className="relative flex items-baseline justify-between">
-        <GhostHeadline>INV</GhostHeadline>
+      <div className="flex items-baseline justify-between">
         <div className="flex items-baseline gap-3">
           <div>
             <EyebrowLabel>Resource Catalogue</EyebrowLabel>
@@ -88,27 +83,8 @@ export default function InventoryPage() {
 
       {/* Category card grid */}
       {summary && summary.total > 0 && (
-        <div className="relative">
-          {/* Orbital arc decoration — desktop only */}
-          <svg
-            aria-hidden="true"
-            className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none select-none"
-            preserveAspectRatio="none"
-          >
-            <ellipse
-              cx="50%"
-              cy="50%"
-              rx="45%"
-              ry="40%"
-              fill="none"
-              stroke="#F37338"
-              strokeWidth="1"
-              strokeDasharray="6 8"
-              opacity="0.25"
-            />
-          </svg>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 relative">
+        <div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {Object.entries(summary.by_category)
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([category, count]) => {

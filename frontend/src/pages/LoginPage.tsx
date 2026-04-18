@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { requestPasswordReset } from "@/api/auth";
-import GhostHeadline from "@/components/shared/GhostHeadline";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 export default function LoginPage() {
@@ -10,8 +9,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from =
-    (location.state as { from?: Location })?.from?.pathname ??
-    "/dashboard";
+    (location.state as { from?: Location })?.from?.pathname ?? "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,15 +77,11 @@ export default function LoginPage() {
             <p className="text-sm font-bold tracking-tight text-ink-black dark:text-canvas-cream leading-none">
               CloudLine
             </p>
-            <p className="text-[10px] text-slate-gray mt-0.5">
-              AWS Security
-            </p>
+            <p className="text-[10px] text-slate-gray mt-0.5">AWS Security</p>
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-lifted-cream dark:bg-ink-black rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
-          <GhostHeadline className="-bottom-4 -right-6">AUTH</GhostHeadline>
-
+        <div className="bg-lifted-cream dark:bg-ink-black rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
           <EyebrowLabel className="mb-3">Secure Access</EyebrowLabel>
           <h1 className="text-base font-semibold text-ink-black dark:text-canvas-cream mb-5">
             Sign in
@@ -159,19 +153,15 @@ export default function LoginPage() {
           ) : (
             <div>
               <p className="text-[13px] text-slate-gray mb-3">
-                Enter your email to request a password reset. An
-                admin will approve it.
+                Enter your email to request a password reset. An admin will
+                approve it.
               </p>
               {resetSent ? (
                 <p className="text-[13px] text-green-600 dark:text-green-400">
-                  Reset request sent. Contact your admin to approve
-                  it.
+                  Reset request sent. Contact your admin to approve it.
                 </p>
               ) : (
-                <form
-                  onSubmit={handleResetSubmit}
-                  className="space-y-3"
-                >
+                <form onSubmit={handleResetSubmit} className="space-y-3">
                   <input
                     type="email"
                     placeholder="Email address"

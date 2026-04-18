@@ -32,16 +32,23 @@ function formatLabel(domain: string) {
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: Array<{ name: string; value: number; payload: { color: string, displayValue: string } }>;
+  payload?: Array<{
+    name: string;
+    value: number;
+    payload: { color: string; displayValue: string };
+  }>;
 }
 
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const { name, payload: itemPayload } = payload[0];
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-3 py-2 shadow-elev-1 text-xs">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-1 text-xs">
       <div className="flex items-center gap-1.5 font-semibold text-ink-black dark:text-canvas-cream">
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: itemPayload.color }} />
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: itemPayload.color }}
+        />
         {name}: {itemPayload.displayValue}
       </div>
     </div>
@@ -52,7 +59,10 @@ export default function DomainPieChart({ byDomain }: Props) {
   const entries = Object.entries(byDomain)
     .map(([domain, val]) => ({
       domain,
-      count: typeof val === "number" ? val : (val as { alarm?: number }).alarm ?? 0,
+      count:
+        typeof val === "number"
+          ? val
+          : ((val as { alarm?: number }).alarm ?? 0),
     }))
     .filter((e) => e.count > 0)
     .sort((a, b) => b.count - a.count);
@@ -86,9 +96,18 @@ export default function DomainPieChart({ byDomain }: Props) {
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center flex-1 text-slate-gray">
-          <svg className="w-10 h-10 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-              d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+          <svg
+            className="w-10 h-10 mb-2 opacity-40"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+              d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
+            />
           </svg>
           <p className="text-xs">No domain data</p>
         </div>
@@ -107,11 +126,7 @@ export default function DomainPieChart({ byDomain }: Props) {
                 className="stroke-lifted-cream dark:stroke-ink-black"
               >
                 {displayData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={entry.color}
-                    fillOpacity={0.65}
-                  />
+                  <Cell key={i} fill={entry.color} fillOpacity={0.65} />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
@@ -121,7 +136,10 @@ export default function DomainPieChart({ byDomain }: Props) {
                 wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
                 formatter={(value: string, entry: any) => (
                   <span className="text-slate-gray">
-                    {value} <span className="font-bold text-ink-black dark:text-canvas-cream">{entry.payload?.displayValue}</span>
+                    {value}{" "}
+                    <span className="font-bold text-ink-black dark:text-canvas-cream">
+                      {entry.payload?.displayValue}
+                    </span>
                   </span>
                 )}
               />

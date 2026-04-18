@@ -372,7 +372,7 @@ export default function Sidebar() {
           <div
             role="listbox"
             aria-label="Select account"
-            className="absolute z-50 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 py-1"
+            className="absolute z-50 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 py-1 overflow-hidden"
           >
             <div
               role="option"
@@ -381,7 +381,7 @@ export default function Sidebar() {
                 setSelectedAccount("");
                 setPopoverOpen(false);
               }}
-              className={`px-3 py-2 text-[13px] cursor-pointer flex items-center gap-2 hover:bg-ghost-cream dark:hover:bg-white/5 ${
+              className={`px-10 py-2 text-[13px] cursor-pointer flex items-center gap-2 hover:bg-ghost-cream dark:hover:bg-white/5 ${
                 selectedAccount === ""
                   ? "text-ink-black dark:text-canvas-cream font-medium"
                   : "text-slate-gray dark:text-ghost-cream"
@@ -399,7 +399,7 @@ export default function Sidebar() {
                   setSelectedAccount(a.account_id);
                   setPopoverOpen(false);
                 }}
-                className={`px-3 py-2 text-[13px] cursor-pointer hover:bg-ghost-cream dark:hover:bg-white/5 ${
+                className={`px-10 py-2 text-[13px] cursor-pointer hover:bg-ghost-cream dark:hover:bg-white/5 ${
                   selectedAccount === a.account_id
                     ? "text-ink-black dark:text-canvas-cream font-medium"
                     : "text-slate-gray dark:text-ghost-cream"
@@ -434,7 +434,7 @@ export default function Sidebar() {
                   setPopoverOpen(false);
                   setModalOpen(true);
                 }}
-                className="w-full text-left px-3 py-2 text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/5 font-medium"
+                className="w-full text-left px-10 py-2 text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/5 font-medium"
               >
                 + Add Account
               </button>

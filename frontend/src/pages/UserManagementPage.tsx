@@ -171,8 +171,7 @@ function RoleBadge({ role }: { role: UserRole }) {
       "bg-ink-black text-canvas-cream dark:bg-canvas-cream dark:text-ink-black",
     operator:
       "bg-ghost-cream text-ink-black dark:bg-white/10 dark:text-gray-200",
-    viewer:
-      "bg-ghost-cream text-slate-gray dark:bg-white/5 dark:text-gray-400",
+    viewer: "bg-ghost-cream text-slate-gray dark:bg-white/5 dark:text-gray-400",
   };
   return (
     <span
@@ -474,7 +473,7 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-4">
+    <div className="space-y-4 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <EyebrowLabel className="mb-1">User Management</EyebrowLabel>

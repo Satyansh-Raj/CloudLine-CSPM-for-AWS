@@ -23,22 +23,24 @@ interface ChartTooltipProps {
 function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/10 rounded-hero px-3 py-2 shadow-elev-2 text-xs">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-2 text-xs">
       <p className="font-semibold text-ink-black dark:text-canvas-cream mb-1">
         {label}
       </p>
-      {payload.map((p) => (
-        <div key={p.name} className="flex items-center gap-2">
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: p.color }}
-          />
-          <span className="text-slate-gray">{p.name}:</span>
-          <span className="font-semibold text-ink-black dark:text-canvas-cream">
-            {p.value}
-          </span>
-        </div>
-      ))}
+      <div className="space-y-1">
+        {payload.map((p) => (
+          <div key={p.name} className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: p.color }}
+            />
+            <span className="text-slate-gray">{p.name}:</span>
+            <span className="font-semibold text-ink-black dark:text-canvas-cream">
+              {p.value}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -10,7 +10,6 @@ import {
   DomainPieChart,
 } from "@/components/dashboard";
 import { AccountBadge } from "@/components/shared";
-import GhostHeadline from "@/components/shared/GhostHeadline";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 import { triggerScan } from "@/api";
 
@@ -148,17 +147,13 @@ function MacieSummaryCard({ findings }: { findings: MacieFinding[] }) {
           <p className="text-2xl font-bold text-ink-black dark:text-canvas-cream">
             {findings.length}
           </p>
-          <p className="text-xs text-slate-gray mt-0.5">
-            Total
-          </p>
+          <p className="text-xs text-slate-gray mt-0.5">Total</p>
         </div>
         <div>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">
             {highCount}
           </p>
-          <p className="text-xs text-slate-gray mt-0.5">
-            High
-          </p>
+          <p className="text-xs text-slate-gray mt-0.5">High</p>
         </div>
       </div>
     </div>
@@ -266,8 +261,7 @@ export default function DashboardPage() {
     <div className="space-y-5">
       {/* Page header */}
       <div className="flex items-center justify-between">
-        <div className="relative">
-          <GhostHeadline className="-bottom-3 -left-1">DASH</GhostHeadline>
+        <div>
           <EyebrowLabel className="mb-1">Overview</EyebrowLabel>
           <h2 className="text-display-sm font-bold text-ink-black dark:text-canvas-cream tracking-display">
             Dashboard

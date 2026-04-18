@@ -179,18 +179,18 @@ export default function Header() {
                 </span>
               </button>
               {menuOpen && (
-                <div className="absolute right-0 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 py-1 z-50">
+                <div className="absolute right-0 mt-1 w-44 rounded-xl border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 overflow-hidden z-50">
                   <button
                     type="button"
                     onClick={() => {
                       setMenuOpen(false);
                       navigate("/account/change-password");
                     }}
-                    className="w-full text-left px-3 py-2 text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/5"
+                    className="w-full text-left px-3 py-2.5 text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/5"
                   >
                     Change Password
                   </button>
-                  <div className="border-t border-ghost-cream dark:border-white/5 mt-1 pt-1">
+                  <div className="border-t border-ghost-cream dark:border-white/5">
                     <button
                       type="button"
                       onClick={() => {
@@ -198,7 +198,7 @@ export default function Header() {
                         setMenuOpen(false);
                         navigate("/login");
                       }}
-                      className="w-full text-left px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                      className="w-full text-left px-3 py-2.5 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       Sign Out
                     </button>

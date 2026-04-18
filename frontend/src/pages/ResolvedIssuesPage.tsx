@@ -13,12 +13,7 @@ import { useViolations } from "@/hooks/useViolations";
 import { useRegion } from "@/hooks/useRegion";
 import { useAccount } from "@/hooks/useAccount";
 import { toResolvedPath } from "@/utils/violationUrl";
-import {
-  SeverityBadge,
-  StatusBadge,
-  EyebrowLabel,
-  GhostHeadline,
-} from "@/components/shared";
+import { SeverityBadge, StatusBadge, EyebrowLabel } from "@/components/shared";
 import { ViolationFilters, type FilterValues } from "@/components/violations";
 import { getCheckName } from "@/constants/checkNames";
 import type { Violation } from "@/types";
@@ -183,8 +178,7 @@ export default function ResolvedIssuesPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="relative flex items-center justify-between flex-wrap gap-3">
-        <GhostHeadline>RSLVD</GhostHeadline>
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <EyebrowLabel>Passed Checks</EyebrowLabel>
           <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight">
@@ -278,7 +272,7 @@ export default function ResolvedIssuesPage() {
                     {hg.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-4 py-3 text-left text-xs font-medium text-slate-gray uppercase tracking-wider cursor-pointer select-none hover:bg-ghost-cream dark:hover:bg-white/5"
+                        className="px-10 py-3 text-left text-xs font-medium text-slate-gray uppercase tracking-wider cursor-pointer select-none hover:bg-ghost-cream dark:hover:bg-white/5"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <div className="flex items-center gap-1">
@@ -333,7 +327,7 @@ export default function ResolvedIssuesPage() {
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
-                          className="px-4 py-3 whitespace-nowrap text-sm text-ink-black dark:text-canvas-cream"
+                          className="px-10 py-3 whitespace-nowrap text-sm text-ink-black dark:text-canvas-cream"
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
