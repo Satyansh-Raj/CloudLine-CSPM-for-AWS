@@ -107,16 +107,22 @@ def get_framework_score(
             ),
         )
 
-    eff_region = region or settings.aws_region
     eff_account = (
         account_id or settings.aws_account_id
     )
 
-    states = state_manager.query_by_account(
-        eff_account,
-        eff_region,
-        limit=5000,
-    )
+    if region:
+        states = state_manager.query_by_account(
+            eff_account, region, limit=5000
+        )
+    else:
+        states = []
+        for r in settings.aws_regions:
+            states.extend(
+                state_manager.query_by_account(
+                    eff_account, r, limit=5000
+                )
+            )
 
     scorer = ComplianceFrameworkScorer(
         framework=framework_name,
@@ -147,16 +153,22 @@ def get_compliance_score(
     Includes a by_framework breakdown with per-framework
     scores computed via ComplianceFrameworkScorer.
     """
-    eff_region = region or settings.aws_region
     eff_account = (
         account_id or settings.aws_account_id
     )
 
-    states = state_manager.query_by_account(
-        eff_account,
-        eff_region,
-        limit=5000,
-    )
+    if region:
+        states = state_manager.query_by_account(
+            eff_account, region, limit=5000
+        )
+    else:
+        states = []
+        for r in settings.aws_regions:
+            states.extend(
+                state_manager.query_by_account(
+                    eff_account, r, limit=5000
+                )
+            )
 
     alarms = [s for s in states if s.status == "alarm"]
 

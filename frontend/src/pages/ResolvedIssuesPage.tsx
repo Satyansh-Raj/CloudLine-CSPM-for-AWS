@@ -13,7 +13,12 @@ import { useViolations } from "@/hooks/useViolations";
 import { useRegion } from "@/hooks/useRegion";
 import { useAccount } from "@/hooks/useAccount";
 import { toResolvedPath } from "@/utils/violationUrl";
-import { SeverityBadge, StatusBadge, EyebrowLabel } from "@/components/shared";
+import {
+  CustomSelect,
+  SeverityBadge,
+  StatusBadge,
+  EyebrowLabel,
+} from "@/components/shared";
 import { ViolationFilters, type FilterValues } from "@/components/violations";
 import { getCheckName } from "@/constants/checkNames";
 import type { Violation } from "@/types";
@@ -204,19 +209,15 @@ export default function ResolvedIssuesPage() {
             <label className="block text-xs font-medium text-slate-gray mb-1">
               Region
             </label>
-            <select
+            <CustomSelect
               value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
+              onChange={setSelectedRegion}
               aria-label="Select region"
-            >
-              <option value="">All Regions</option>
-              {regions.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "All Regions" },
+                ...regions.map((r) => ({ value: r, label: r })),
+              ]}
+            />
           </div>
         </div>
       </div>

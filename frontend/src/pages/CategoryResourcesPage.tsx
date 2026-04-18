@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useInventory } from "@/hooks/useInventory";
 import { useRegion } from "@/hooks/useRegion";
 import { ExposureBadge } from "@/components/inventory";
-import { EyebrowLabel } from "@/components/shared";
+import { CustomSelect, EyebrowLabel } from "@/components/shared";
 import type { Resource } from "@/types/inventory";
 
 function capitalize(s: string): string {
@@ -32,7 +32,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
       to="/inventory/detail"
       state={{ resource }}
       aria-label={resource.resource_name}
-      className="flex items-center gap-3 px-4 py-3 hover:bg-canvas-cream dark:hover:bg-white/5 transition-colors rounded-xl group"
+      className="flex items-center gap-3 px-6 py-3 hover:bg-canvas-cream dark:hover:bg-white/5 transition-colors rounded-xl group"
     >
       <span className="flex-1 min-w-0 text-sm font-medium text-ink-black dark:text-canvas-cream group-hover:text-link-blue dark:group-hover:text-link-blue truncate">
         {resource.resource_name}
@@ -104,19 +104,15 @@ export default function CategoryResourcesPage() {
             <label className="block text-xs font-medium text-slate-gray mb-1">
               Region
             </label>
-            <select
+            <CustomSelect
               value={region}
-              onChange={(e) => setRegion(e.target.value)}
-              className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
+              onChange={setRegion}
               aria-label="Select region"
-            >
-              <option value="">All Regions</option>
-              {regions.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "All Regions" },
+                ...regions.map((r) => ({ value: r, label: r })),
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -156,7 +152,7 @@ export default function CategoryResourcesPage() {
       {!isLoading && !error && data && data.length > 0 && (
         <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 overflow-hidden">
           {/* Column headers */}
-          <div className="flex items-center gap-3 px-4 py-2 border-b border-ghost-cream dark:border-white/5">
+          <div className="flex items-center gap-3 px-6 py-2 border-b border-ghost-cream dark:border-white/5">
             <span className="flex-1 text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70">
               Resource
             </span>

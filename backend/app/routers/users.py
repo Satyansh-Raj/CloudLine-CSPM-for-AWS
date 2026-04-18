@@ -136,7 +136,17 @@ def list_users(
     store: UserStore = Depends(get_user_store),
 ) -> list[dict]:
     """Return all users (password_hash excluded)."""
-    return [_user_to_dict(u) for u in store.list_users()]
+    users = store.list_users()
+    # Deduplicate by email — keeps earliest created.
+    seen: set[str] = set()
+    deduped = []
+    for u in sorted(
+        users, key=lambda x: x.created_at or ""
+    ):
+        if u.email not in seen:
+            seen.add(u.email)
+            deduped.append(u)
+    return [_user_to_dict(u) for u in deduped]
 
 
 # NOTE: this must be registered BEFORE /{user_id}

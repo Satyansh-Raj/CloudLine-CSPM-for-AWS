@@ -42,12 +42,26 @@ def bootstrap_admin(
         )
         return
 
-    existing = user_store.list_users()
-    if existing:
+    # Check by email — avoids false-negative from
+    # list_users() returning [] on transient error.
+    existing = user_store.get_user_by_email(
+        settings.admin_bootstrap_email
+    )
+    if existing is not None:
+        logger.debug(
+            "bootstrap_admin: admin user already "
+            "exists, skipping.",
+        )
+        return
+    # Also guard against any user existing (prevents
+    # creating admin when list succeeds but email
+    # check returned None due to GSI propagation lag).
+    all_users = user_store.list_users()
+    if all_users:
         logger.debug(
             "bootstrap_admin: %d user(s) already "
             "exist, skipping.",
-            len(existing),
+            len(all_users),
         )
         return
 

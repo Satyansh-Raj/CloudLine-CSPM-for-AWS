@@ -93,6 +93,22 @@
   .dark * {
     scrollbar-color: rgba(243, 240, 238, 0.15) transparent;
   }
+
+  /* Select dropdown: black highlight instead of OS blue */
+  select {
+    accent-color: #141413;
+  }
+  .dark select {
+    accent-color: #F3F0EE;
+  }
+  option:checked {
+    background: #141413 !important;
+    color: #F3F0EE !important;
+  }
+  .dark option:checked {
+    background: #F3F0EE !important;
+    color: #141413 !important;
+  }
 }
 
 /* ── Utility: orbital arc SVG lines ───────────────── */

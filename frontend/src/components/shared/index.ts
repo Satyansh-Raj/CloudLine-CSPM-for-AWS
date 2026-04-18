@@ -9,3 +9,5 @@ export { default as Input } from "./Input";
 export { default as Card } from "./Card";
 export { default as EyebrowLabel } from "./EyebrowLabel";
 export { default as GhostHeadline } from "./GhostHeadline";
+export { default as CustomSelect } from "./CustomSelect";
+export type { SelectOption } from "./CustomSelect";

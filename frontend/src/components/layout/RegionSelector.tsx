@@ -1,3 +1,4 @@
+import { CustomSelect } from "@/components/shared";
 import { useRegion } from "@/hooks/useRegion";
 
 function GlobeIcon() {
@@ -24,27 +25,20 @@ function GlobeIcon() {
 }
 
 export default function RegionSelector() {
-  const { selectedRegion, regions, setSelectedRegion } =
-    useRegion();
+  const { selectedRegion, regions, setSelectedRegion } = useRegion();
 
   return (
-    <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-600">
+    <div className="flex items-center gap-1.5">
       <GlobeIcon />
-      <select
+      <CustomSelect
         value={selectedRegion}
-        onChange={(e) =>
-          setSelectedRegion(e.target.value)
-        }
-        className="text-xs bg-transparent border-none outline-none cursor-pointer text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        onChange={setSelectedRegion}
         aria-label="Select region"
-      >
-        <option value="">All Regions</option>
-        {regions.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-      </select>
+        options={[
+          { value: "", label: "All Regions" },
+          ...regions.map((r) => ({ value: r, label: r })),
+        ]}
+      />
     </div>
   );
 }

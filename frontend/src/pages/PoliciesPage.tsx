@@ -12,7 +12,7 @@ import {
 } from "@/api/policies";
 import { getCheckName } from "@/constants/checkNames";
 import SeverityBadge from "@/components/shared/SeverityBadge";
-import { EyebrowLabel } from "@/components/shared";
+import { CustomSelect, EyebrowLabel } from "@/components/shared";
 
 const DOMAINS = [
   "identity",
@@ -540,30 +540,18 @@ export default function PoliciesPage() {
                 }
               />
             </div>
-            <select
+            <CustomSelect
               value={domainFilter}
-              onChange={(e) => setDomainFilter(e.target.value)}
-              className={
-                "rounded-pill border" +
-                " border-ghost-cream" +
-                " dark:border-white/10" +
-                " bg-canvas-cream dark:bg-ink-black" +
-                " px-2.5 py-1.5 text-sm" +
-                " text-ink-black" +
-                " dark:text-canvas-cream" +
-                " focus:outline-none" +
-                " focus:ring-2" +
-                " focus:ring-ink-black/20 dark:focus:ring-canvas-cream/20" +
-                " transition-colors"
-              }
-            >
-              <option value="">All domains</option>
-              {DOMAINS.map((d) => (
-                <option key={d} value={d}>
-                  {DOMAIN_LABELS[d] ?? d.replace(/_/g, " ")}
-                </option>
-              ))}
-            </select>
+              onChange={setDomainFilter}
+              aria-label="Filter by domain"
+              options={[
+                { value: "", label: "All domains" },
+                ...DOMAINS.map((d) => ({
+                  value: d,
+                  label: DOMAIN_LABELS[d] ?? d.replace(/_/g, " "),
+                })),
+              ]}
+            />
             {(search || domainFilter) && (
               <button
                 onClick={() => {
@@ -957,37 +945,33 @@ export default function PoliciesPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Domain</label>
-                  <select
-                    name="domain"
+                  <CustomSelect
                     value={form.domain}
-                    onChange={handleChange}
-                    required
-                    className={inputCls}
-                  >
-                    <option value="">Select...</option>
-                    {DOMAINS.map((d) => (
-                      <option key={d} value={d}>
-                        {DOMAIN_LABELS[d] ?? d.replace(/_/g, " ")}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm((p) => ({ ...p, domain: v }))}
+                    aria-label="Select domain"
+                    options={[
+                      { value: "", label: "Select..." },
+                      ...DOMAINS.map((d) => ({
+                        value: d,
+                        label: DOMAIN_LABELS[d] ?? d.replace(/_/g, " "),
+                      })),
+                    ]}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Severity</label>
-                  <select
-                    name="severity"
+                  <CustomSelect
                     value={form.severity}
-                    onChange={handleChange}
-                    required
-                    className={inputCls}
-                  >
-                    <option value="">Select...</option>
-                    {SEVERITIES.map((s) => (
-                      <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm((p) => ({ ...p, severity: v }))}
+                    aria-label="Select severity"
+                    options={[
+                      { value: "", label: "Select..." },
+                      ...SEVERITIES.map((s) => ({
+                        value: s,
+                        label: s.charAt(0).toUpperCase() + s.slice(1),
+                      })),
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -1150,20 +1134,18 @@ export default function PoliciesPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Domain</label>
-                  <select
-                    name="domain"
+                  <CustomSelect
                     value={rawForm.domain}
-                    onChange={handleRawChange}
-                    required
-                    className={inputCls}
-                  >
-                    <option value="">Select...</option>
-                    {DOMAINS.map((d) => (
-                      <option key={d} value={d}>
-                        {DOMAIN_LABELS[d] ?? d.replace(/_/g, " ")}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setRawForm((p) => ({ ...p, domain: v }))}
+                    aria-label="Select domain"
+                    options={[
+                      { value: "", label: "Select..." },
+                      ...DOMAINS.map((d) => ({
+                        value: d,
+                        label: DOMAIN_LABELS[d] ?? d.replace(/_/g, " "),
+                      })),
+                    ]}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Filename</label>

@@ -4,7 +4,7 @@ import { useCompliance } from "@/hooks/useCompliance";
 import { useComplianceFramework } from "@/hooks/useComplianceFramework";
 import { useRegion } from "@/hooks/useRegion";
 import { useAccount } from "@/hooks/useAccount";
-import { AccountBadge, EyebrowLabel } from "@/components/shared";
+import { AccountBadge, CustomSelect, EyebrowLabel } from "@/components/shared";
 import { getControlName } from "@/constants/controlNames";
 import type {
   FrameworkSummary,
@@ -205,10 +205,7 @@ function ViolationRows({ violations }: { violations: ControlViolation[] }) {
           <td className="py-1.5 pr-4 text-xs capitalize text-slate-gray">
             {v.severity}
           </td>
-          <td
-            colSpan={2}
-            className="py-1.5 pr-4 text-xs text-slate-gray"
-          >
+          <td colSpan={2} className="py-1.5 pr-4 text-xs text-slate-gray">
             {v.reason}
           </td>
         </tr>
@@ -387,8 +384,11 @@ function LoadingSkeleton() {
 export default function CompliancePage() {
   const { selectedAccount } = useAccount();
   const accountId = selectedAccount || undefined;
-  const { data, isLoading, error } = useCompliance(accountId);
   const { selectedRegion, regions, setSelectedRegion } = useRegion();
+  const { data, isLoading, error } = useCompliance(
+    accountId,
+    selectedRegion || undefined,
+  );
 
   const [selectedFramework, setSelectedFramework] = useState<string>("");
 
@@ -419,22 +419,15 @@ export default function CompliancePage() {
         </div>
 
         {/* Region selector */}
-        <label className="flex items-center gap-2">
-          <span className="sr-only">Region</span>
-          <select
-            aria-label="Region"
-            value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="text-[13px] rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-ink-black dark:text-canvas-cream px-3 py-1.5 outline-none focus:ring-2 focus:ring-ink-black/20 dark:focus:ring-canvas-cream/20"
-          >
-            <option value="">All Regions</option>
-            {regions.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CustomSelect
+          value={selectedRegion}
+          onChange={setSelectedRegion}
+          aria-label="Region"
+          options={[
+            { value: "", label: "All Regions" },
+            ...regions.map((r) => ({ value: r, label: r })),
+          ]}
+        />
       </div>
 
       {/* Loading */}

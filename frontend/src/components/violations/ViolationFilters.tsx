@@ -1,3 +1,5 @@
+import { CustomSelect } from "@/components/shared";
+
 interface FilterValues {
   severity: string;
   domain: string;
@@ -19,39 +21,10 @@ const DOMAINS = [
   "detection",
 ];
 
-function Select({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-medium text-slate-gray mb-1">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt === ""
-              ? "All"
-              : opt
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase())}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+function toLabel(v: string, allLabel: string): string {
+  return v === ""
+    ? allLabel
+    : v.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export type { FilterValues };
@@ -59,18 +32,28 @@ export type { FilterValues };
 export default function ViolationFilters({ filters, onChange }: Props) {
   return (
     <div className="flex flex-wrap gap-4">
-      <Select
-        label="Severity"
-        value={filters.severity}
-        options={SEVERITIES}
-        onChange={(severity) => onChange({ ...filters, severity })}
-      />
-      <Select
-        label="Domain"
-        value={filters.domain}
-        options={DOMAINS}
-        onChange={(domain) => onChange({ ...filters, domain })}
-      />
+      <div>
+        <label className="block text-xs font-medium text-slate-gray mb-1">
+          Severity
+        </label>
+        <CustomSelect
+          value={filters.severity}
+          onChange={(severity) => onChange({ ...filters, severity })}
+          options={SEVERITIES.map((s) => ({ value: s, label: toLabel(s, "All") }))}
+          aria-label="Select severity"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-gray mb-1">
+          Domain
+        </label>
+        <CustomSelect
+          value={filters.domain}
+          onChange={(domain) => onChange({ ...filters, domain })}
+          options={DOMAINS.map((d) => ({ value: d, label: toLabel(d, "All") }))}
+          aria-label="Select domain"
+        />
+      </div>
       {(filters.severity || filters.domain) && (
         <div className="flex items-end">
           <button

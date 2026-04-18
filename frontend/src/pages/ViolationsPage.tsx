@@ -8,7 +8,7 @@ import {
   ViolationFilters,
   type FilterValues,
 } from "@/components/violations";
-import { AccountBadge, EyebrowLabel } from "@/components/shared";
+import { AccountBadge, CustomSelect, EyebrowLabel } from "@/components/shared";
 import { toViolationPath } from "@/utils/violationUrl";
 import type { Violation } from "@/types";
 
@@ -84,19 +84,15 @@ export default function ViolationsPage() {
             <label className="block text-xs font-medium text-slate-gray mb-1">
               Region
             </label>
-            <select
+            <CustomSelect
               value={region}
-              onChange={(e) => setRegion(e.target.value)}
-              className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
+              onChange={setRegion}
               aria-label="Select region"
-            >
-              <option value="">All Regions</option>
-              {regions.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "All Regions" },
+                ...regions.map((r) => ({ value: r, label: r })),
+              ]}
+            />
           </div>
         </div>
       </div>

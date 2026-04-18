@@ -66,14 +66,22 @@ def list_violations(
     effective_account = (
         account_id or settings.aws_account_id
     )
-    effective_region = (
-        region if region else settings.aws_region
-    )
-    states = state_manager.query_by_account(
-        effective_account,
-        effective_region,
-        limit=limit,
-    )
+    if region:
+        states = state_manager.query_by_account(
+            effective_account,
+            region,
+            limit=limit,
+        )
+    else:
+        states = []
+        for r in settings.aws_regions:
+            states.extend(
+                state_manager.query_by_account(
+                    effective_account,
+                    r,
+                    limit=limit,
+                )
+            )
     if check_id:
         states = [
             s for s in states

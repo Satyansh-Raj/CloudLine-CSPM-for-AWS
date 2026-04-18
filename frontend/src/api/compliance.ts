@@ -3,11 +3,15 @@ import type { ComplianceScore, FrameworkScore } from "@/types";
 
 export async function getComplianceScore(
   accountId?: string,
+  region?: string,
 ): Promise<ComplianceScore> {
+  const params: Record<string, string> = {};
+  if (accountId) params.account_id = accountId;
+  if (region) params.region = region;
   const { data } = await apiClient.get<ComplianceScore>(
     "/v1/compliance/score",
     {
-      params: accountId ? { account_id: accountId } : undefined,
+      params: Object.keys(params).length > 0 ? params : undefined,
     },
   );
   return data;
