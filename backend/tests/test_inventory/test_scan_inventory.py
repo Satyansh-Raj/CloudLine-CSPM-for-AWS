@@ -438,8 +438,10 @@ class TestPersistAll35Types:
             ),
             lambda_functions=[LambdaFunction(
                 function_name="fn-rt",
-                arn=f"arn:aws:lambda:{REGION}"
-                f":{ACCOUNT}:function:fn-rt",
+                function_arn=(
+                    f"arn:aws:lambda:{REGION}"
+                    f":{ACCOUNT}:function:fn-rt"
+                ),
             )],
             apigateway=APIGatewayData(rest_apis=[
                 APIGatewayAPI(
@@ -796,8 +798,10 @@ class TestSoftDeleteMultiType:
             )]),
             lambda_functions=[LambdaFunction(
                 function_name="fn-keep",
-                    arn=f"arn:aws:lambda:{REGION}"
-                    f":{ACCOUNT}:function:fn-keep",
+                function_arn=(
+                    f"arn:aws:lambda:{REGION}"
+                    f":{ACCOUNT}:function:fn-keep"
+                ),
             )],
         )
 

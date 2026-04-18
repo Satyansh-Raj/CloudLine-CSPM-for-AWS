@@ -2186,7 +2186,7 @@ class TestClassifyECRRepository:
                 repositories=[
                     ECRRepository(
                         repository_name="backend",
-                        arn=arn,
+                        repository_arn=arn,
                     ),
                 ],
             ),
@@ -2420,7 +2420,7 @@ class TestClassifyAll35Types:
                 db_instances=[
                     RDSInstance(
                         db_instance_id="db-full",
-                        arn=(
+                        db_instance_arn=(
                             f"arn:aws:rds:{REGION}"
                             f":{ACCOUNT}:db:db-full"
                         ),
@@ -2453,7 +2453,7 @@ class TestClassifyAll35Types:
                 tables=[
                     DynamoDBTable(
                         table_name="tbl-full",
-                        arn=(
+                        table_arn=(
                             f"arn:aws:dynamodb:{REGION}"
                             f":{ACCOUNT}:table/tbl-full"
                         ),
@@ -2522,7 +2522,7 @@ class TestClassifyAll35Types:
                 load_balancers=[
                     LoadBalancer(
                         lb_name="lb-full",
-                        arn=(
+                        load_balancer_arn=(
                             f"arn:aws:elasticloadbalancing"
                             f":{REGION}:{ACCOUNT}"
                             ":loadbalancer/app/lb-full"
@@ -2551,7 +2551,7 @@ class TestClassifyAll35Types:
             lambda_functions=[
                 LambdaFunction(
                     function_name="fn-full",
-                    arn=(
+                    function_arn=(
                         f"arn:aws:lambda:{REGION}"
                         f":{ACCOUNT}:function:fn-full"
                     ),
@@ -2664,7 +2664,7 @@ class TestClassifyAll35Types:
                 repositories=[
                     ECRRepository(
                         repository_name="ecr-full",
-                        arn=(
+                        repository_arn=(
                             f"arn:aws:ecr:{REGION}"
                             f":{ACCOUNT}:repository"
                             "/ecr-full"
@@ -2685,7 +2685,7 @@ class TestClassifyAll35Types:
                 task_definitions=[
                     ECSTaskDefinition(
                         family="td-full",
-                        arn=(
+                        task_definition_arn=(
                             f"arn:aws:ecs:{REGION}"
                             f":{ACCOUNT}:task-definition"
                             "/td-full:1"

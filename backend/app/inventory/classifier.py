@@ -115,6 +115,25 @@ class ResourceClassifier:
         self.account_id = account_id
         self.region = region
 
+    def _classify_batch(
+        self,
+        label: str,
+        items,
+        fn,
+        records: list[ResourceRecord],
+    ) -> None:
+        """Classify a batch of resources, skipping
+        individual failures without aborting the run."""
+        for item in items:
+            try:
+                records.append(fn(item))
+            except Exception as exc:
+                logger.warning(
+                    "classify %s item failed: %s",
+                    label,
+                    exc,
+                )
+
     def classify_all(
         self, input_data: UnifiedAWSInput
     ) -> list[ResourceRecord]:
@@ -130,210 +149,92 @@ class ResourceClassifier:
         )
         exposure = ExposureClassifier(input_data)
         records: list[ResourceRecord] = []
+        cb = self._classify_batch
 
-        # EC2 instances
-        for inst in input_data.ec2.instances:
-            records.append(
-                self._ec2(inst, exposure, now)
-            )
-
-        # S3 buckets
-        for bkt in input_data.s3.buckets:
-            records.append(
-                self._s3(bkt, exposure, now)
-            )
-
-        # RDS instances
-        for db in input_data.rds.db_instances:
-            records.append(
-                self._rds(db, exposure, now)
-            )
-
-        # Lambda functions
-        for fn in input_data.lambda_functions:
-            records.append(
-                self._lambda(fn, exposure, now)
-            )
-
-        # EBS volumes
-        for vol in input_data.ec2.ebs_volumes:
-            records.append(self._ebs(vol, now))
-
-        # Security groups
-        for sg in input_data.ec2.security_groups:
-            records.append(self._sg(sg, now))
-
-        # VPCs
-        for vpc in input_data.vpc.vpcs:
-            records.append(self._vpc(vpc, now))
-
-        # KMS keys
-        for key in input_data.kms.keys:
-            records.append(self._kms(key, now))
-
-        # Secrets
-        for sec in input_data.secrets_manager.secrets:
-            records.append(self._secret(sec, now))
-
-        # IAM users
-        for user in input_data.iam.users:
-            records.append(
-                self._iam_user(user, now)
-            )
-
-        # IAM groups
-        for grp in input_data.iam.groups:
-            records.append(
-                self._iam_group(grp, now)
-            )
-
-        # IAM roles
-        for role in input_data.iam.roles:
-            records.append(
-                self._iam_role(role, now)
-            )
-
-        # IAM policies
-        for pol in input_data.iam.customer_managed_policies:
-            records.append(
-                self._iam_policy(pol, now)
-            )
-
-        # CloudTrail trails
-        for trail in input_data.cloudtrail.trails:
-            records.append(
-                self._cloudtrail(trail, now)
-            )
-
-        # GuardDuty detectors
-        for det in input_data.guardduty.detectors:
-            records.append(
-                self._guardduty(det, now)
-            )
-
-        # CloudWatch alarms
-        for alarm in input_data.cloudwatch.alarms:
-            records.append(
-                self._cloudwatch_alarm(alarm, now)
-            )
-
-        # Network ACLs
-        for nacl in input_data.vpc.nacls:
-            records.append(
-                self._network_acl(nacl, now)
-            )
-
-        # Subnets
-        for sub in input_data.vpc.subnets:
-            records.append(
-                self._subnet(sub, now)
-            )
-
-        # Internet Gateways
-        for igw in input_data.vpc.internet_gateways:
-            records.append(
-                self._internet_gateway(igw, now)
-            )
-
-        # NAT Gateways
-        for nat in input_data.vpc.nat_gateways:
-            records.append(
-                self._nat_gateway(nat, now)
-            )
-
-        # Network Firewalls
-        for nf in input_data.vpc.network_firewalls:
-            records.append(
-                self._network_firewall(nf, now)
-            )
-
-        # WAF Web ACLs
-        for waf in input_data.vpc.waf_web_acls:
-            records.append(
-                self._waf_web_acl(waf, now)
-            )
-
-        # Aurora clusters
-        for ac in input_data.rds.aurora_clusters:
-            records.append(
-                self._aurora_cluster(ac, now)
-            )
-
-        # RDS snapshots
-        for snap in input_data.rds.snapshots:
-            records.append(
-                self._rds_snapshot(snap, now)
-            )
-
-        # DynamoDB tables
-        for tbl in input_data.dynamodb.tables:
-            records.append(
-                self._dynamodb_table(tbl, now)
-            )
-
-        # Load Balancers
-        for lb in input_data.elb.load_balancers:
-            records.append(
-                self._load_balancer(lb, now)
-            )
-
-        # CloudFront distributions
-        for dist in input_data.cdn.distributions:
-            records.append(
-                self._cloudfront(dist, now)
-            )
-
-        # Route53 hosted zones
-        for zone in input_data.cdn.hosted_zones:
-            records.append(
-                self._route53(zone, now)
-            )
-
-        # Auto Scaling Groups
-        for asg in (
-            input_data.ec2.auto_scaling_groups
-        ):
-            records.append(
-                self._auto_scaling_group(asg, now)
-            )
-
-        # EBS Snapshots
-        for snap in input_data.ec2.ebs_snapshots:
-            records.append(
-                self._ebs_snapshot(snap, now)
-            )
-
-        # API Gateways
-        for api in input_data.apigateway.rest_apis:
-            records.append(
-                self._api_gateway(api, now)
-            )
-
-        # ECR Repositories
-        for repo in input_data.ecr.repositories:
-            records.append(
-                self._ecr_repository(repo, now)
-            )
-
-        # ECS Clusters
-        for cluster in input_data.ecs.clusters:
-            records.append(
-                self._ecs_cluster(cluster, now)
-            )
-
-        # ECS Task Definitions
-        for td in (
-            input_data.ecs.task_definitions
-        ):
-            records.append(
-                self._ecs_task_definition(td, now)
-            )
-
-        # EKS Clusters
-        for eks in input_data.eks.clusters:
-            records.append(
-                self._eks_cluster(eks, now)
-            )
+        cb("ec2_instance", input_data.ec2.instances,
+           lambda x: self._ec2(x, exposure, now),
+           records)
+        cb("s3_bucket", input_data.s3.buckets,
+           lambda x: self._s3(x, exposure, now),
+           records)
+        cb("rds_instance", input_data.rds.db_instances,
+           lambda x: self._rds(x, exposure, now),
+           records)
+        cb("lambda_function", input_data.lambda_functions,
+           lambda x: self._lambda(x, exposure, now),
+           records)
+        cb("ebs_volume", input_data.ec2.ebs_volumes,
+           lambda x: self._ebs(x, now), records)
+        cb("security_group", input_data.ec2.security_groups,
+           lambda x: self._sg(x, now), records)
+        cb("vpc", input_data.vpc.vpcs,
+           lambda x: self._vpc(x, now), records)
+        cb("kms_key", input_data.kms.keys,
+           lambda x: self._kms(x, now), records)
+        cb("secret", input_data.secrets_manager.secrets,
+           lambda x: self._secret(x, now), records)
+        cb("iam_user", input_data.iam.users,
+           lambda x: self._iam_user(x, now), records)
+        cb("iam_group", input_data.iam.groups,
+           lambda x: self._iam_group(x, now), records)
+        cb("iam_role", input_data.iam.roles,
+           lambda x: self._iam_role(x, now), records)
+        cb("iam_policy",
+           input_data.iam.customer_managed_policies,
+           lambda x: self._iam_policy(x, now), records)
+        cb("cloudtrail", input_data.cloudtrail.trails,
+           lambda x: self._cloudtrail(x, now), records)
+        cb("guardduty", input_data.guardduty.detectors,
+           lambda x: self._guardduty(x, now), records)
+        cb("cloudwatch_alarm", input_data.cloudwatch.alarms,
+           lambda x: self._cloudwatch_alarm(x, now),
+           records)
+        cb("network_acl", input_data.vpc.nacls,
+           lambda x: self._network_acl(x, now), records)
+        cb("subnet", input_data.vpc.subnets,
+           lambda x: self._subnet(x, now), records)
+        cb("internet_gateway",
+           input_data.vpc.internet_gateways,
+           lambda x: self._internet_gateway(x, now),
+           records)
+        cb("nat_gateway", input_data.vpc.nat_gateways,
+           lambda x: self._nat_gateway(x, now), records)
+        cb("network_firewall",
+           input_data.vpc.network_firewalls,
+           lambda x: self._network_firewall(x, now),
+           records)
+        cb("waf_web_acl", input_data.vpc.waf_web_acls,
+           lambda x: self._waf_web_acl(x, now), records)
+        cb("aurora_cluster", input_data.rds.aurora_clusters,
+           lambda x: self._aurora_cluster(x, now), records)
+        cb("rds_snapshot", input_data.rds.snapshots,
+           lambda x: self._rds_snapshot(x, now), records)
+        cb("dynamodb_table", input_data.dynamodb.tables,
+           lambda x: self._dynamodb_table(x, now), records)
+        cb("load_balancer", input_data.elb.load_balancers,
+           lambda x: self._load_balancer(x, now), records)
+        cb("cloudfront", input_data.cdn.distributions,
+           lambda x: self._cloudfront(x, now), records)
+        cb("route53", input_data.cdn.hosted_zones,
+           lambda x: self._route53(x, now), records)
+        cb("auto_scaling_group",
+           input_data.ec2.auto_scaling_groups,
+           lambda x: self._auto_scaling_group(x, now),
+           records)
+        cb("ebs_snapshot", input_data.ec2.ebs_snapshots,
+           lambda x: self._ebs_snapshot(x, now), records)
+        cb("api_gateway", input_data.apigateway.rest_apis,
+           lambda x: self._api_gateway(x, now), records)
+        cb("ecr_repository", input_data.ecr.repositories,
+           lambda x: self._ecr_repository(x, now), records)
+        cb("ecs_cluster", input_data.ecs.clusters,
+           lambda x: self._ecs_cluster(x, now), records)
+        cb("ecs_task_definition",
+           input_data.ecs.task_definitions,
+           lambda x: self._ecs_task_definition(x, now),
+           records)
+        cb("eks_cluster", input_data.eks.clusters,
+           lambda x: self._eks_cluster(x, now), records)
 
         return records
 
@@ -542,7 +443,7 @@ class ResourceClassifier:
         )
         return self._make_record(
             "rds_instance",
-            db.arn,
+            db.db_instance_arn,
             db.db_instance_id,
             now,
             tags=db.tags,
@@ -555,7 +456,7 @@ class ResourceClassifier:
         )
         return self._make_record(
             "lambda_function",
-            fn.arn,
+            fn.function_arn,
             fn.function_name,
             now,
             tags=fn.tags,
@@ -777,7 +678,7 @@ class ResourceClassifier:
     def _dynamodb_table(self, tbl, now):
         return self._make_record(
             "dynamodb_table",
-            tbl.arn,
+            tbl.table_arn,
             tbl.table_name,
             now,
             tags=tbl.tags,
@@ -809,7 +710,7 @@ class ResourceClassifier:
         )
         return self._make_record(
             "load_balancer",
-            lb.arn,
+            lb.load_balancer_arn,
             lb.lb_name,
             now,
             tags=lb.tags,
@@ -888,7 +789,7 @@ class ResourceClassifier:
     def _ecr_repository(self, repo, now):
         return self._make_record(
             "ecr_repository",
-            repo.arn,
+            repo.repository_arn,
             repo.repository_name,
             now,
             tags=repo.tags,
@@ -908,7 +809,7 @@ class ResourceClassifier:
     def _ecs_task_definition(self, td, now):
         return self._make_record(
             "ecs_task_definition",
-            td.arn,
+            td.task_definition_arn,
             td.family,
             now,
             tags=td.tags,
