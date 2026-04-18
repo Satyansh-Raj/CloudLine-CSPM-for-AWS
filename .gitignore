@@ -41,6 +41,7 @@ frontend/src/hooks/__tests__/
 frontend/src/pages/__tests__/
 frontend/src/test/
 frontend/src/utils/__tests__/
+frontend/src/components/shared/__tests__/
 
 # ── Linters / Formatters ────────────────────────
 .ruff_cache/
@@ -85,3 +86,4 @@ build/
 *.pptx
 docs/
 MULTI_ACCOUNT.md
+
