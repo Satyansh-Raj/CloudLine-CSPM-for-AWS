@@ -10,16 +10,17 @@ export default memo(function AccountNodeComponent({
   return (
     <div
       className={[
-        "px-4 py-3 rounded-xl w-44 shadow-lg",
-        "bg-indigo-600 text-white border border-indigo-500",
+        "px-4 py-3 rounded-xl w-44 shadow-elev-2",
+        "bg-ink-black text-canvas-cream",
+        "border border-[#2a2a29]",
         "cursor-pointer select-none",
-        "hover:bg-indigo-500 transition-colors",
+        "hover:opacity-90 transition-opacity",
       ].join(" ")}
     >
       <div className="flex items-center gap-2 mb-1">
         {/* Cloud icon */}
         <svg
-          className="w-5 h-5 shrink-0"
+          className="w-5 h-5 shrink-0 text-canvas-cream/70"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -35,13 +36,13 @@ export default memo(function AccountNodeComponent({
             }
           />
         </svg>
-        <span className="text-sm font-semibold flex-1">
+        <span className="text-sm font-semibold flex-1 text-canvas-cream">
           AWS Account
         </span>
         {/* Collapse chevron */}
         <span
           className={[
-            "shrink-0 text-indigo-200",
+            "shrink-0 text-canvas-cream/50",
             "transition-transform duration-200",
             isCollapsed ? "-rotate-90" : "",
           ].join(" ")}
@@ -61,14 +62,14 @@ export default memo(function AccountNodeComponent({
           </svg>
         </span>
       </div>
-      <p className="text-xs text-indigo-200">
+      <p className="text-xs text-canvas-cream/60">
         {data.count} {data.label}
         {isCollapsed && " — click to expand"}
       </p>
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-indigo-400 !border-indigo-600"
+        className="!bg-canvas-cream/40 !border-canvas-cream/20"
       />
     </div>
   );

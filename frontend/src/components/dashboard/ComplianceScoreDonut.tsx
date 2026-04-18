@@ -1,8 +1,5 @@
-/**
- * Compliance score card — redesigned with multi-ring concentric donut.
- * One ring per status category (passed / violations / errors / skipped).
- */
 import MultiRingDonut from "@/components/shared/MultiRingDonut";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 import type { ComplianceScore } from "@/types";
 
 interface Props {
@@ -10,7 +7,7 @@ interface Props {
 }
 
 export default function ComplianceScoreDonut({ data }: Props) {
-  const total = data.total_checks || 1; // guard /0
+  const total = data.total_checks || 1;
 
   const rings = [
     {
@@ -37,7 +34,7 @@ export default function ComplianceScoreDonut({ data }: Props) {
       pct: ((data.skipped ?? 0) / total) * 100,
       color: "#94a3b8",
     },
-  ].filter((r) => r.value > 0 || r.label === "Passed"); // always show passed ring
+  ].filter((r) => r.value > 0 || r.label === "Passed");
 
   const scoreColor =
     data.score_percent >= 80
@@ -47,19 +44,19 @@ export default function ComplianceScoreDonut({ data }: Props) {
         : "#ef4444";
 
   return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-      {/* Header */}
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+          <EyebrowLabel className="mb-1">Posture</EyebrowLabel>
+          <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream">
             Compliance Score
           </h3>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+          <p className="text-xs text-slate-gray mt-0.5">
             {data.total_checks} checks evaluated
           </p>
         </div>
         <span
-          className="text-xs font-bold px-2.5 py-1 rounded-full"
+          className="text-xs font-bold px-2.5 py-1 rounded-pill"
           style={{
             backgroundColor: scoreColor + "15",
             color: scoreColor,
@@ -69,7 +66,6 @@ export default function ComplianceScoreDonut({ data }: Props) {
         </span>
       </div>
 
-      {/* Ring chart */}
       <div className="flex justify-center">
         <MultiRingDonut
           rings={rings}

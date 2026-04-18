@@ -8,7 +8,7 @@ import {
   ViolationFilters,
   type FilterValues,
 } from "@/components/violations";
-import { AccountBadge } from "@/components/shared";
+import { AccountBadge, EyebrowLabel } from "@/components/shared";
 import { toViolationPath } from "@/utils/violationUrl";
 import type { Violation } from "@/types";
 
@@ -65,25 +65,29 @@ export default function ViolationsPage() {
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-baseline gap-3">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-          Violations
-        </h2>
+        <div>
+          <EyebrowLabel>Active Alerts</EyebrowLabel>
+          <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight">
+            Violations
+          </h2>
+        </div>
         <AccountBadge />
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
         <div className="flex flex-wrap items-end gap-4">
           <ViolationFilters filters={filters} onChange={setFilters} />
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-slate-gray mb-1">
               Region
             </label>
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              className="block w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
               aria-label="Select region"
             >
               <option value="">All Regions</option>
@@ -99,11 +103,11 @@ export default function ViolationsPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm animate-pulse space-y-3">
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-10 bg-gray-100 dark:bg-white/5 rounded-xl"
+              className="h-10 bg-ghost-cream dark:bg-white/5 rounded-xl"
             />
           ))}
         </div>
@@ -111,7 +115,7 @@ export default function ViolationsPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-5">
+        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-hero p-5">
           <p className="text-sm text-red-700 dark:text-red-400">
             Failed to load violations:{" "}
             {(error as { message?: string }).message ?? "Unknown error"}

@@ -32,8 +32,8 @@ export default function DomainDonut({ domains }: Props) {
   );
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 p-6">
+      <h3 className="text-sm font-medium text-slate-gray mb-4">
         Failures by Domain
       </h3>
       <div className="h-48">

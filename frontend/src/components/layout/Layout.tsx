@@ -8,12 +8,11 @@ export default function Layout() {
   useWebSocket();
 
   return (
-    /* Pure white / pitch black shell — sidebar + content share the same bg token */
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-black">
+    <div className="flex h-screen overflow-hidden bg-canvas-cream dark:bg-ink-black">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-[#0a0a0a]">
+        <main className="flex-1 overflow-y-auto p-6 bg-canvas-cream dark:bg-ink-black">
           <Outlet />
         </main>
       </div>

@@ -102,119 +102,112 @@ export default function Header() {
   }, [feedOpen]);
 
   return (
-    /* Pure white in light, pure black in dark */
-    <header className="h-14 shrink-0 bg-white dark:bg-black border-b border-gray-100 dark:border-white/5 flex items-center justify-between px-6 gap-4">
-      {/* Live indicator */}
-      <div className="flex items-center gap-1.5">
-        <span
-          className={`w-2 h-2 rounded-full shrink-0 ${
-            status === "connected"
-              ? "bg-emerald-500"
+    <header className="shrink-0 px-6 pt-6 pb-2 bg-canvas-cream dark:bg-ink-black">
+      <div className="flex items-center justify-between px-5 h-12 rounded-pill bg-lifted-cream dark:bg-[#1c1c1b] shadow-elev-1 gap-4">
+        {/* Live indicator */}
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              status === "connected"
+                ? "bg-emerald-500"
+                : status === "connecting"
+                  ? "bg-amber-400 animate-pulse"
+                  : "bg-dust-taupe dark:bg-slate-gray"
+            }`}
+          />
+          <span className="text-xs font-medium text-slate-gray">
+            {status === "connected"
+              ? "Live"
               : status === "connecting"
-                ? "bg-amber-400 animate-pulse"
-                : "bg-gray-300 dark:bg-gray-700"
-          }`}
-        />
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-600">
-          {status === "connected"
-            ? "Live"
-            : status === "connecting"
-              ? "Connecting…"
-              : "Offline"}
-        </span>
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center gap-1">
-        {/* Bell */}
-        <div className="relative" ref={feedRef}>
-          <button
-            onClick={() => setFeedOpen(!feedOpen)}
-            className="relative w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            aria-label="Notifications"
-          >
-            <BellIcon />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-black" />
-            )}
-          </button>
-          {feedOpen && (
-            <div className="absolute right-0 mt-2 w-80 h-96 flex flex-col bg-white dark:bg-gray-950 border border-gray-100 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
-              <DriftAlertFeed
-                onNavigate={(path) => {
-                  setFeedOpen(false);
-                  navigate(path);
-                }}
-              />
-            </div>
-          )}
+                ? "Connecting…"
+                : "Offline"}
+          </span>
         </div>
 
-        {/* Dark toggle */}
-        <button
-          onClick={() => setDark(!dark)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-          aria-label="Toggle dark mode"
-        >
-          {dark ? <SunIcon /> : <MoonIcon />}
-        </button>
-
-        {/* User menu */}
-        {user && (
-          <div className="relative" ref={menuRef}>
+        {/* Controls */}
+        <div className="flex items-center gap-1">
+          {/* Bell */}
+          <div className="relative" ref={feedRef}>
             <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="User menu"
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+              onClick={() => setFeedOpen(!feedOpen)}
+              className="relative w-9 h-9 flex items-center justify-center rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/10 hover:text-ink-black dark:hover:text-canvas-cream transition-colors"
+              aria-label="Notifications"
             >
-              <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[11px] font-semibold shrink-0">
-                {user.full_name?.[0]?.toUpperCase() ?? "U"}
-              </span>
-              <span className="hidden sm:block max-w-[120px] truncate">
-                {user.email}
-              </span>
-              <span
-                className={`hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${
-                  user.role === "admin"
-                    ? "bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300"
-                    : user.role === "operator"
-                      ? "bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300"
-                      : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400"
-                }`}
-              >
-                {user.role}
-              </span>
+              <BellIcon />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-signal-orange rounded-full ring-2 ring-lifted-cream dark:ring-[#1c1c1b]" />
+              )}
             </button>
-            {menuOpen && (
-              <div className="absolute right-0 mt-1 w-52 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-neutral-900 shadow-lg py-1 z-50">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    navigate("/account/change-password");
+            {feedOpen && (
+              <div className="absolute right-0 mt-2 w-80 h-96 flex flex-col bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero shadow-elev-2 overflow-hidden z-50">
+                <DriftAlertFeed
+                  onNavigate={(path) => {
+                    setFeedOpen(false);
+                    navigate(path);
                   }}
-                  className="w-full text-left px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
-                >
-                  Change Password
-                </button>
-                <div className="border-t border-gray-100 dark:border-white/5 mt-1 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setMenuOpen(false);
-                      navigate("/login");
-                    }}
-                    className="w-full text-left px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                />
               </div>
             )}
           </div>
-        )}
+
+          {/* Dark toggle */}
+          <button
+            onClick={() => setDark(!dark)}
+            className="w-9 h-9 flex items-center justify-center rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/10 hover:text-ink-black dark:hover:text-canvas-cream transition-colors"
+            aria-label="Toggle dark mode"
+          >
+            {dark ? <SunIcon /> : <MoonIcon />}
+          </button>
+
+          {/* User menu */}
+          {user && (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="User menu"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-btn text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/10 transition-colors"
+              >
+                <span className="w-6 h-6 rounded-full bg-ink-black dark:bg-canvas-cream text-canvas-cream dark:text-ink-black flex items-center justify-center text-[11px] font-semibold shrink-0">
+                  {user.full_name?.[0]?.toUpperCase() ?? "U"}
+                </span>
+                <span className="hidden sm:block max-w-[120px] truncate">
+                  {user.email}
+                </span>
+                <span className="hidden sm:inline px-1.5 py-0.5 rounded-btn text-[10px] font-medium capitalize bg-ghost-cream dark:bg-white/10 text-ink-black dark:text-canvas-cream">
+                  {user.role}
+                </span>
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 py-1 z-50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/account/change-password");
+                    }}
+                    className="w-full text-left px-3 py-2 text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/5"
+                  >
+                    Change Password
+                  </button>
+                  <div className="border-t border-ghost-cream dark:border-white/5 mt-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setMenuOpen(false);
+                        navigate("/login");
+                      }}
+                      className="w-full text-left px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

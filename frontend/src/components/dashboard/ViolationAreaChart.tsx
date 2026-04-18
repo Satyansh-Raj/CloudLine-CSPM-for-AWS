@@ -1,7 +1,3 @@
-/**
- * Area chart showing violation trend over severity categories.
- * Uses the by_severity data from the compliance score.
- */
 import {
   AreaChart,
   Area,
@@ -12,6 +8,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
+
 interface Props {
   byDomain?: Record<string, any>;
 }
@@ -23,8 +21,6 @@ const COLORS = {
   low: "#22c55e",
 };
 
-// Build a single multi-series "snapshot" data point for display
-// When real time-series data exists this can be replaced with actual trend data
 function buildChartData(byDomain: Record<string, any>) {
   const domains = Object.keys(byDomain);
   if (domains.length === 0) {
@@ -48,8 +44,8 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 shadow-xl text-xs">
-      <p className="font-semibold text-gray-700 dark:text-gray-100 mb-2">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-1 text-xs">
+      <p className="font-semibold text-ink-black dark:text-canvas-cream mb-2">
         {label}
       </p>
       {payload.map((p) => (
@@ -58,10 +54,10 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: p.color }}
           />
-          <span className="text-gray-500 dark:text-gray-300 capitalize">
+          <span className="text-slate-gray capitalize">
             {p.name}:
           </span>
-          <span className="font-semibold text-gray-800 dark:text-white">
+          <span className="font-semibold text-ink-black dark:text-canvas-cream">
             {p.value}
           </span>
         </div>
@@ -74,13 +70,14 @@ export default function ViolationAreaChart({ byDomain = {} }: Props) {
   const data = buildChartData(byDomain);
 
   return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+          <EyebrowLabel className="mb-1">Violations</EyebrowLabel>
+          <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream">
             Violations by Domain & Severity
           </h3>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+          <p className="text-xs text-slate-gray mt-0.5">
             Current scan distribution
           </p>
         </div>
@@ -111,20 +108,20 @@ export default function ViolationAreaChart({ byDomain = {} }: Props) {
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="currentColor"
-              className="text-gray-100 dark:text-white/5"
+              className="text-ghost-cream dark:text-white/5"
               vertical={false}
             />
             <XAxis
               dataKey="name"
               tick={{ fontSize: 11, fill: "currentColor" }}
-              className="text-gray-400 dark:text-gray-600"
+              className="text-slate-gray"
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               allowDecimals={false}
               tick={{ fontSize: 11, fill: "currentColor" }}
-              className="text-gray-400 dark:text-gray-600"
+              className="text-slate-gray"
               axisLine={false}
               tickLine={false}
             />

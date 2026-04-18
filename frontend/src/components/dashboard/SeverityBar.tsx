@@ -1,7 +1,3 @@
-/**
- * Severity bar chart — redesigned with rounded bars, clean grid,
- * and dark mode support.
- */
 import {
   BarChart,
   Bar,
@@ -12,6 +8,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 interface Props {
   bySeverity?: Record<string, number>;
@@ -36,8 +33,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const { value, payload: item } = payload[0];
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-1.5 shadow-lg">
-      <span className="text-sm font-bold text-gray-800 dark:text-white">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-3 py-1.5 shadow-elev-1">
+      <span className="text-sm font-bold text-ink-black dark:text-canvas-cream">
         {value} {item.name}
       </span>
     </div>
@@ -53,11 +50,12 @@ export default function SeverityBar({ bySeverity = {} }: Props) {
   }));
 
   return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm h-full flex flex-col">
-      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
+      <EyebrowLabel className="mb-1">Severity</EyebrowLabel>
+      <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-1">
         Violations by Severity
       </h3>
-      <p className="text-xs text-gray-400 dark:text-gray-600 mb-4">
+      <p className="text-xs text-slate-gray mb-4">
         Active violations breakdown
       </p>
       <div className="flex-1 min-h-[11rem]">
@@ -69,20 +67,20 @@ export default function SeverityBar({ bySeverity = {} }: Props) {
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="currentColor"
-              className="text-gray-100 dark:text-white/5"
+              className="text-ghost-cream dark:text-white/5"
               vertical={false}
             />
             <XAxis
               dataKey="name"
               tick={{ fontSize: 11, fill: "currentColor" }}
-              className="text-gray-400 dark:text-gray-600"
+              className="text-slate-gray"
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               allowDecimals={false}
               tick={{ fontSize: 11, fill: "currentColor" }}
-              className="text-gray-400 dark:text-gray-600"
+              className="text-slate-gray"
               axisLine={false}
               tickLine={false}
             />

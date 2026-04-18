@@ -36,10 +36,10 @@ const columns = [
     header: "Issue",
     cell: (info) => (
       <div>
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
+        <span className="text-sm font-medium text-ink-black dark:text-canvas-cream">
           {getCheckName(info.getValue())}
         </span>
-        <span className="block text-[10px] font-mono text-gray-400 dark:text-gray-500">
+        <span className="block text-[10px] font-mono text-slate-gray/70 dark:text-slate-gray/50">
           {info.getValue()}
         </span>
       </div>
@@ -49,7 +49,7 @@ const columns = [
     header: "Resource",
     cell: (info) => (
       <span
-        className="font-mono text-xs truncate block max-w-[200px]"
+        className="font-mono text-xs truncate block max-w-[200px] text-ink-black dark:text-canvas-cream"
         title={info.getValue()}
       >
         {info.getValue() || "—"}
@@ -67,7 +67,7 @@ const columns = [
   col.accessor("domain", {
     header: "Domain",
     cell: (info) => (
-      <span className="text-sm capitalize">
+      <span className="text-sm capitalize text-ink-black dark:text-canvas-cream">
         {info.getValue().replace(/_/g, " ")}
       </span>
     ),
@@ -76,7 +76,7 @@ const columns = [
     header: "Detected",
     sortingFn: "datetime",
     cell: (info) => (
-      <span className="text-xs text-gray-500 dark:text-gray-400">
+      <span className="text-xs text-slate-gray">
         {formatDate(info.getValue())}
       </span>
     ),
@@ -101,15 +101,15 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-white/5">
-        <table className="min-w-full divide-y divide-gray-100 dark:divide-white/5">
-          <thead className="bg-gray-50 dark:bg-white/[0.03]">
+      <div className="overflow-x-auto rounded-hero border border-ghost-cream dark:border-white/5">
+        <table className="min-w-full divide-y divide-ghost-cream dark:divide-white/5">
+          <thead className="bg-canvas-cream dark:bg-ink-black/30">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-white/5"
+                    className="px-4 py-3 text-left text-xs font-medium text-slate-gray uppercase tracking-wider cursor-pointer select-none hover:bg-ghost-cream dark:hover:bg-white/5"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-1">
@@ -127,12 +127,12 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
               </tr>
             ))}
           </thead>
-          <tbody className="bg-white dark:bg-[#111] divide-y divide-gray-100 dark:divide-white/5">
+          <tbody className="bg-lifted-cream dark:bg-ink-black divide-y divide-ghost-cream dark:divide-white/5">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                  className="px-4 py-8 text-center text-sm text-slate-gray"
                 >
                   No violations found.
                 </td>
@@ -141,13 +141,13 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-gray-50 dark:hover:bg-white/[0.04] cursor-pointer transition-colors"
+                  className="hover:bg-canvas-cream dark:hover:bg-white/[0.04] cursor-pointer transition-colors"
                   onClick={() => onRowClick(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                      className="px-4 py-3 whitespace-nowrap text-sm text-ink-black dark:text-canvas-cream"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -165,7 +165,7 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
       {/* Pagination */}
       {table.getPageCount() > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-slate-gray">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()} ({data.length} total)
           </p>
@@ -173,14 +173,14 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              className="px-3 py-1.5 text-sm rounded-btn border border-ghost-cream dark:border-white/10 text-ink-black dark:text-canvas-cream disabled:opacity-40 hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              className="px-3 py-1.5 text-sm rounded-btn border border-ghost-cream dark:border-white/10 text-ink-black dark:text-canvas-cream disabled:opacity-40 hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors"
             >
               Next
             </button>

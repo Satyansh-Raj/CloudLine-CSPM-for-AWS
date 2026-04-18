@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useInventory } from "@/hooks/useInventory";
 import { useRegion } from "@/hooks/useRegion";
 import { ExposureBadge } from "@/components/inventory";
+import { EyebrowLabel } from "@/components/shared";
 import type { Resource } from "@/types/inventory";
 
 function capitalize(s: string): string {
@@ -31,41 +32,23 @@ function ResourceRow({ resource }: { resource: Resource }) {
       to="/inventory/detail"
       state={{ resource }}
       aria-label={resource.resource_name}
-      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50
-        dark:hover:bg-white/5 transition-colors rounded-xl group"
+      className="flex items-center gap-3 px-4 py-3 hover:bg-canvas-cream dark:hover:bg-white/5 transition-colors rounded-xl group"
     >
-      {/* Resource name */}
-      <span
-        className="flex-1 min-w-0 text-sm font-medium text-gray-900
-          dark:text-white group-hover:text-blue-600
-          dark:group-hover:text-blue-400 truncate"
-      >
+      <span className="flex-1 min-w-0 text-sm font-medium text-ink-black dark:text-canvas-cream group-hover:text-link-blue dark:group-hover:text-link-blue truncate">
         {resource.resource_name}
       </span>
 
-      {/* Service badge */}
-      <span
-        className="hidden sm:inline-flex items-center px-2 py-0.5 rounded
-          text-xs font-medium bg-blue-50 dark:bg-blue-500/10
-          text-blue-700 dark:text-blue-300 border border-blue-100
-          dark:border-blue-500/20 whitespace-nowrap"
-      >
+      <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-pill text-xs font-medium bg-ghost-cream dark:bg-white/5 text-slate-gray whitespace-nowrap">
         {resource.service}
       </span>
 
-      {/* Exposure */}
       <ExposureBadge exposure={resource.exposure} />
 
-      {/* Violation count */}
-      <span
-        className="hidden sm:block text-xs tabular-nums text-gray-500
-          dark:text-gray-400 whitespace-nowrap"
-      >
+      <span className="hidden sm:block text-xs tabular-nums text-slate-gray whitespace-nowrap">
         {resource.violation_count}{" "}
         {resource.violation_count === 1 ? "violation" : "violations"}
       </span>
 
-      {/* Risk score */}
       <RiskScore score={resource.risk_score} />
     </Link>
   );
@@ -87,9 +70,7 @@ export default function CategoryResourcesPage() {
         <Link
           to="/inventory"
           aria-label="Back to Inventory"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500
-            dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400
-            transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-gray hover:text-ink-black dark:hover:text-canvas-cream transition-colors"
         >
           <svg
             className="w-4 h-4"
@@ -109,24 +90,24 @@ export default function CategoryResourcesPage() {
         </Link>
       </div>
 
-      <h2
-        className="text-xl font-bold text-gray-900 dark:text-white
-          tracking-tight"
-      >
-        {capitalize(category)}
-      </h2>
+      <div>
+        <EyebrowLabel>Category</EyebrowLabel>
+        <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight mt-0.5">
+          {capitalize(category)}
+        </h2>
+      </div>
 
       {/* Region filter */}
-      <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-slate-gray mb-1">
               Region
             </label>
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              className="block w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
               aria-label="Select region"
             >
               <option value="">All Regions</option>
@@ -142,15 +123,11 @@ export default function CategoryResourcesPage() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div
-          className="bg-white dark:bg-[#111] border border-gray-100
-            dark:border-white/5 rounded-2xl p-6 shadow-sm animate-pulse
-            space-y-3"
-        >
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-10 bg-gray-100 dark:bg-white/5 rounded-xl"
+              className="h-10 bg-ghost-cream dark:bg-white/5 rounded-xl"
             />
           ))}
         </div>
@@ -158,10 +135,7 @@ export default function CategoryResourcesPage() {
 
       {/* Error state */}
       {error && (
-        <div
-          className="bg-red-50 dark:bg-red-500/5 border border-red-200
-            dark:border-red-500/20 rounded-2xl p-5"
-        >
+        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-hero p-5">
           <p className="text-sm text-red-700 dark:text-red-400">
             Failed to load resources:{" "}
             {(error as { message?: string }).message ?? "Unknown error"}
@@ -171,11 +145,8 @@ export default function CategoryResourcesPage() {
 
       {/* Empty state */}
       {!isLoading && !error && data && data.length === 0 && (
-        <div
-          className="bg-white dark:bg-[#111] border border-gray-100
-            dark:border-white/5 rounded-2xl p-10 shadow-sm text-center"
-        >
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-10 shadow-elev-1 text-center">
+          <p className="text-sm text-slate-gray">
             No {category} resources found
           </p>
         </div>
@@ -183,51 +154,28 @@ export default function CategoryResourcesPage() {
 
       {/* Resource list */}
       {!isLoading && !error && data && data.length > 0 && (
-        <div
-          className="bg-white dark:bg-[#111] border border-gray-100
-            dark:border-white/5 rounded-2xl shadow-sm overflow-hidden"
-        >
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 overflow-hidden">
           {/* Column headers */}
-          <div
-            className="flex items-center gap-3 px-4 py-2 border-b
-              border-gray-100 dark:border-white/5"
-          >
-            <span
-              className="flex-1 text-[10px] uppercase tracking-widest
-                font-semibold text-gray-400 dark:text-gray-600"
-            >
+          <div className="flex items-center gap-3 px-4 py-2 border-b border-ghost-cream dark:border-white/5">
+            <span className="flex-1 text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70">
               Resource
             </span>
-            <span
-              className="hidden sm:block text-[10px] uppercase
-                tracking-widest font-semibold text-gray-400
-                dark:text-gray-600"
-            >
+            <span className="hidden sm:block text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70">
               Service
             </span>
-            <span
-              className="text-[10px] uppercase tracking-widest font-semibold
-                text-gray-400 dark:text-gray-600"
-            >
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70">
               Exposure
             </span>
-            <span
-              className="hidden sm:block text-[10px] uppercase
-                tracking-widest font-semibold text-gray-400
-                dark:text-gray-600 whitespace-nowrap"
-            >
+            <span className="hidden sm:block text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70 whitespace-nowrap">
               Violations
             </span>
-            <span
-              className="text-[10px] uppercase tracking-widest font-semibold
-                text-gray-400 dark:text-gray-600"
-            >
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70">
               Risk
             </span>
           </div>
 
           {/* Rows */}
-          <div className="divide-y divide-gray-50 dark:divide-white/5 p-1">
+          <div className="divide-y divide-ghost-cream dark:divide-white/5 p-1">
             {(data as Resource[]).map((r) => (
               <ResourceRow key={r.resource_id} resource={r} />
             ))}

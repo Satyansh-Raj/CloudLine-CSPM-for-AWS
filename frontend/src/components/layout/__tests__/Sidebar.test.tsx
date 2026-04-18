@@ -107,7 +107,7 @@ describe("Sidebar", () => {
 
   it("shows version", () => {
     renderSidebar();
-    expect(screen.getByText("v0.1.0")).toBeInTheDocument();
+    expect(screen.getByText("v0.4.13")).toBeInTheDocument();
   });
 
   // Account switcher popover tests

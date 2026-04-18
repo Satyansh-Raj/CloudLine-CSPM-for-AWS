@@ -250,7 +250,6 @@ export default function Sidebar() {
   const [accountId, setAccountId] = useState("");
   const [roleArn, setRoleArn] = useState("");
   const [saving, setSaving] = useState(false);
-  // After account created: show trust policy
   const [createdAccount, setCreatedAccount] = useState<TargetAccount | null>(
     null,
   );
@@ -312,16 +311,16 @@ export default function Sidebar() {
     <aside
       className="
       w-60 shrink-0 min-h-screen flex flex-col
-      bg-white dark:bg-black
-      border-r border-gray-100 dark:border-white/5
+      bg-lifted-cream dark:bg-ink-black
+      border-r border-ghost-cream dark:border-white/5
     "
     >
       {/* Brand */}
-      <div className="px-5 py-5 border-b border-gray-100 dark:border-white/5">
+      <div className="px-5 py-5 border-b border-ghost-cream dark:border-white/5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-full bg-ink-black dark:bg-canvas-cream flex items-center justify-center shrink-0">
             <svg
-              className="w-4 h-4 text-white"
+              className="w-4 h-4 text-canvas-cream dark:text-ink-black"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -331,33 +330,31 @@ export default function Sidebar() {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold tracking-tight text-gray-900 dark:text-white leading-none">
+            <p className="text-sm font-bold tracking-tight text-ink-black dark:text-canvas-cream leading-none">
               CloudLine
             </p>
-            <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-0.5">
-              AWS Security
-            </p>
+            <p className="text-[10px] text-slate-gray mt-0.5">AWS Security</p>
           </div>
         </div>
       </div>
 
       {/* Account Switcher */}
       <div
-        className="px-3 py-3 border-b border-gray-100 dark:border-white/5"
+        className="px-3 py-3 border-b border-ghost-cream dark:border-white/5"
         ref={popoverRef}
       >
-        <p className="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-700">
+        <p className="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-eyebrow text-slate-gray">
           Account
         </p>
         <button
           type="button"
           aria-label="Switch account"
           onClick={() => setPopoverOpen((o) => !o)}
-          className="w-full flex items-center justify-between px-2.5 py-2 text-[13px] font-medium rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white hover:border-blue-400 focus:ring-2 focus:ring-blue-500/30 outline-none cursor-pointer transition-colors"
+          className="w-full flex items-center justify-between px-2.5 py-2 text-[13px] font-medium rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-ink-black dark:text-canvas-cream hover:border-ink-black dark:hover:border-canvas-cream/50 focus:ring-2 focus:ring-ink-black/20 outline-none cursor-pointer transition-colors"
         >
           <span className="truncate">{buttonLabel}</span>
           <svg
-            className="w-3.5 h-3.5 ml-1.5 shrink-0 text-gray-400"
+            className="w-3.5 h-3.5 ml-1.5 shrink-0 text-slate-gray"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -375,7 +372,7 @@ export default function Sidebar() {
           <div
             role="listbox"
             aria-label="Select account"
-            className="absolute z-50 mt-1 w-52 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-neutral-900 shadow-lg py-1"
+            className="absolute z-50 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 py-1"
           >
             <div
               role="option"
@@ -384,13 +381,13 @@ export default function Sidebar() {
                 setSelectedAccount("");
                 setPopoverOpen(false);
               }}
-              className={`px-3 py-2 text-[13px] cursor-pointer flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 ${
+              className={`px-3 py-2 text-[13px] cursor-pointer flex items-center gap-2 hover:bg-ghost-cream dark:hover:bg-white/5 ${
                 selectedAccount === ""
-                  ? "text-blue-600 dark:text-blue-400 font-medium"
-                  : "text-gray-700 dark:text-gray-300"
+                  ? "text-ink-black dark:text-canvas-cream font-medium"
+                  : "text-slate-gray dark:text-ghost-cream"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-dust-taupe dark:bg-slate-gray shrink-0" />
               All Accounts
             </div>
             {accounts.map((a) => (
@@ -402,18 +399,18 @@ export default function Sidebar() {
                   setSelectedAccount(a.account_id);
                   setPopoverOpen(false);
                 }}
-                className={`px-3 py-2 text-[13px] cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 ${
+                className={`px-3 py-2 text-[13px] cursor-pointer hover:bg-ghost-cream dark:hover:bg-white/5 ${
                   selectedAccount === a.account_id
-                    ? "text-blue-600 dark:text-blue-400 font-medium"
-                    : "text-gray-700 dark:text-gray-300"
+                    ? "text-ink-black dark:text-canvas-cream font-medium"
+                    : "text-slate-gray dark:text-ghost-cream"
                 }`}
               >
                 <p className="truncate">{a.account_name}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-600 truncate">
+                <p className="text-[11px] text-slate-gray truncate">
                   {a.account_id}
                 </p>
                 <div className="flex items-center justify-between mt-0.5">
-                  <p className="text-[10px] text-gray-400 dark:text-gray-600">
+                  <p className="text-[10px] text-slate-gray">
                     {formatRelativeTime(a.last_scanned)}
                   </p>
                   <button
@@ -423,21 +420,21 @@ export default function Sidebar() {
                       e.stopPropagation();
                       handleScanNow(a);
                     }}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 font-medium"
+                    className="text-[10px] px-1.5 py-0.5 rounded-btn bg-ghost-cream dark:bg-white/10 text-ink-black dark:text-canvas-cream hover:bg-dust-taupe dark:hover:bg-white/20 font-medium"
                   >
                     Scan Now
                   </button>
                 </div>
               </div>
             ))}
-            <div className="border-t border-gray-100 dark:border-white/5 mt-1 pt-1">
+            <div className="border-t border-ghost-cream dark:border-white/5 mt-1 pt-1">
               <button
                 type="button"
                 onClick={() => {
                   setPopoverOpen(false);
                   setModalOpen(true);
                 }}
-                className="w-full text-left px-3 py-2 text-[13px] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 font-medium"
+                className="w-full text-left px-3 py-2 text-[13px] text-ink-black dark:text-canvas-cream hover:bg-ghost-cream dark:hover:bg-white/5 font-medium"
               >
                 + Add Account
               </button>
@@ -456,18 +453,18 @@ export default function Sidebar() {
               role="dialog"
               aria-modal="true"
               aria-label="Add Account"
-              className="w-80 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl p-5"
+              className="w-80 rounded-hero bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 shadow-elev-2 p-5"
             >
               {createdAccount ? (
                 <>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-1">
                     Account Added!
                   </h2>
-                  <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-3">
+                  <p className="text-[12px] text-slate-gray mb-3">
                     Paste this trust policy into the CloudLineScanner role in
                     account {createdAccount.account_id}:
                   </p>
-                  <pre className="text-[11px] bg-gray-50 dark:bg-black rounded-lg p-3 overflow-auto whitespace-pre-wrap break-all text-gray-700 dark:text-gray-300 mb-4">
+                  <pre className="text-[11px] bg-canvas-cream dark:bg-[#0e0e0d] rounded-hero p-3 overflow-auto whitespace-pre-wrap break-all text-ink-black dark:text-canvas-cream mb-4">
                     {JSON.stringify(
                       {
                         Principal: {
@@ -506,14 +503,14 @@ export default function Sidebar() {
                           ),
                         )
                       }
-                      className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                      className="px-3 py-1.5 text-[13px] rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5"
                     >
                       Copy
                     </button>
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
+                      className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
                     >
                       Done
                     </button>
@@ -521,7 +518,7 @@ export default function Sidebar() {
                 </>
               ) : (
                 <>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                  <h2 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-4">
                     Add Account
                   </h2>
                   <div className="space-y-3">
@@ -530,28 +527,28 @@ export default function Sidebar() {
                       placeholder="Account Name"
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
-                      className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                      className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:ring-canvas-cream/20 dark:focus:border-canvas-cream/50"
                     />
                     <input
                       type="text"
                       placeholder="Account ID"
                       value={accountId}
                       onChange={(e) => setAccountId(e.target.value)}
-                      className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                      className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:ring-canvas-cream/20 dark:focus:border-canvas-cream/50"
                     />
                     <input
                       type="text"
                       placeholder="Role ARN"
                       value={roleArn}
                       onChange={(e) => setRoleArn(e.target.value)}
-                      className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                      className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:ring-canvas-cream/20 dark:focus:border-canvas-cream/50"
                     />
                   </div>
                   <div className="flex gap-2 mt-4 justify-end">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                      className="px-3 py-1.5 text-[13px] rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5"
                     >
                       Cancel
                     </button>
@@ -561,7 +558,7 @@ export default function Sidebar() {
                       disabled={
                         saving || !accountName || !accountId || !roleArn
                       }
-                      className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {saving ? "Saving…" : "Save"}
                     </button>
@@ -575,7 +572,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-700">
+        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-eyebrow text-slate-gray">
           Menu
         </p>
         {navItems.map((item) => (
@@ -583,10 +580,10 @@ export default function Sidebar() {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+              `group flex items-center gap-3 px-3 py-2.5 rounded-pill text-[13px] font-medium transition-all duration-150 ${
                 isActive
-                  ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20"
-                  : "text-gray-500 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 border border-transparent"
+                  ? "bg-ink-black text-canvas-cream border border-transparent dark:bg-canvas-cream dark:text-ink-black"
+                  : "text-slate-gray dark:text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5 hover:text-ink-black dark:hover:text-canvas-cream border border-transparent"
               }`
             }
           >
@@ -595,15 +592,15 @@ export default function Sidebar() {
                 <span
                   className={
                     isActive
-                      ? "text-blue-500 dark:text-blue-400"
-                      : "text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors"
+                      ? "text-canvas-cream dark:text-ink-black"
+                      : "text-slate-gray dark:text-slate-gray group-hover:text-ink-black dark:group-hover:text-canvas-cream transition-colors"
                   }
                 >
                   {iconMap[item.icon]}
                 </span>
                 {item.label}
                 {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-canvas-cream dark:bg-ink-black" />
                 )}
               </>
             )}
@@ -613,10 +610,10 @@ export default function Sidebar() {
           <NavLink
             to="/users"
             className={({ isActive }) =>
-              `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+              `group flex items-center gap-3 px-3 py-2.5 rounded-pill text-[13px] font-medium transition-all duration-150 ${
                 isActive
-                  ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20"
-                  : "text-gray-500 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200 border border-transparent"
+                  ? "bg-ink-black text-canvas-cream border border-transparent dark:bg-canvas-cream dark:text-ink-black"
+                  : "text-slate-gray dark:text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5 hover:text-ink-black dark:hover:text-canvas-cream border border-transparent"
               }`
             }
           >
@@ -625,15 +622,15 @@ export default function Sidebar() {
                 <span
                   className={
                     isActive
-                      ? "text-blue-500 dark:text-blue-400"
-                      : "text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors"
+                      ? "text-canvas-cream dark:text-ink-black"
+                      : "text-slate-gray dark:text-slate-gray group-hover:text-ink-black dark:group-hover:text-canvas-cream transition-colors"
                   }
                 >
                   {iconMap["users"]}
                 </span>
                 User Management
                 {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-canvas-cream dark:bg-ink-black" />
                 )}
               </>
             )}
@@ -642,9 +639,9 @@ export default function Sidebar() {
       </nav>
 
       {/* Version */}
-      <div className="px-3 py-4 border-t border-gray-100 dark:border-white/5">
-        <p className="text-[10px] text-gray-300 dark:text-gray-800 px-2">
-          v0.1.0
+      <div className="px-3 py-4 border-t border-ghost-cream dark:border-white/5">
+        <p className="text-[10px] text-dust-taupe dark:text-slate-gray px-2">
+          v0.4.13
         </p>
       </div>
     </aside>

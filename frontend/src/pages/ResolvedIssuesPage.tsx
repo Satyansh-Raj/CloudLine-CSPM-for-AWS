@@ -13,7 +13,12 @@ import { useViolations } from "@/hooks/useViolations";
 import { useRegion } from "@/hooks/useRegion";
 import { useAccount } from "@/hooks/useAccount";
 import { toResolvedPath } from "@/utils/violationUrl";
-import { SeverityBadge, StatusBadge } from "@/components/shared";
+import {
+  SeverityBadge,
+  StatusBadge,
+  EyebrowLabel,
+  GhostHeadline,
+} from "@/components/shared";
 import { ViolationFilters, type FilterValues } from "@/components/violations";
 import { getCheckName } from "@/constants/checkNames";
 import type { Violation } from "@/types";
@@ -41,10 +46,10 @@ const columns = [
     header: "Issue",
     cell: (info) => (
       <div>
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
+        <span className="text-sm font-medium text-ink-black dark:text-canvas-cream">
           {getCheckName(info.getValue())}
         </span>
-        <span className="block text-[10px] font-mono text-gray-400 dark:text-gray-500">
+        <span className="block text-[10px] font-mono text-slate-gray/70">
           {info.getValue()}
         </span>
       </div>
@@ -54,7 +59,7 @@ const columns = [
     header: "Resource",
     cell: (info) => (
       <span
-        className="font-mono text-xs truncate block max-w-[200px]"
+        className="font-mono text-xs truncate block max-w-[200px] text-ink-black dark:text-canvas-cream"
         title={info.getValue()}
       >
         {info.getValue() || "—"}
@@ -73,7 +78,7 @@ const columns = [
   col.accessor("resolved_at", {
     header: "Resolved At",
     cell: (info) => (
-      <span className="text-xs text-gray-500 dark:text-gray-500">
+      <span className="text-xs text-slate-gray">
         {formatDate(info.getValue())}
       </span>
     ),
@@ -81,7 +86,7 @@ const columns = [
   col.accessor("domain", {
     header: "Domain",
     cell: (info) => (
-      <span className="text-sm capitalize">
+      <span className="text-sm capitalize text-ink-black dark:text-canvas-cream">
         {info.getValue().replace(/_/g, " ")}
       </span>
     ),
@@ -178,35 +183,37 @@ export default function ResolvedIssuesPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="relative flex items-center justify-between flex-wrap gap-3">
+        <GhostHeadline>RSLVD</GhostHeadline>
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <EyebrowLabel>Passed Checks</EyebrowLabel>
+          <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight">
             Resolved Issues
           </h2>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+          <p className="text-xs text-slate-gray mt-0.5">
             Violations that currently pass their security checks
           </p>
         </div>
 
         {data && data.length > 0 && (
-          <span className="shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-500/20">
+          <span className="shrink-0 px-3 py-1.5 text-xs font-semibold rounded-pill bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-500/20">
             {data.length} resolved
           </span>
         )}
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
         <div className="flex flex-wrap items-end gap-4">
           <ViolationFilters filters={filters} onChange={setFilters} />
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-slate-gray mb-1">
               Region
             </label>
             <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
-              className="block w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
               aria-label="Select region"
             >
               <option value="">All Regions</option>
@@ -222,11 +229,11 @@ export default function ResolvedIssuesPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm animate-pulse space-y-3">
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-10 bg-gray-100 dark:bg-white/5 rounded-xl"
+              className="h-10 bg-ghost-cream dark:bg-white/5 rounded-xl"
             />
           ))}
         </div>
@@ -234,7 +241,7 @@ export default function ResolvedIssuesPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-5">
+        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-hero p-5">
           <p className="text-sm text-red-700 dark:text-red-400">
             Failed to load resolved issues:{" "}
             {(error as { message?: string }).message ?? "Unknown error"}
@@ -244,14 +251,14 @@ export default function ResolvedIssuesPage() {
 
       {/* Empty state */}
       {!isLoading && !error && data && data.length === 0 && (
-        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-12 text-center shadow-sm">
-          <div className="w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-12 text-center shadow-elev-1">
+          <div className="w-12 h-12 rounded-hero bg-green-50 dark:bg-green-500/10 flex items-center justify-center mx-auto mb-3">
             <CheckIcon />
           </div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <p className="text-sm font-medium text-ink-black dark:text-canvas-cream">
             No resolved issues yet
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+          <p className="text-xs text-slate-gray mt-1">
             Violations that pass their checks will appear here.
           </p>
         </div>
@@ -261,17 +268,17 @@ export default function ResolvedIssuesPage() {
       {!isLoading && !error && data && data.length > 0 && (
         <div>
           <div
-            className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-white/5"
+            className="overflow-x-auto rounded-hero border border-ghost-cream dark:border-white/5"
             data-testid="resolved-issues-table"
           >
-            <table className="min-w-full divide-y divide-gray-100 dark:divide-white/5">
-              <thead className="bg-gray-50 dark:bg-white/[0.03]">
+            <table className="min-w-full divide-y divide-ghost-cream dark:divide-white/5">
+              <thead className="bg-canvas-cream dark:bg-ink-black/30">
                 {table.getHeaderGroups().map((hg) => (
                   <tr key={hg.id}>
                     {hg.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-white/5"
+                        className="px-4 py-3 text-left text-xs font-medium text-slate-gray uppercase tracking-wider cursor-pointer select-none hover:bg-ghost-cream dark:hover:bg-white/5"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <div className="flex items-center gap-1">
@@ -293,12 +300,12 @@ export default function ResolvedIssuesPage() {
                   </tr>
                 ))}
               </thead>
-              <tbody className="bg-white dark:bg-[#111] divide-y divide-gray-100 dark:divide-white/5">
+              <tbody className="bg-lifted-cream dark:bg-ink-black divide-y divide-ghost-cream dark:divide-white/5">
                 {table.getRowModel().rows.length === 0 ? (
                   <tr>
                     <td
                       colSpan={columns.length}
-                      className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                      className="px-4 py-8 text-center text-sm text-slate-gray"
                     >
                       No resolved issues found.
                     </td>
@@ -308,7 +315,7 @@ export default function ResolvedIssuesPage() {
                     <tr
                       key={row.id}
                       data-testid="resolved-row"
-                      className="hover:bg-gray-50 dark:hover:bg-white/[0.04] cursor-pointer transition-colors"
+                      className="hover:bg-canvas-cream dark:hover:bg-white/[0.04] cursor-pointer transition-colors"
                       onClick={() =>
                         navigate(
                           toResolvedPath(
@@ -326,7 +333,7 @@ export default function ResolvedIssuesPage() {
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
-                          className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                          className="px-4 py-3 whitespace-nowrap text-sm text-ink-black dark:text-canvas-cream"
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -344,7 +351,7 @@ export default function ResolvedIssuesPage() {
           {/* Pagination */}
           {table.getPageCount() > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-slate-gray">
                 Page {table.getState().pagination.pageIndex + 1} of{" "}
                 {table.getPageCount()} ({data.length} total)
               </p>
@@ -352,14 +359,14 @@ export default function ResolvedIssuesPage() {
                 <button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  className="px-3 py-1.5 text-sm rounded-btn border border-ghost-cream dark:border-white/10 text-ink-black dark:text-canvas-cream disabled:opacity-40 hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  className="px-3 py-1.5 text-sm rounded-btn border border-ghost-cream dark:border-white/10 text-ink-black dark:text-canvas-cream disabled:opacity-40 hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors"
                 >
                   Next
                 </button>

@@ -11,8 +11,39 @@ import {
 import type { ApiError } from "@/api/client";
 import type { CreateUserRequest, LoginEvent } from "@/api/users";
 import type { User, UserRole } from "@/types/auth";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 type Tab = "users" | "reset_requests";
+
+const inputCls = [
+  "w-full px-3 py-2 text-[13px]",
+  "rounded-pill border border-ghost-cream dark:border-white/10",
+  "bg-canvas-cream dark:bg-black",
+  "text-ink-black dark:text-white",
+  "outline-none focus:ring-2 focus:ring-ink-black/20",
+].join(" ");
+
+function InitialsAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+  return (
+    <span
+      className={[
+        "inline-flex items-center justify-center",
+        "w-7 h-7 rounded-full shrink-0",
+        "bg-ghost-cream dark:bg-white/10",
+        "text-ink-black dark:text-gray-300",
+        "text-[11px] font-semibold select-none",
+      ].join(" ")}
+      aria-hidden="true"
+    >
+      {initials}
+    </span>
+  );
+}
 
 function LoginHistoryModal({
   user,
@@ -42,21 +73,25 @@ function LoginHistoryModal({
         role="dialog"
         aria-modal="true"
         aria-label={`Login history for ${user.full_name}`}
-        className="w-[560px] max-h-[80vh] flex flex-col rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl"
+        className={[
+          "w-[560px] max-h-[80vh] flex flex-col",
+          "rounded-hero bg-lifted-cream dark:bg-[#1c1c1b]",
+          "border border-ghost-cream dark:border-white/10 shadow-elev-2",
+        ].join(" ")}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/5">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-ghost-cream dark:border-white/5">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-sm font-semibold text-ink-black dark:text-white">
               Login History
             </h2>
-            <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-[12px] text-slate-gray dark:text-gray-400 mt-0.5">
               {user.full_name} · {user.email}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+            className="text-slate-gray hover:text-ink-black dark:hover:text-gray-200 text-lg leading-none"
             aria-label="Close"
           >
             ×
@@ -65,27 +100,27 @@ function LoginHistoryModal({
 
         <div className="overflow-y-auto flex-1 p-2">
           {loading ? (
-            <div className="py-10 text-center text-[13px] text-gray-400">
+            <div className="py-10 text-center text-[13px] text-slate-gray">
               Loading…
             </div>
           ) : events.length === 0 ? (
-            <div className="py-10 text-center text-[13px] text-gray-400">
+            <div className="py-10 text-center text-[13px] text-slate-gray">
               No login events recorded.
             </div>
           ) : (
             <table className="w-full text-[12px]">
               <thead>
-                <tr className="bg-gray-50 dark:bg-white/[0.02]">
-                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                <tr className="bg-canvas-cream dark:bg-white/[0.02]">
+                  <th className="text-left px-3 py-2 font-medium text-slate-gray dark:text-gray-400">
                     Time
                   </th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                  <th className="text-left px-3 py-2 font-medium text-slate-gray dark:text-gray-400">
                     IP
                   </th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                  <th className="text-left px-3 py-2 font-medium text-slate-gray dark:text-gray-400">
                     Result
                   </th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-500 dark:text-gray-400">
+                  <th className="text-left px-3 py-2 font-medium text-slate-gray dark:text-gray-400">
                     User Agent
                   </th>
                 </tr>
@@ -94,12 +129,12 @@ function LoginHistoryModal({
                 {events.map((ev, i) => (
                   <tr
                     key={i}
-                    className="border-t border-gray-100 dark:border-white/5"
+                    className="border-t border-ghost-cream dark:border-white/5"
                   >
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    <td className="px-3 py-2 text-ink-black dark:text-gray-300 whitespace-nowrap">
                       {new Date(ev.ts).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400 font-mono">
+                    <td className="px-3 py-2 text-slate-gray dark:text-gray-400 font-mono">
                       {ev.ip}
                     </td>
                     <td className="px-3 py-2">
@@ -114,7 +149,7 @@ function LoginHistoryModal({
                       </span>
                     </td>
                     <td
-                      className="px-3 py-2 text-gray-400 truncate max-w-[180px]"
+                      className="px-3 py-2 text-slate-gray truncate max-w-[180px]"
                       title={ev.user_agent}
                     >
                       {ev.user_agent || "—"}
@@ -133,13 +168,15 @@ function LoginHistoryModal({
 function RoleBadge({ role }: { role: UserRole }) {
   const colors: Record<UserRole, string> = {
     admin:
-      "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300",
-    operator: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
-    viewer: "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400",
+      "bg-ink-black text-canvas-cream dark:bg-canvas-cream dark:text-ink-black",
+    operator:
+      "bg-ghost-cream text-ink-black dark:bg-white/10 dark:text-gray-200",
+    viewer:
+      "bg-ghost-cream text-slate-gray dark:bg-white/5 dark:text-gray-400",
   };
   return (
     <span
-      className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${colors[role]}`}
+      className={`px-2 py-0.5 rounded-pill text-[11px] font-medium capitalize ${colors[role]}`}
     >
       {role}
     </span>
@@ -191,16 +228,20 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Add User"
-        className="w-96 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl p-5"
+        className={[
+          "w-96 rounded-hero p-5",
+          "bg-lifted-cream dark:bg-[#1c1c1b]",
+          "border border-ghost-cream dark:border-white/10 shadow-elev-2",
+        ].join(" ")}
       >
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-sm font-semibold text-ink-black dark:text-white mb-4">
           Add User
         </h2>
 
         {error && (
           <div
             role="alert"
-            className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+            className="mb-3 px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
           >
             {error}
           </div>
@@ -213,7 +254,7 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
-            className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+            className={inputCls}
           />
           <input
             type="email"
@@ -221,7 +262,7 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+            className={inputCls}
           />
           <div>
             <input
@@ -230,16 +271,16 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+              className={inputCls}
             />
-            <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+            <p className="mt-1 text-[11px] text-slate-gray dark:text-gray-500">
               Min 12 chars · at least 1 digit · at least 1 symbol
             </p>
           </div>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as UserRole)}
-            className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+            className={inputCls}
           >
             <option value="viewer">Viewer</option>
             <option value="operator">Operator</option>
@@ -249,14 +290,14 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+              className="px-3 py-1.5 text-[13px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90 disabled:opacity-50"
             >
               {saving ? "Creating…" : "Create"}
             </button>
@@ -308,19 +349,23 @@ function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label={`Set password for ${user.full_name}`}
-        className="w-96 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/10 shadow-2xl p-5"
+        className={[
+          "w-96 rounded-hero p-5",
+          "bg-lifted-cream dark:bg-[#1c1c1b]",
+          "border border-ghost-cream dark:border-white/10 shadow-elev-2",
+        ].join(" ")}
       >
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+        <h2 className="text-sm font-semibold text-ink-black dark:text-white mb-1">
           Set Password
         </h2>
-        <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-4">
+        <p className="text-[12px] text-slate-gray dark:text-gray-400 mb-4">
           {user.full_name} · {user.email}
         </p>
 
         {error && (
           <div
             role="alert"
-            className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+            className="mb-3 px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
           >
             {error}
           </div>
@@ -334,7 +379,7 @@ function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 text-[13px] rounded-lg bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15"
+              className="px-4 py-1.5 text-[13px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-300 hover:bg-ghost-cream dark:hover:bg-white/10"
             >
               Close
             </button>
@@ -348,9 +393,9 @@ function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                className={inputCls}
               />
-              <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+              <p className="mt-1 text-[11px] text-slate-gray dark:text-gray-500">
                 Min 12 chars · at least 1 digit · at least 1 symbol
               </p>
             </div>
@@ -360,20 +405,20 @@ function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
-              className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+              className={inputCls}
             />
             <div className="flex gap-2 justify-end pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                className="px-3 py-1.5 text-[13px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90 disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Set Password"}
               </button>
@@ -429,43 +474,52 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-            User Management
+          <EyebrowLabel className="mb-1">User Management</EyebrowLabel>
+          <h1 className="text-lg font-semibold text-ink-black dark:text-white">
+            Users
           </h1>
-          <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-[13px] text-slate-gray dark:text-gray-400 mt-0.5">
             Manage users and password reset requests.
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-4 border-b border-gray-100 dark:border-white/5">
+      {/* Pill segment tabs */}
+      <div
+        className={[
+          "inline-flex p-1 gap-1",
+          "bg-ghost-cream dark:bg-white/5 rounded-pill",
+        ].join(" ")}
+      >
         <button
           type="button"
           onClick={() => setTab("users")}
-          className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+          className={[
+            "px-4 py-1.5 text-[13px] font-medium rounded-pill transition-colors",
             tab === "users"
-              ? "border-blue-500 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          }`}
+              ? "bg-ink-black text-canvas-cream"
+              : "text-slate-gray dark:text-gray-400 hover:text-ink-black dark:hover:text-gray-200",
+          ].join(" ")}
         >
           Users
         </button>
         <button
           type="button"
           onClick={() => setTab("reset_requests")}
-          className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+          className={[
+            "px-4 py-1.5 text-[13px] font-medium rounded-pill transition-colors",
+            "flex items-center gap-1.5",
             tab === "reset_requests"
-              ? "border-blue-500 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          }`}
+              ? "bg-ink-black text-canvas-cream"
+              : "text-slate-gray dark:text-gray-400 hover:text-ink-black dark:hover:text-gray-200",
+          ].join(" ")}
         >
           Reset Requests
           {resets.length > 0 && (
-            <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+            <span className="px-1.5 py-0.5 rounded-pill bg-red-500 text-white text-[10px] font-bold">
               {resets.length}
             </span>
           )}
@@ -479,7 +533,7 @@ export default function UserManagementPage() {
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="px-3 py-1.5 text-[13px] rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
+              className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
             >
               + Add User
             </button>
@@ -488,46 +542,51 @@ export default function UserManagementPage() {
           {deleteError && (
             <div
               role="alert"
-              className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+              className="mb-3 px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
             >
               {deleteError}
             </div>
           )}
 
           {loading ? (
-            <div className="py-12 text-center text-[13px] text-gray-400">
+            <div className="py-12 text-center text-[13px] text-slate-gray">
               Loading…
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-100 dark:border-white/5 overflow-hidden">
+            <div className="rounded-hero border border-ghost-cream dark:border-white/5 overflow-hidden shadow-elev-1">
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/5">
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                  <tr className="bg-canvas-cream dark:bg-white/[0.02] border-b border-ghost-cream dark:border-white/5">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Name
                     </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Email
                     </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Role
                     </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Status
                     </th>
                     <th className="px-4 py-2.5" />
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
                   {users.map((u) => (
                     <tr
                       key={u.sk}
-                      className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50/50 dark:hover:bg-white/[0.02]"
+                      className="border-b border-ghost-cream dark:border-white/5 last:border-0 hover:bg-canvas-cream dark:hover:bg-white/[0.02]"
                     >
-                      <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
-                        {u.full_name}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <InitialsAvatar name={u.full_name} />
+                          <span className="text-ink-black dark:text-white font-medium">
+                            {u.full_name}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-slate-gray dark:text-gray-400">
                         {u.email}
                       </td>
                       <td className="px-4 py-3">
@@ -538,7 +597,7 @@ export default function UserManagementPage() {
                           className={`text-[11px] font-medium ${
                             u.is_active
                               ? "text-green-600 dark:text-green-400"
-                              : "text-gray-400"
+                              : "text-slate-gray"
                           }`}
                         >
                           {u.is_active ? "Active" : "Inactive"}
@@ -549,14 +608,14 @@ export default function UserManagementPage() {
                           <button
                             type="button"
                             onClick={() => setPasswordUser(u)}
-                            className="px-2.5 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                            className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
                           >
                             Set Password
                           </button>
                           <button
                             type="button"
                             onClick={() => setHistoryUser(u)}
-                            className="px-2.5 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                            className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
                           >
                             History
                           </button>
@@ -564,7 +623,7 @@ export default function UserManagementPage() {
                             <button
                               type="button"
                               onClick={() => void handleDeleteUser(u.sk)}
-                              className="px-2.5 py-1 text-[11px] rounded-lg border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                              className="px-2.5 py-1 text-[11px] rounded-btn border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
                             >
                               Deactivate
                             </button>
@@ -577,7 +636,7 @@ export default function UserManagementPage() {
                     <tr>
                       <td
                         colSpan={5}
-                        className="px-4 py-8 text-center text-gray-400"
+                        className="px-4 py-8 text-center text-slate-gray"
                       >
                         No users found.
                       </td>
@@ -608,40 +667,45 @@ export default function UserManagementPage() {
       {tab === "reset_requests" && (
         <div>
           {loading ? (
-            <div className="py-12 text-center text-[13px] text-gray-400">
+            <div className="py-12 text-center text-[13px] text-slate-gray">
               Loading…
             </div>
           ) : resets.length === 0 ? (
-            <div className="py-12 text-center text-[13px] text-gray-400">
+            <div className="py-12 text-center text-[13px] text-slate-gray">
               No pending reset requests.
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-100 dark:border-white/5 overflow-hidden">
+            <div className="rounded-hero border border-ghost-cream dark:border-white/5 overflow-hidden shadow-elev-1">
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/5">
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                  <tr className="bg-canvas-cream dark:bg-white/[0.02] border-b border-ghost-cream dark:border-white/5">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Name
                     </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Email
                     </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400">
+                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                       Role
                     </th>
                     <th className="px-4 py-2.5" />
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
                   {resets.map((u) => (
                     <tr
                       key={u.sk}
-                      className="border-b border-gray-100 dark:border-white/5 last:border-0"
+                      className="border-b border-ghost-cream dark:border-white/5 last:border-0"
                     >
-                      <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
-                        {u.full_name}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <InitialsAvatar name={u.full_name} />
+                          <span className="text-ink-black dark:text-white font-medium">
+                            {u.full_name}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-slate-gray dark:text-gray-400">
                         {u.email}
                       </td>
                       <td className="px-4 py-3">
@@ -651,7 +715,7 @@ export default function UserManagementPage() {
                         <button
                           type="button"
                           onClick={() => void handleApproveReset(u.sk)}
-                          className="px-3 py-1 text-[12px] rounded-lg bg-green-600 text-white font-medium hover:bg-green-700"
+                          className="px-3 py-1 text-[12px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
                         >
                           Approve
                         </button>

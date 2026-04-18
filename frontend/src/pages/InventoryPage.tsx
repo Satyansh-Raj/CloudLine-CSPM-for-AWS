@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { useInventorySummary } from "@/hooks/useInventory";
 import { useAccount } from "@/hooks/useAccount";
-import { AccountBadge } from "@/components/shared";
+import {
+  AccountBadge,
+  EyebrowLabel,
+  GhostHeadline,
+} from "@/components/shared";
 
-/* ---------- category icons ---------- */
-
-/* All 10 categories have custom PNG artwork in
-   public/icons/, served at build time from /icons/. */
 const CATEGORY_ICONS: Record<string, string> = {
   backup: "/icons/backup.png",
   compute: "/icons/compute.png",
@@ -24,8 +24,6 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/* ---------- page ---------- */
-
 export default function InventoryPage() {
   const { selectedAccount } = useAccount();
   const accountId = selectedAccount || undefined;
@@ -37,26 +35,21 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Heading + total stat */}
-      <div className="flex items-baseline justify-between">
+      {/* Heading */}
+      <div className="relative flex items-baseline justify-between">
+        <GhostHeadline>INV</GhostHeadline>
         <div className="flex items-baseline gap-3">
-          <h2
-            className="text-xl font-bold text-gray-900
-              dark:text-white tracking-tight"
-          >
-            Inventory
-          </h2>
+          <div>
+            <EyebrowLabel>Resource Catalogue</EyebrowLabel>
+            <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight">
+              Inventory
+            </h2>
+          </div>
           <AccountBadge />
         </div>
         {summary && (
-          <span
-            className="text-sm text-gray-500
-              dark:text-gray-400"
-          >
-            <span
-              className="font-semibold text-gray-900
-                dark:text-white"
-            >
+          <span className="text-sm text-slate-gray">
+            <span className="font-semibold text-ink-black dark:text-canvas-cream">
               {summary.total}
             </span>{" "}
             total resources
@@ -66,16 +59,11 @@ export default function InventoryPage() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div
-          className="grid grid-cols-2 sm:grid-cols-3
-            lg:grid-cols-5 gap-4 animate-pulse"
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 animate-pulse">
           {Array.from({ length: 10 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-square rounded-2xl
-                bg-gray-100 dark:bg-white/5 border
-                border-gray-100 dark:border-white/5"
+              className="aspect-square rounded-hero bg-ghost-cream dark:bg-white/5 border border-ghost-cream dark:border-white/5"
             />
           ))}
         </div>
@@ -83,15 +71,8 @@ export default function InventoryPage() {
 
       {/* Error state */}
       {error && (
-        <div
-          className="bg-red-50 dark:bg-red-500/5
-            border border-red-200
-            dark:border-red-500/20 rounded-xl p-5"
-        >
-          <p
-            className="text-sm text-red-700
-              dark:text-red-400"
-          >
+        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-hero p-5">
+          <p className="text-sm text-red-700 dark:text-red-400">
             Failed to load inventory:{" "}
             {(error as { message?: string }).message ?? "Unknown error"}
           </p>
@@ -100,74 +81,68 @@ export default function InventoryPage() {
 
       {/* Empty state */}
       {summary && summary.total === 0 && (
-        <div
-          className="flex items-center justify-center
-            py-20 text-gray-400 dark:text-gray-600
-            text-sm"
-        >
+        <div className="flex items-center justify-center py-20 text-slate-gray text-sm">
           No resources found
         </div>
       )}
 
-      {/* Category card grid — square cards */}
+      {/* Category card grid */}
       {summary && summary.total > 0 && (
-        <div
-          className="grid grid-cols-2 sm:grid-cols-3
-            lg:grid-cols-5 gap-4"
-        >
-          {Object.entries(summary.by_category)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([category, count]) => {
-              const icon = CATEGORY_ICONS[category.toLowerCase()];
-              return (
-                <Link
-                  key={category}
-                  to={`/inventory/${category}`}
-                  className="group aspect-square
-                    flex flex-col items-center
-                    justify-center gap-2
-                    bg-white dark:bg-[#111]
-                    border border-gray-100
-                    dark:border-white/5
-                    rounded-2xl p-3
-                    shadow-sm hover:shadow-lg
-                    hover:border-gray-200
-                    dark:hover:border-white/10
-                    transition-all duration-200
-                    overflow-hidden"
-                >
-                  {/* Icon */}
-                  <img
-                    src={icon ?? "/icons/storage.png"}
-                    alt={category}
-                    loading="eager"
-                    decoding="async"
-                    className="w-full max-h-[60%]
-                      object-contain drop-shadow-md
-                      flex-shrink-0"
-                  />
+        <div className="relative">
+          {/* Orbital arc decoration — desktop only */}
+          <svg
+            aria-hidden="true"
+            className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none select-none"
+            preserveAspectRatio="none"
+          >
+            <ellipse
+              cx="50%"
+              cy="50%"
+              rx="45%"
+              ry="40%"
+              fill="none"
+              stroke="#F37338"
+              strokeWidth="1"
+              strokeDasharray="6 8"
+              opacity="0.25"
+            />
+          </svg>
 
-                  {/* Category name */}
-                  <span
-                    className="text-xs font-medium
-                      text-gray-500
-                      dark:text-gray-400
-                      leading-tight text-center"
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 relative">
+            {Object.entries(summary.by_category)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([category, count]) => {
+                const icon = CATEGORY_ICONS[category.toLowerCase()];
+                return (
+                  <Link
+                    key={category}
+                    to={`/inventory/${category}`}
+                    className="group flex flex-col items-center justify-center gap-3 bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 hover:shadow-elev-2 hover:border-ink-black/20 dark:hover:border-white/15 transition-all duration-200 overflow-hidden"
                   >
-                    {capitalize(category)}
-                  </span>
+                    {/* Circular portrait icon */}
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-ghost-cream dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                      <img
+                        src={icon ?? "/icons/storage.png"}
+                        alt={category}
+                        loading="eager"
+                        decoding="async"
+                        className="w-10 h-10 object-contain drop-shadow-sm"
+                      />
+                    </div>
 
-                  {/* Resource count */}
-                  <span
-                    className="text-2xl font-bold
-                      text-gray-900 dark:text-white
-                      leading-none"
-                  >
-                    {count}
-                  </span>
-                </Link>
-              );
-            })}
+                    {/* Eyebrow-style category name */}
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray text-center leading-tight">
+                      {capitalize(category)}
+                    </span>
+
+                    {/* Resource count */}
+                    <span className="text-2xl font-black text-ink-black dark:text-canvas-cream leading-none">
+                      {count}
+                    </span>
+                  </Link>
+                );
+              })}
+          </div>
         </div>
       )}
     </div>

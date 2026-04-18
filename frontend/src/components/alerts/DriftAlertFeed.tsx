@@ -32,9 +32,9 @@ function AlertItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+      className={`w-full text-left px-3 py-2 hover:bg-canvas-cream dark:hover:bg-white/[0.04] transition-colors ${
         !alert.read
-          ? "bg-blue-50/50 dark:bg-blue-900/10"
+          ? "bg-ghost-cream dark:bg-white/5"
           : ""
       }`}
     >
@@ -46,17 +46,17 @@ function AlertItem({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <span className="text-sm font-medium text-ink-black dark:text-canvas-cream">
               {alert.data.check_id}
             </span>
             <SeverityBadge
               severity={alert.data.severity}
             />
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+          <p className="text-xs text-slate-gray truncate mt-0.5">
             {alert.data.resource_arn}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-gray/70 mt-0.5">
             {formatTime(alert.receivedAt)}
           </p>
         </div>
@@ -87,9 +87,9 @@ export default function DriftAlertFeed({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-ghost-cream dark:border-white/5">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream">
             Live Alerts
           </h3>
           <span
@@ -98,7 +98,7 @@ export default function DriftAlertFeed({
                 ? "bg-green-500"
                 : status === "connecting"
                   ? "bg-yellow-500 animate-pulse"
-                  : "bg-gray-400"
+                  : "bg-slate-gray/50"
             }`}
             title={status}
           />
@@ -106,15 +106,15 @@ export default function DriftAlertFeed({
         {alerts.length > 0 && (
           <button
             onClick={markAllRead}
-            className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-xs text-link-blue hover:opacity-80"
           >
             Mark all read
           </button>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700/50">
+      <div className="flex-1 overflow-y-auto divide-y divide-ghost-cream dark:divide-white/5">
         {alerts.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-400 dark:text-gray-500">
+          <div className="p-4 text-center text-sm text-slate-gray">
             No alerts yet
           </div>
         ) : (

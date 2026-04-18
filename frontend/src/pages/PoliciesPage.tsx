@@ -12,6 +12,7 @@ import {
 } from "@/api/policies";
 import { getCheckName } from "@/constants/checkNames";
 import SeverityBadge from "@/components/shared/SeverityBadge";
+import { EyebrowLabel } from "@/components/shared";
 
 const DOMAINS = [
   "identity",
@@ -200,7 +201,7 @@ function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
       className={
-        "w-4 h-4 text-gray-400 dark:text-gray-500" +
+        "w-4 h-4 text-slate-gray" +
         " transition-transform duration-200" +
         (open ? " rotate-90" : "")
       }
@@ -331,12 +332,10 @@ export default function PoliciesPage() {
       if (!groups[d]) groups[d] = [];
       groups[d].push(p);
     }
-    // Sort domains in DOMAINS order
     const ordered: [string, PolicyInfo[]][] = [];
     for (const d of DOMAINS) {
       if (groups[d]) ordered.push([d, groups[d]]);
     }
-    // Any remaining domains
     for (const d of Object.keys(groups)) {
       if (!DOMAINS.includes(d as (typeof DOMAINS)[number])) {
         ordered.push([d, groups[d]]);
@@ -430,35 +429,36 @@ export default function PoliciesPage() {
 
   /* ── Shared styles ──────────────────────────── */
   const inputCls =
-    "w-full rounded-lg border border-gray-200" +
-    " dark:border-white/10 bg-white dark:bg-[#1a1a1a]" +
-    " px-3 py-2 text-sm text-gray-900" +
-    " dark:text-gray-100 placeholder-gray-400" +
-    " dark:placeholder-gray-600" +
+    "w-full rounded-pill border border-ghost-cream" +
+    " dark:border-white/10 bg-canvas-cream dark:bg-ink-black" +
+    " px-3 py-2 text-sm text-ink-black" +
+    " dark:text-canvas-cream placeholder-slate-gray/60" +
+    " dark:placeholder-slate-gray/40" +
     " focus:outline-none focus:ring-2" +
-    " focus:ring-blue-500/40 transition-colors";
+    " focus:ring-ink-black/20 dark:focus:ring-canvas-cream/20 transition-colors";
 
-  const labelCls =
-    "block text-xs font-medium text-gray-600" + " dark:text-gray-400 mb-1";
+  const labelCls = "block text-xs font-medium text-slate-gray mb-1";
 
   const totalCount = policies?.length ?? 0;
   const filteredCount = filtered.length;
   const showingSubset = totalCount > 0 && filteredCount !== totalCount;
 
+  const panelCls =
+    "bg-lifted-cream dark:bg-ink-black border" +
+    " border-ghost-cream dark:border-white/5" +
+    " rounded-hero p-5 shadow-elev-1";
+
   return (
     <div className="space-y-4">
-      <h2
-        className={
-          "text-xl font-bold text-gray-900" + " dark:text-white tracking-tight"
-        }
-      >
+      <EyebrowLabel>Policy Editor</EyebrowLabel>
+      <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight -mt-2">
         Rego Policies
       </h2>
 
       {/* Feedback banner */}
       {feedback && (
         <div
-          className={`rounded-xl border p-4 text-sm ${
+          className={`rounded-hero border p-4 text-sm ${
             feedback.type === "success"
               ? "bg-green-50 dark:bg-green-500/5" +
                 " border-green-200" +
@@ -476,34 +476,20 @@ export default function PoliciesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ── Left: Policy list ──────────────── */}
-        <div
-          className={
-            "bg-white dark:bg-[#111] border" +
-            " border-gray-100 dark:border-white/5" +
-            " rounded-2xl p-5 shadow-sm"
-          }
-        >
+        <div className={panelCls}>
           {/* Header + count */}
           <div className="flex items-center justify-between mb-4">
-            <h3
-              className={
-                "text-sm font-semibold" +
-                " text-gray-800" +
-                " dark:text-gray-200"
-              }
-            >
+            <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream">
               Existing Policies
             </h3>
             {totalCount > 0 && (
               <span
                 className={
                   "px-2.5 py-1 text-xs" +
-                  " font-semibold rounded-full" +
-                  " bg-blue-50 dark:bg-blue-500/10" +
-                  " text-blue-700" +
-                  " dark:text-blue-400" +
-                  " border border-blue-100" +
-                  " dark:border-blue-500/20"
+                  " font-semibold rounded-pill" +
+                  " bg-ghost-cream dark:bg-white/5" +
+                  " text-ink-black dark:text-canvas-cream" +
+                  " border border-ghost-cream dark:border-white/10"
                 }
               >
                 {showingSubset
@@ -520,8 +506,7 @@ export default function PoliciesPage() {
                 className={
                   "absolute left-2.5 top-1/2" +
                   " -translate-y-1/2 w-3.5 h-3.5" +
-                  " text-gray-400" +
-                  " dark:text-gray-500"
+                  " text-slate-gray/60"
                 }
                 fill="none"
                 stroke="currentColor"
@@ -540,18 +525,17 @@ export default function PoliciesPage() {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search rules..."
                 className={
-                  "w-full rounded-lg border" +
-                  " border-gray-200" +
+                  "w-full rounded-pill border" +
+                  " border-ghost-cream" +
                   " dark:border-white/10" +
-                  " bg-white dark:bg-[#1a1a1a]" +
+                  " bg-canvas-cream dark:bg-ink-black" +
                   " pl-8 pr-3 py-1.5 text-sm" +
-                  " text-gray-900" +
-                  " dark:text-gray-100" +
-                  " placeholder-gray-400" +
-                  " dark:placeholder-gray-600" +
+                  " text-ink-black" +
+                  " dark:text-canvas-cream" +
+                  " placeholder-slate-gray/60" +
                   " focus:outline-none" +
                   " focus:ring-2" +
-                  " focus:ring-blue-500/40" +
+                  " focus:ring-ink-black/20 dark:focus:ring-canvas-cream/20" +
                   " transition-colors"
                 }
               />
@@ -560,16 +544,16 @@ export default function PoliciesPage() {
               value={domainFilter}
               onChange={(e) => setDomainFilter(e.target.value)}
               className={
-                "rounded-lg border" +
-                " border-gray-200" +
+                "rounded-pill border" +
+                " border-ghost-cream" +
                 " dark:border-white/10" +
-                " bg-white dark:bg-[#1a1a1a]" +
+                " bg-canvas-cream dark:bg-ink-black" +
                 " px-2.5 py-1.5 text-sm" +
-                " text-gray-900" +
-                " dark:text-gray-100" +
+                " text-ink-black" +
+                " dark:text-canvas-cream" +
                 " focus:outline-none" +
                 " focus:ring-2" +
-                " focus:ring-blue-500/40" +
+                " focus:ring-ink-black/20 dark:focus:ring-canvas-cream/20" +
                 " transition-colors"
               }
             >
@@ -587,8 +571,8 @@ export default function PoliciesPage() {
                   setDomainFilter("");
                 }}
                 className={
-                  "text-xs text-blue-600" +
-                  " dark:text-blue-400" +
+                  "text-xs text-slate-gray" +
+                  " hover:text-ink-black dark:hover:text-canvas-cream" +
                   " hover:underline" +
                   " whitespace-nowrap self-center"
                 }
@@ -604,7 +588,7 @@ export default function PoliciesPage() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className={"h-16 bg-gray-100" + " dark:bg-white/5 rounded-xl"}
+                  className="h-16 bg-ghost-cream dark:bg-white/5 rounded-xl"
                 />
               ))}
             </div>
@@ -612,7 +596,7 @@ export default function PoliciesPage() {
 
           {/* Error */}
           {error && (
-            <p className={"text-sm text-red-600" + " dark:text-red-400"}>
+            <p className="text-sm text-red-600 dark:text-red-400">
               Failed to load policies:{" "}
               {(error as { message?: string }).message ?? "Unknown error"}
             </p>
@@ -620,20 +604,18 @@ export default function PoliciesPage() {
 
           {/* Empty states */}
           {policies && policies.length === 0 && (
-            <p className={"text-sm text-gray-500" + " dark:text-gray-500"}>
-              No policies found.
-            </p>
+            <p className="text-sm text-slate-gray">No policies found.</p>
           )}
 
           {policies && policies.length > 0 && filtered.length === 0 && (
-            <p className={"text-sm text-gray-500" + " dark:text-gray-500"}>
+            <p className="text-sm text-slate-gray">
               No policies match your search.
             </p>
           )}
 
           {/* Grouped policy list */}
           {grouped.length > 0 && (
-            <div className={"space-y-1 max-h-[80vh]" + " overflow-y-auto pr-1"}>
+            <div className="space-y-1 max-h-[80vh] overflow-y-auto pr-1">
               {grouped.map(([domain, domainPolicies]) => {
                 const collapsed = collapsedDomains.has(domain);
                 return (
@@ -644,8 +626,8 @@ export default function PoliciesPage() {
                       className={
                         "w-full flex items-center" +
                         " gap-2 px-3 py-2" +
-                        " rounded-lg" +
-                        " hover:bg-gray-50" +
+                        " rounded-pill" +
+                        " hover:bg-canvas-cream" +
                         " dark:hover:bg-white/[0.03]" +
                         " transition-colors" +
                         " group"
@@ -657,8 +639,7 @@ export default function PoliciesPage() {
                           "text-xs font-semibold" +
                           " uppercase" +
                           " tracking-wider" +
-                          " text-gray-500" +
-                          " dark:text-gray-400"
+                          " text-slate-gray"
                         }
                       >
                         {DOMAIN_LABELS[domain] ?? domain.replace(/_/g, " ")}
@@ -667,12 +648,11 @@ export default function PoliciesPage() {
                         className={
                           "ml-auto text-[10px]" +
                           " font-medium" +
-                          " text-gray-400" +
-                          " dark:text-gray-600" +
-                          " bg-gray-100" +
+                          " text-slate-gray/70" +
+                          " bg-ghost-cream" +
                           " dark:bg-white/5" +
                           " px-1.5 py-0.5" +
-                          " rounded-full"
+                          " rounded-pill"
                         }
                       >
                         {domainPolicies.length}
@@ -689,11 +669,11 @@ export default function PoliciesPage() {
                               className={
                                 "flex items-center" +
                                 " justify-between" +
-                                " rounded-xl" +
+                                " rounded-hero" +
                                 " border" +
-                                " border-gray-100" +
+                                " border-ghost-cream" +
                                 " dark:border-white/5" +
-                                " bg-gray-50" +
+                                " bg-canvas-cream" +
                                 " dark:bg-white/[0.02]" +
                                 " px-4 py-3"
                               }
@@ -703,8 +683,8 @@ export default function PoliciesPage() {
                                   className={
                                     "text-sm" +
                                     " font-medium" +
-                                    " text-gray-900" +
-                                    " dark:text-white" +
+                                    " text-ink-black" +
+                                    " dark:text-canvas-cream" +
                                     " truncate"
                                   }
                                 >
@@ -723,12 +703,11 @@ export default function PoliciesPage() {
                                     <span
                                       className={
                                         "text-[10px]" +
-                                        " text-gray-400" +
-                                        " dark:text-gray-600" +
-                                        " bg-gray-100" +
+                                        " text-slate-gray/70" +
+                                        " bg-ghost-cream" +
                                         " dark:bg-white/5" +
                                         " px-1.5 py-0.5" +
-                                        " rounded"
+                                        " rounded-pill"
                                       }
                                     >
                                       {p.rule_count}{" "}
@@ -745,12 +724,11 @@ export default function PoliciesPage() {
                                   onClick={() => toggleSource(p.check_id)}
                                   className={
                                     "p-1.5" +
-                                    " rounded-lg" +
-                                    " text-gray-400" +
-                                    " hover:text-blue-600" +
-                                    " dark:hover:text-blue-400" +
-                                    " hover:bg-blue-50" +
-                                    " dark:hover:bg-blue-500/10" +
+                                    " rounded-btn" +
+                                    " text-slate-gray" +
+                                    " hover:text-link-blue" +
+                                    " hover:bg-ghost-cream" +
+                                    " dark:hover:bg-white/5" +
                                     " transition-colors"
                                   }
                                   title="View source"
@@ -776,8 +754,8 @@ export default function PoliciesPage() {
                                   disabled={deleteMutation.isPending}
                                   className={
                                     "p-1.5" +
-                                    " rounded-lg" +
-                                    " text-gray-400" +
+                                    " rounded-btn" +
+                                    " text-slate-gray" +
                                     " hover:text-red-600" +
                                     " dark:hover:text-red-400" +
                                     " hover:bg-red-50" +
@@ -804,14 +782,14 @@ export default function PoliciesPage() {
                               </div>
                             </div>
 
-                            {/* Source code panel */}
+                            {/* Source code panel — intentionally dark terminal */}
                             {expandedSource === p.check_id && (
                               <div
                                 className={
                                   "mt-1 ml-4" +
-                                  " rounded-xl" +
+                                  " rounded-hero" +
                                   " border" +
-                                  " border-gray-100" +
+                                  " border-ghost-cream" +
                                   " dark:border-white/5" +
                                   " bg-gray-900" +
                                   " dark:bg-black/40" +
@@ -906,42 +884,28 @@ export default function PoliciesPage() {
         </div>
 
         {/* ── Right: Add Policy (tabbed) ────── */}
-        <div
-          className={
-            "bg-white dark:bg-[#111] border" +
-            " border-gray-100 dark:border-white/5" +
-            " rounded-2xl p-5 shadow-sm"
-          }
-        >
-          <h3
-            className={
-              "text-sm font-semibold text-gray-800" + " dark:text-gray-200 mb-4"
-            }
-          >
+        <div className={panelCls}>
+          <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-4">
             Add New Policy
           </h3>
 
-          {/* Tab switcher */}
+          {/* Tab switcher — pill segment control */}
           <div
             className={
-              "flex rounded-lg border" +
-              " border-gray-200" +
-              " dark:border-white/10" +
-              " overflow-hidden mb-4"
+              "inline-flex rounded-pill border" +
+              " border-ghost-cream dark:border-white/10" +
+              " bg-canvas-cream dark:bg-ink-black" +
+              " overflow-hidden p-0.5 gap-0.5 mb-4 w-full"
             }
           >
             <button
               onClick={() => setActiveTab("gui")}
               className={
-                "flex-1 px-3 py-2 text-xs" +
-                " font-semibold transition-colors" +
+                "flex-1 px-3 py-1.5 text-xs" +
+                " font-semibold transition-colors rounded-pill" +
                 (activeTab === "gui"
-                  ? " bg-blue-600 text-white" + " dark:bg-blue-500"
-                  : " bg-white dark:bg-white/5" +
-                    " text-gray-600" +
-                    " dark:text-gray-400" +
-                    " hover:bg-gray-50" +
-                    " dark:hover:bg-white/[0.08]")
+                  ? " bg-ink-black text-canvas-cream dark:bg-canvas-cream dark:text-ink-black"
+                  : " text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5")
               }
             >
               GUI Builder
@@ -949,17 +913,11 @@ export default function PoliciesPage() {
             <button
               onClick={() => setActiveTab("code")}
               className={
-                "flex-1 px-3 py-2 text-xs" +
-                " font-semibold transition-colors" +
-                " border-l border-gray-200" +
-                " dark:border-white/10" +
+                "flex-1 px-3 py-1.5 text-xs" +
+                " font-semibold transition-colors rounded-pill" +
                 (activeTab === "code"
-                  ? " bg-blue-600 text-white" + " dark:bg-blue-500"
-                  : " bg-white dark:bg-white/5" +
-                    " text-gray-600" +
-                    " dark:text-gray-400" +
-                    " hover:bg-gray-50" +
-                    " dark:hover:bg-white/[0.08]")
+                  ? " bg-ink-black text-canvas-cream dark:bg-canvas-cream dark:text-ink-black"
+                  : " text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5")
               }
             >
               Code Editor
@@ -1145,25 +1103,19 @@ export default function PoliciesPage() {
                 />
               </div>
 
-              {/* Rego Preview */}
+              {/* Rego Preview — intentionally dark terminal */}
               {regoPreview && (
                 <div>
                   <label className={labelCls}>Generated Rego Preview</label>
                   <pre
                     className={
-                      "rounded-xl border" +
-                      " border-gray-100" +
-                      " dark:border-white/5" +
-                      " bg-gray-900" +
-                      " dark:bg-black/40" +
+                      "rounded-hero border" +
+                      " border-ghost-cream dark:border-white/5" +
+                      " bg-gray-900 dark:bg-black/40" +
                       " px-4 py-3 text-xs" +
-                      " leading-relaxed" +
-                      " font-mono" +
-                      " text-green-400" +
-                      " dark:text-green-300" +
-                      " overflow-x-auto" +
-                      " max-h-[30vh]" +
-                      " overflow-y-auto"
+                      " leading-relaxed font-mono" +
+                      " text-green-400 dark:text-green-300" +
+                      " overflow-x-auto max-h-[30vh] overflow-y-auto"
                     }
                   >
                     {regoPreview}
@@ -1177,14 +1129,13 @@ export default function PoliciesPage() {
                 disabled={createMutation.isPending}
                 className={
                   "w-full mt-2 px-4 py-2.5" +
-                  " rounded-xl text-sm" +
-                  " font-medium text-white" +
-                  " bg-blue-600" +
-                  " hover:bg-blue-700" +
-                  " dark:bg-blue-500" +
-                  " dark:hover:bg-blue-600" +
+                  " rounded-btn text-sm" +
+                  " font-medium" +
+                  " bg-ink-black text-canvas-cream" +
+                  " dark:bg-canvas-cream dark:text-ink-black" +
+                  " hover:opacity-90" +
                   " disabled:opacity-50" +
-                  " transition-colors"
+                  " transition-opacity"
                 }
               >
                 {createMutation.isPending ? "Creating..." : "Create Policy"}
@@ -1234,8 +1185,7 @@ export default function PoliciesPage() {
                   onClick={insertTemplate}
                   className={
                     "text-xs font-medium" +
-                    " text-blue-600" +
-                    " dark:text-blue-400" +
+                    " text-link-blue" +
                     " hover:underline"
                   }
                 >
@@ -1243,7 +1193,7 @@ export default function PoliciesPage() {
                 </button>
               </div>
 
-              {/* Code textarea */}
+              {/* Code textarea — intentionally dark terminal */}
               <div>
                 <label className={labelCls}>Rego Policy Code</label>
                 <textarea
@@ -1262,23 +1212,16 @@ export default function PoliciesPage() {
                   rows={16}
                   spellCheck={false}
                   className={
-                    "w-full rounded-xl border" +
-                    " border-gray-200" +
-                    " dark:border-white/10" +
-                    " bg-gray-900" +
-                    " dark:bg-black/40" +
+                    "w-full rounded-hero border" +
+                    " border-ghost-cream dark:border-white/5" +
+                    " bg-gray-900 dark:bg-black/40" +
                     " px-4 py-3 text-xs" +
-                    " leading-relaxed" +
-                    " font-mono" +
-                    " text-green-400" +
-                    " dark:text-green-300" +
-                    " placeholder-gray-600" +
-                    " dark:placeholder-gray-700" +
-                    " focus:outline-none" +
-                    " focus:ring-2" +
-                    " focus:ring-blue-500/40" +
-                    " transition-colors" +
-                    " resize-y"
+                    " leading-relaxed font-mono" +
+                    " text-green-400 dark:text-green-300" +
+                    " placeholder-gray-600 dark:placeholder-gray-700" +
+                    " focus:outline-none focus:ring-2" +
+                    " focus:ring-ink-black/20 dark:focus:ring-canvas-cream/20" +
+                    " transition-colors resize-y"
                   }
                 />
               </div>
@@ -1289,14 +1232,13 @@ export default function PoliciesPage() {
                 disabled={rawMutation.isPending}
                 className={
                   "w-full mt-2 px-4 py-2.5" +
-                  " rounded-xl text-sm" +
-                  " font-medium text-white" +
-                  " bg-blue-600" +
-                  " hover:bg-blue-700" +
-                  " dark:bg-blue-500" +
-                  " dark:hover:bg-blue-600" +
+                  " rounded-btn text-sm" +
+                  " font-medium" +
+                  " bg-ink-black text-canvas-cream" +
+                  " dark:bg-canvas-cream dark:text-ink-black" +
+                  " hover:opacity-90" +
                   " disabled:opacity-50" +
-                  " transition-colors"
+                  " transition-opacity"
                 }
               >
                 {rawMutation.isPending ? "Creating..." : "Create Policy"}

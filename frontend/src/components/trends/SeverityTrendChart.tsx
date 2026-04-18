@@ -23,8 +23,8 @@ interface ChartTooltipProps {
 function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs">
-      <p className="font-semibold text-gray-700 dark:text-gray-100 mb-1">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/10 rounded-hero px-3 py-2 shadow-elev-2 text-xs">
+      <p className="font-semibold text-ink-black dark:text-canvas-cream mb-1">
         {label}
       </p>
       {payload.map((p) => (
@@ -33,8 +33,8 @@ function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: p.color }}
           />
-          <span className="text-gray-500 dark:text-gray-300">{p.name}:</span>
-          <span className="font-semibold text-gray-800 dark:text-white">
+          <span className="text-slate-gray">{p.name}:</span>
+          <span className="font-semibold text-ink-black dark:text-canvas-cream">
             {p.value}
           </span>
         </div>
@@ -51,10 +51,10 @@ export default function SeverityTrendChart({ data }: Props) {
   return (
     <div>
       <div className="mb-1">
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+        <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream">
           Violations by Severity
         </h3>
-        <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+        <p className="text-xs text-slate-gray mt-0.5">
           Daily new violations broken down by severity
         </p>
       </div>
@@ -67,20 +67,20 @@ export default function SeverityTrendChart({ data }: Props) {
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="currentColor"
-              className="text-gray-100 dark:text-white/5"
+              className="text-ghost-cream dark:text-white/5"
               vertical={false}
             />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 11, fill: "currentColor" }}
-              className="text-gray-400 dark:text-gray-600"
+              className="text-slate-gray"
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               allowDecimals={false}
               tick={{ fontSize: 11, fill: "currentColor" }}
-              className="text-gray-400 dark:text-gray-600"
+              className="text-slate-gray"
               axisLine={false}
               tickLine={false}
             />
@@ -88,10 +88,7 @@ export default function SeverityTrendChart({ data }: Props) {
             <Legend
               iconType="circle"
               iconSize={7}
-              wrapperStyle={{
-                fontSize: "11px",
-                paddingTop: "12px",
-              }}
+              wrapperStyle={{ fontSize: "11px", paddingTop: "12px" }}
             />
             <Area
               type="monotone"

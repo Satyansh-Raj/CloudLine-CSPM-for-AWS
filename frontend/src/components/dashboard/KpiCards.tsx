@@ -1,9 +1,6 @@
-/**
- * KPI stat cards — top row of the dashboard.
- * Shows total checks, violations, passed, and score.
- */
 import type { ComplianceScore } from "@/types";
 import type { RiskSummary } from "@/types";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 interface Props {
     compliance: ComplianceScore;
@@ -14,8 +11,7 @@ interface KpiItem {
     label: string;
     value: string | number;
     sub?: string;
-    accent: string;          // Tailwind text colour for the big number
-    trend?: "up" | "down" | "neutral";
+    accent: string;
 }
 
 export default function KpiCards({ compliance, risk }: Props) {
@@ -24,7 +20,7 @@ export default function KpiCards({ compliance, risk }: Props) {
             label: "Total Checks",
             value: compliance.total_checks,
             sub: "policies evaluated",
-            accent: "text-gray-900 dark:text-white",
+            accent: "text-ink-black dark:text-canvas-cream",
         },
         {
             label: "Active Violations",
@@ -52,27 +48,41 @@ export default function KpiCards({ compliance, risk }: Props) {
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {cards.map((card) => (
-                <div
-                    key={card.label}
-                    className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 flex flex-col justify-between min-h-[6.5rem] shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-shadow"
-                >
-                    {/* Top section — label + value */}
-                    <div className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                            {card.label}
-                        </span>
-                        <span className={`text-3xl font-bold leading-none tabular-nums ${card.accent}`}>
-                            {card.value}
+        <div className="relative">
+            {/* Orbital arc decoration — desktop only */}
+            <svg
+                aria-hidden
+                className="hidden lg:block absolute -top-5 left-[10%] w-[80%] h-10 pointer-events-none overflow-visible"
+                viewBox="0 0 100 30"
+                preserveAspectRatio="none"
+            >
+                <path
+                    d="M 0 28 Q 50 0 100 28"
+                    fill="none"
+                    stroke="#F37338"
+                    strokeWidth="0.8"
+                    strokeDasharray="4 3"
+                    opacity="0.3"
+                />
+            </svg>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                {cards.map((card) => (
+                    <div
+                        key={card.label}
+                        className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 flex flex-col justify-between min-h-[6.5rem] shadow-elev-1 hover:shadow-elev-2 transition-shadow"
+                    >
+                        <div className="flex flex-col gap-1">
+                            <EyebrowLabel>{card.label}</EyebrowLabel>
+                            <span className={`text-3xl font-bold leading-none tabular-nums mt-1 ${card.accent}`}>
+                                {card.value}
+                            </span>
+                        </div>
+                        <span className="text-xs text-slate-gray truncate mt-2">
+                            {card.sub ?? "\u00A0"}
                         </span>
                     </div>
-                    {/* Bottom — sub-label always pinned to bottom */}
-                    <span className="text-xs text-gray-400 dark:text-gray-600 truncate">
-                        {card.sub ?? "\u00A0"}
-                    </span>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 }

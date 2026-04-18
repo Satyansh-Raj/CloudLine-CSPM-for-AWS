@@ -4,6 +4,8 @@ import {
   SeverityBadge,
   RiskScoreMeter,
   ComplianceSection,
+  EyebrowLabel,
+  GhostHeadline,
 } from "@/components/shared";
 import { getCheckName } from "@/constants/checkNames";
 import { getComplianceMapping } from "@/constants/complianceMappings";
@@ -13,10 +15,6 @@ import type { Violation, StatusHistoryEntry } from "@/types";
 
 /* ---- local helpers ---- */
 
-/**
- * Synthesize a status_history from timestamps when the
- * backend returns an empty array (legacy violations).
- */
 function buildHistory(v: Violation): StatusHistoryEntry[] {
   if (v.status_history && v.status_history.length > 0) {
     return v.status_history;
@@ -81,7 +79,7 @@ export default function ResolvedDetailPage() {
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+        className="flex items-center gap-1.5 text-sm text-slate-gray hover:text-ink-black dark:hover:text-canvas-cream transition-colors"
       >
         <svg
           className="w-4 h-4"
@@ -100,10 +98,10 @@ export default function ResolvedDetailPage() {
       </button>
 
       {!violation ? (
-        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-12 text-center shadow-sm">
-          <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-12 text-center shadow-elev-1">
+          <div className="w-10 h-10 rounded-hero bg-ghost-cream dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
             <svg
-              className="w-5 h-5 text-gray-400"
+              className="w-5 h-5 text-slate-gray"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -116,17 +114,18 @@ export default function ResolvedDetailPage() {
               />
             </svg>
           </div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <p className="text-sm font-medium text-ink-black dark:text-canvas-cream">
             Violation not found
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+          <p className="text-xs text-slate-gray mt-1">
             It may have been resolved or the URL is incorrect.
           </p>
         </div>
       ) : (
         <>
           {/* Header card */}
-          <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-6 py-5 shadow-sm relative">
+          <div className="relative overflow-hidden bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
+            <GhostHeadline>DONE</GhostHeadline>
             <img
               src="/resolved.png"
               alt="Resolved"
@@ -135,18 +134,19 @@ export default function ResolvedDetailPage() {
             />
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <SeverityBadge severity={violation.severity} />
-              <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400">
+              <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-pill bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400">
                 Resolved
               </span>
-              <span className="ml-auto text-[10px] font-mono text-gray-400 dark:text-gray-600">
+              <span className="ml-auto text-[10px] font-mono text-slate-gray/70">
                 {violation.check_id}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <EyebrowLabel>Resolved Issue</EyebrowLabel>
+            <h2 className="text-xl font-bold text-ink-black dark:text-canvas-cream tracking-tight mt-1">
               {getCheckName(violation.check_id)}
             </h2>
             {violation.domain && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">
+              <p className="text-xs text-slate-gray mt-1 capitalize">
                 {violation.domain.replace(/_/g, " ")}
               </p>
             )}
@@ -155,46 +155,42 @@ export default function ResolvedDetailPage() {
           {/* Details grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Issue details — 2/3 */}
-            <div className="lg:col-span-2 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-6 py-5 shadow-sm flex flex-col">
+            <div className="lg:col-span-2 bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1 flex flex-col">
               <div className="space-y-4">
-                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray">
                   Issue Details
                 </h3>
 
                 <div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">
-                    Resource
-                  </p>
-                  <p className="text-sm font-mono text-gray-900 dark:text-white break-all">
+                  <p className="text-xs text-slate-gray/70 mb-0.5">Resource</p>
+                  <p className="text-sm font-mono text-ink-black dark:text-canvas-cream break-all">
                     {violation.resource || "N/A"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">
-                    Reason
-                  </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-xs text-slate-gray/70 mb-0.5">Reason</p>
+                  <p className="text-sm text-ink-black dark:text-canvas-cream leading-relaxed">
                     {violation.reason || "No reason provided"}
                   </p>
                 </div>
               </div>
 
               {/* Timestamps */}
-              <div className="flex flex-wrap gap-8 pt-3 mt-auto border-t border-gray-100 dark:border-white/5">
+              <div className="flex flex-wrap gap-8 pt-3 mt-auto border-t border-ghost-cream dark:border-white/5">
                 {violation.first_detected && (
                   <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">
+                    <p className="text-xs text-slate-gray/70 mb-0.5">
                       First Detected
                     </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
+                    <p className="text-xs text-ink-black dark:text-canvas-cream">
                       {formatTimestamp(violation.first_detected)}
                     </p>
                   </div>
                 )}
                 {violation.resolved_at && (
                   <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">
+                    <p className="text-xs text-slate-gray/70 mb-0.5">
                       Resolved At
                     </p>
                     <p className="text-xs text-green-600 dark:text-green-400 font-medium">
@@ -204,10 +200,10 @@ export default function ResolvedDetailPage() {
                 )}
                 {violation.last_evaluated && (
                   <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">
+                    <p className="text-xs text-slate-gray/70 mb-0.5">
                       Last Evaluated
                     </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
+                    <p className="text-xs text-ink-black dark:text-canvas-cream">
                       {formatTimestamp(violation.last_evaluated)}
                     </p>
                   </div>
@@ -222,21 +218,21 @@ export default function ResolvedDetailPage() {
               )}
 
               {/* Regression count */}
-              <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-5 py-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+              <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-5 py-4 shadow-elev-1">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-gray mb-2">
                   Regressions
                 </p>
-                <p className="text-2xl font-black text-gray-900 dark:text-white">
+                <p className="text-2xl font-black text-ink-black dark:text-canvas-cream">
                   {violation.regression_count ?? 0}
                 </p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-1">
+                <p className="text-[10px] text-slate-gray mt-1">
                   Times this issue reappeared after resolution
                 </p>
               </div>
 
               {hasCompliance && comp && (
-                <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-5 py-4 shadow-sm space-y-3">
-                  <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-5 py-4 shadow-elev-1 space-y-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray">
                     Compliance
                   </h3>
                   <ComplianceSection
@@ -262,7 +258,7 @@ export default function ResolvedDetailPage() {
           </div>
 
           {/* Issue History Chart */}
-          <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl px-6 py-5 shadow-sm">
+          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
             <IssueHistoryChart statusHistory={buildHistory(violation)} />
           </div>
         </>

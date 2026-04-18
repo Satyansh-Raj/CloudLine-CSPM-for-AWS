@@ -17,11 +17,11 @@ function CopyButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       className={`
-        flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
+        flex items-center gap-1.5 px-2.5 py-1 rounded-btn text-xs font-medium
         transition-all duration-150
         ${copied
           ? "bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400"
-          : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
+          : "bg-ghost-cream dark:bg-white/5 text-slate-gray hover:bg-ghost-cream/80 dark:hover:bg-white/10"
         }
       `}
     >
@@ -47,14 +47,14 @@ function CopyButton({ text }: { text: string }) {
 
 function CodeBlock({ code, language }: { code: string; language: string }) {
   return (
-    <div className="rounded-xl border border-gray-100 dark:border-white/5 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-black/30 border-b border-gray-100 dark:border-white/5">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+    <div className="rounded-xl border border-ghost-cream dark:border-white/5 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-canvas-cream dark:bg-ink-black/50 border-b border-ghost-cream dark:border-white/5">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray/70">
           {language}
         </span>
         <CopyButton text={code} />
       </div>
-      <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-gray-800 dark:text-gray-200 bg-gray-50/50 dark:bg-black/10 font-mono whitespace-pre">
+      <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-ink-black dark:text-canvas-cream bg-canvas-cream/50 dark:bg-ink-black/10 font-mono whitespace-pre">
         {code}
       </pre>
     </div>
@@ -68,13 +68,13 @@ function ConsoleSteps({ steps }: { steps: string[] }) {
         <li key={i} className="flex gap-3">
           <span className="
             flex-shrink-0 w-5 h-5 rounded-full mt-0.5
-            bg-blue-100 dark:bg-blue-500/10
-            text-blue-700 dark:text-blue-400
+            bg-ghost-cream dark:bg-white/10
+            text-ink-black dark:text-canvas-cream
             text-[10px] font-bold flex items-center justify-center
           ">
             {i + 1}
           </span>
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p className="text-sm text-ink-black dark:text-canvas-cream leading-relaxed">
             {step}
           </p>
         </li>
@@ -99,9 +99,9 @@ export default function RemediationTabs({ checkId, resource }: Props) {
   ];
 
   return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero overflow-hidden shadow-elev-1">
       {/* Tab bar */}
-      <div className="px-5 border-b border-gray-100 dark:border-white/5">
+      <div className="px-5 border-b border-ghost-cream dark:border-white/5">
         <div className="flex gap-0">
           {tabs.map((tab) => (
             <button
@@ -110,8 +110,8 @@ export default function RemediationTabs({ checkId, resource }: Props) {
               className={`
                 px-4 py-3 text-xs font-semibold border-b-2 transition-all duration-150
                 ${activeTab === tab.id
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  ? "border-ink-black text-ink-black dark:border-canvas-cream dark:text-canvas-cream"
+                  : "border-transparent text-slate-gray hover:text-ink-black dark:hover:text-canvas-cream"
                 }
               `}
             >
@@ -124,7 +124,7 @@ export default function RemediationTabs({ checkId, resource }: Props) {
       {/* Tab content */}
       <div className="px-5 py-5">
         {!steps ? (
-          <p className="text-xs text-gray-400 dark:text-gray-600 italic">
+          <p className="text-xs text-slate-gray italic">
             No remediation steps available for this check.
           </p>
         ) : (

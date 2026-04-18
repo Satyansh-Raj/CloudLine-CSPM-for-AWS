@@ -15,43 +15,22 @@ vi.stubGlobal(
 
 describe("PeriodSelector", () => {
   it("renders all period options", () => {
-    render(
-      <PeriodSelector
-        value="7d"
-        onChange={() => {}}
-      />,
-    );
-    expect(
-      screen.getByText("7 Days"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("30 Days"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("90 Days"),
-    ).toBeInTheDocument();
+    render(<PeriodSelector value="7d" onChange={() => {}} />);
+    expect(screen.getByText("7 Days")).toBeInTheDocument();
+    expect(screen.getByText("30 Days")).toBeInTheDocument();
+    expect(screen.getByText("90 Days")).toBeInTheDocument();
   });
 
   it("highlights active period", () => {
-    render(
-      <PeriodSelector
-        value="30d"
-        onChange={() => {}}
-      />,
-    );
+    render(<PeriodSelector value="30d" onChange={() => {}} />);
     const btn = screen.getByText("30 Days");
-    expect(btn.className).toContain("bg-primary-600");
+    expect(btn.className).toContain("bg-ink-black");
   });
 
   it("calls onChange on click", async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <PeriodSelector
-        value="7d"
-        onChange={onChange}
-      />,
-    );
+    render(<PeriodSelector value="7d" onChange={onChange} />);
 
     await user.click(screen.getByText("90 Days"));
     expect(onChange).toHaveBeenCalledWith("90d");
@@ -74,17 +53,13 @@ const mockData = [
 describe("TrendLineChart", () => {
   it("renders heading", () => {
     render(<TrendLineChart data={mockData} />);
-    expect(
-      screen.getByText("Violations Over Time"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Violations Over Time")).toBeInTheDocument();
   });
 });
 
 describe("SeverityTrendChart", () => {
   it("renders heading", () => {
     render(<SeverityTrendChart data={mockData} />);
-    expect(
-      screen.getByText("Violations by Severity"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Violations by Severity")).toBeInTheDocument();
   });
 });

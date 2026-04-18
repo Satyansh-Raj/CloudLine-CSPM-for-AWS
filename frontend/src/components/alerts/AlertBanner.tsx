@@ -12,14 +12,10 @@ const borderColors: Record<string, string> = {
 };
 
 const bgColors: Record<string, string> = {
-  critical:
-    "bg-red-50 dark:bg-red-900/20",
-  high:
-    "bg-orange-50 dark:bg-orange-900/20",
-  medium:
-    "bg-yellow-50 dark:bg-yellow-900/20",
-  low:
-    "bg-green-50 dark:bg-green-900/20",
+  critical: "bg-red-50 dark:bg-red-900/20",
+  high: "bg-orange-50 dark:bg-orange-900/20",
+  medium: "bg-yellow-50 dark:bg-yellow-900/20",
+  low: "bg-green-50 dark:bg-green-900/20",
 };
 
 function typeLabel(type: string): string {
@@ -46,39 +42,39 @@ function ToastItem({
   }, [alert.id, onDismiss]);
 
   const severity = alert.data.severity;
-  const border = borderColors[severity] ?? "border-l-gray-400";
-  const bg = bgColors[severity] ?? "bg-gray-50 dark:bg-gray-800";
+  const border = borderColors[severity] ?? "border-l-slate-gray/50";
+  const bg = bgColors[severity] ?? "bg-lifted-cream dark:bg-ink-black";
 
   return (
     <div
-      className={`border-l-4 ${border} ${bg} rounded-r-lg shadow-lg p-3 w-80 animate-slide-in`}
+      className={`border-l-4 ${border} ${bg} rounded-r-hero shadow-elev-2 p-3 w-80 animate-slide-in`}
       role="alert"
     >
       <div className="flex justify-between items-start">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-gray">
               {typeLabel(alert.type)}
             </span>
-            <span className="text-xs font-medium capitalize text-gray-600 dark:text-gray-300">
+            <span className="text-xs font-medium capitalize text-ink-black dark:text-canvas-cream">
               {severity}
             </span>
           </div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          <p className="text-sm font-medium text-ink-black dark:text-canvas-cream truncate">
             {alert.data.check_id}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+          <p className="text-xs text-slate-gray truncate">
             {alert.data.resource_arn}
           </p>
           {alert.data.risk_score > 0 && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-slate-gray mt-0.5">
               Risk: {alert.data.risk_score}
             </p>
           )}
         </div>
         <button
           onClick={() => onDismiss(alert.id)}
-          className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          className="ml-2 text-slate-gray hover:text-ink-black dark:hover:text-canvas-cream"
           aria-label="Dismiss"
         >
           <svg

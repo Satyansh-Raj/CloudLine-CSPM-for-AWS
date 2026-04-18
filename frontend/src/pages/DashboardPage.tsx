@@ -10,17 +10,19 @@ import {
   DomainPieChart,
 } from "@/components/dashboard";
 import { AccountBadge } from "@/components/shared";
+import GhostHeadline from "@/components/shared/GhostHeadline";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 import { triggerScan } from "@/api";
 
 /* ── Skeleton card ──────────────────────────────── */
 function SkeletonCard({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 animate-pulse ${className}`}
+      className={`bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 animate-pulse ${className}`}
     >
-      <div className="h-3 w-28 bg-gray-200 dark:bg-white/10 rounded mb-3" />
-      <div className="h-8 w-20 bg-gray-200 dark:bg-white/10 rounded mb-2" />
-      <div className="h-2 w-36 bg-gray-100 dark:bg-white/5 rounded" />
+      <div className="h-3 w-28 bg-ghost-cream dark:bg-white/10 rounded-pill mb-3" />
+      <div className="h-8 w-20 bg-ghost-cream dark:bg-white/10 rounded-pill mb-2" />
+      <div className="h-2 w-36 bg-dust-taupe/40 dark:bg-white/5 rounded-pill" />
     </div>
   );
 }
@@ -28,7 +30,7 @@ function SkeletonCard({ className = "" }: { className?: string }) {
 /* ── Error card ─────────────────────────────────── */
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6 flex items-center gap-3">
+    <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-hero p-6 flex items-center gap-3">
       <svg
         className="w-5 h-5 text-red-500 shrink-0"
         fill="none"
@@ -76,11 +78,11 @@ function ScanButton() {
     <button
       onClick={handleScan}
       disabled={loading}
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-btn text-xs font-semibold transition-all ${
         done
-          ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
-          : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 hover:shadow-blue-500/30"
-      } disabled:opacity-60 disabled:cursor-not-allowed`}
+          ? "bg-ghost-cream dark:bg-white/10 text-ink-black dark:text-canvas-cream border border-dust-taupe dark:border-white/10"
+          : "bg-ink-black dark:bg-canvas-cream text-canvas-cream dark:text-ink-black hover:opacity-90 shadow-elev-1"
+      } disabled:opacity-40 disabled:cursor-not-allowed`}
     >
       {loading ? (
         <>
@@ -136,16 +138,17 @@ function MacieSummaryCard({ findings }: { findings: MacieFinding[] }) {
   const highCount = findings.filter((f) => f.severity === "High").length;
 
   return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-      <h2 className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+      <EyebrowLabel className="mb-2">Data Protection</EyebrowLabel>
+      <h2 className="text-xs uppercase tracking-eyebrow text-slate-gray mb-3">
         Sensitive Findings
       </h2>
       <div className="flex items-center gap-6">
         <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+          <p className="text-2xl font-bold text-ink-black dark:text-canvas-cream">
             {findings.length}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-gray mt-0.5">
             Total
           </p>
         </div>
@@ -153,7 +156,7 @@ function MacieSummaryCard({ findings }: { findings: MacieFinding[] }) {
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">
             {highCount}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-gray mt-0.5">
             High
           </p>
         </div>
@@ -175,14 +178,13 @@ export default function DashboardPage() {
   const isLoading = compliance.isLoading || risk.isLoading;
   const error = compliance.error || risk.error;
 
-  /* Loading skeleton */
   if (isLoading) {
     return (
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="h-6 w-36 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
-            <div className="h-3 w-52 bg-gray-100 dark:bg-white/5 rounded mt-2 animate-pulse" />
+            <div className="h-6 w-36 bg-ghost-cream dark:bg-white/10 rounded-pill animate-pulse" />
+            <div className="h-3 w-52 bg-dust-taupe/40 dark:bg-white/5 rounded-pill mt-2 animate-pulse" />
           </div>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -203,11 +205,10 @@ export default function DashboardPage() {
     );
   }
 
-  /* Error */
   if (error) {
     return (
       <div className="space-y-5">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-display-sm font-bold text-ink-black dark:text-canvas-cream tracking-display">
           Dashboard
         </h2>
         <ErrorCard
@@ -217,16 +218,15 @@ export default function DashboardPage() {
     );
   }
 
-  /* Empty state */
   const complianceData = compliance.data;
   const riskData = risk.data;
 
   if (!complianceData || !riskData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-hero bg-ghost-cream dark:bg-white/10 flex items-center justify-center">
           <svg
-            className="w-8 h-8 text-blue-400"
+            className="w-8 h-8 text-slate-gray"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -240,10 +240,10 @@ export default function DashboardPage() {
           </svg>
         </div>
         <div>
-          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+          <h3 className="text-base font-semibold text-ink-black dark:text-canvas-cream">
             No scan data yet
           </h3>
-          <p className="text-sm text-gray-400 dark:text-gray-600 mt-1 max-w-xs">
+          <p className="text-sm text-slate-gray mt-1 max-w-xs">
             Run your first scan to populate the dashboard with live findings.
           </p>
         </div>
@@ -255,7 +255,6 @@ export default function DashboardPage() {
   const highestRisk = riskData.highest_risk?.slice(0, 8) ?? [];
   const bySeverity = complianceData.by_severity ?? {};
 
-  // For domain pie: show the distribution of actual violations (alarms)
   const domainData: Record<string, number> = Object.fromEntries(
     Object.entries(complianceData.by_domain ?? {}).map(([d, v]) => [
       d,
@@ -267,8 +266,10 @@ export default function DashboardPage() {
     <div className="space-y-5">
       {/* Page header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+        <div className="relative">
+          <GhostHeadline className="-bottom-3 -left-1">DASH</GhostHeadline>
+          <EyebrowLabel className="mb-1">Overview</EyebrowLabel>
+          <h2 className="text-display-sm font-bold text-ink-black dark:text-canvas-cream tracking-display">
             Dashboard
           </h2>
           <div className="mt-1">
@@ -281,26 +282,32 @@ export default function DashboardPage() {
       {/* Row 1 — KPI cards */}
       <KpiCards compliance={complianceData} risk={riskData} />
 
-      {/* Row 2 — Area chart (2/3) + compliance donut (1/3) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 min-w-0 overflow-hidden">
-          <ViolationAreaChart byDomain={complianceData.by_domain ?? {}} />
-        </div>
-        <div className="min-w-0 overflow-hidden">
-          <ComplianceScoreDonut data={complianceData} />
+      {/* Row 2 — Area chart + compliance donut */}
+      <div>
+        <EyebrowLabel className="mb-3">Violation Trends</EyebrowLabel>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 min-w-0 overflow-hidden">
+            <ViolationAreaChart byDomain={complianceData.by_domain ?? {}} />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <ComplianceScoreDonut data={complianceData} />
+          </div>
         </div>
       </div>
 
-      {/* Row 3 — Violations table | Severity bar | Domain pie (equal thirds) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="min-w-0 overflow-hidden">
-          <TopViolationsTable items={highestRisk} />
-        </div>
-        <div className="min-w-0 overflow-hidden">
-          <SeverityBar bySeverity={bySeverity} />
-        </div>
-        <div className="min-w-0 overflow-hidden">
-          <DomainPieChart byDomain={domainData} />
+      {/* Row 3 — Violations table + Severity bar + Domain pie */}
+      <div>
+        <EyebrowLabel className="mb-3">Risk Breakdown</EyebrowLabel>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="min-w-0 overflow-hidden">
+            <TopViolationsTable items={highestRisk} />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <SeverityBar bySeverity={bySeverity} />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <DomainPieChart byDomain={domainData} />
+          </div>
         </div>
       </div>
 

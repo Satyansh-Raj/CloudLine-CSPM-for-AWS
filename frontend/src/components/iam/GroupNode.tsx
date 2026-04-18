@@ -10,18 +10,18 @@ export default memo(function GroupNodeComponent({
   return (
     <div
       className={[
-        "w-40 rounded-lg shadow-md border",
-        "bg-white dark:bg-[#111]",
-        "border-gray-200 dark:border-white/10",
+        "w-40 rounded-xl shadow-elev-1 border",
+        "bg-lifted-cream dark:bg-[#1c1c1b]",
+        "border-ghost-cream dark:border-white/10",
         "cursor-pointer select-none",
-        "hover:shadow-lg transition-shadow",
+        "hover:shadow-elev-2 transition-shadow",
       ].join(" ")}
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 pt-3 pb-2">
         {/* Folder icon */}
         <svg
-          className="w-4 h-4 shrink-0 text-amber-500"
+          className="w-4 h-4 shrink-0 text-slate-gray"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.8"
@@ -37,10 +37,7 @@ export default memo(function GroupNodeComponent({
           />
         </svg>
         <span
-          className={[
-            "flex-1 text-xs font-semibold truncate",
-            "text-gray-700 dark:text-gray-200",
-          ].join(" ")}
+          className="flex-1 text-xs font-semibold truncate text-ink-black dark:text-gray-200"
           title={label}
         >
           {label}
@@ -48,7 +45,7 @@ export default memo(function GroupNodeComponent({
         {/* Collapse chevron */}
         <span
           className={[
-            "shrink-0 text-gray-400 dark:text-gray-600",
+            "shrink-0 text-slate-gray dark:text-gray-600",
             "transition-transform duration-200",
             isCollapsed ? "rotate-180" : "",
           ].join(" ")}
@@ -75,7 +72,7 @@ export default memo(function GroupNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-1",
-              "px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "px-1.5 py-0.5 rounded-pill text-[10px] font-medium",
               "bg-red-100 text-red-700",
               "dark:bg-red-900/30 dark:text-red-400",
             ].join(" ")}
@@ -90,7 +87,7 @@ export default memo(function GroupNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-1",
-              "px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "px-1.5 py-0.5 rounded-pill text-[10px] font-medium",
               "bg-green-100 text-green-700",
               "dark:bg-green-900/30 dark:text-green-400",
             ].join(" ")}
@@ -104,12 +101,12 @@ export default memo(function GroupNodeComponent({
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-indigo-400 !border-indigo-600"
+        className="!bg-ink-black/40 !border-ink-black/20"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-gray-400 !border-gray-500"
+        className="!bg-ghost-cream !border-dust-taupe"
       />
     </div>
   );

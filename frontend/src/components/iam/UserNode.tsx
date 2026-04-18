@@ -26,40 +26,33 @@ export default memo(function UserNodeComponent({
 
   const ringCls =
     worstSeverity && alarmCount > 0
-      ? SEVERITY_RING[worstSeverity] ?? "border-gray-300"
-      : "border-gray-200 dark:border-white/10";
+      ? SEVERITY_RING[worstSeverity] ?? "border-ghost-cream"
+      : "border-ghost-cream dark:border-white/10";
 
   return (
     <div
       className={[
-        `w-48 rounded-lg shadow-md border-2`,
-        "bg-white dark:bg-[#111]",
+        "w-48 rounded-xl shadow-elev-1 border-2",
+        "bg-lifted-cream dark:bg-[#1c1c1b]",
         "cursor-pointer select-none",
-        "hover:shadow-lg transition-shadow",
+        "hover:shadow-elev-2 transition-shadow",
         ringCls,
       ].join(" ")}
     >
       <div className="flex items-center gap-2 px-3 pt-3 pb-1">
-        {/* Person icon */}
-        <svg
-          className="w-4 h-4 shrink-0 text-blue-500"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"
-          />
-          <circle cx="12" cy="7" r="4" strokeWidth="1.8" />
-        </svg>
+        {/* Circular avatar with initials */}
         <span
           className={[
-            "flex-1 text-xs font-semibold truncate",
-            "text-gray-700 dark:text-gray-200",
+            "w-6 h-6 rounded-full shrink-0 flex items-center justify-center",
+            "bg-ink-black text-canvas-cream",
+            "text-[9px] font-bold select-none",
           ].join(" ")}
+          aria-hidden="true"
+        >
+          {username.slice(0, 2).toUpperCase()}
+        </span>
+        <span
+          className="flex-1 text-xs font-semibold truncate text-ink-black dark:text-gray-200"
           title={username}
         >
           {username}
@@ -67,7 +60,7 @@ export default memo(function UserNodeComponent({
         {/* Collapse chevron */}
         <span
           className={[
-            "shrink-0 text-gray-400 dark:text-gray-600",
+            "shrink-0 text-slate-gray dark:text-gray-600",
             "transition-transform duration-200",
             isCollapsed ? "-rotate-90" : "",
           ].join(" ")}
@@ -90,10 +83,7 @@ export default memo(function UserNodeComponent({
 
       {/* ARN */}
       <p
-        className={[
-          "px-3 pb-1 text-[9px] truncate",
-          "text-gray-400 dark:text-gray-600",
-        ].join(" ")}
+        className="px-3 pb-1 text-[9px] truncate text-slate-gray dark:text-gray-600"
         title={arn}
       >
         {arn}
@@ -106,7 +96,7 @@ export default memo(function UserNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-0.5",
-              "px-1 py-0.5 rounded text-[9px] font-medium",
+              "px-1 py-0.5 rounded-pill text-[9px] font-medium",
               mfaEnabled
                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                 : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
@@ -120,9 +110,9 @@ export default memo(function UserNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-0.5",
-              "px-1 py-0.5 rounded text-[9px] font-medium",
-              "bg-blue-50 text-blue-600",
-              "dark:bg-blue-900/20 dark:text-blue-400",
+              "px-1 py-0.5 rounded-pill text-[9px] font-medium",
+              "bg-ghost-cream text-ink-black",
+              "dark:bg-white/10 dark:text-gray-300",
             ].join(" ")}
           >
             <svg
@@ -146,9 +136,9 @@ export default memo(function UserNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-0.5",
-              "px-1 py-0.5 rounded text-[9px] font-medium",
-              "bg-amber-50 text-amber-600",
-              "dark:bg-amber-900/20 dark:text-amber-400",
+              "px-1 py-0.5 rounded-pill text-[9px] font-medium",
+              "bg-ghost-cream text-ink-black",
+              "dark:bg-white/10 dark:text-gray-300",
             ].join(" ")}
           >
             <svg
@@ -172,7 +162,7 @@ export default memo(function UserNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-0.5",
-              "px-1 py-0.5 rounded text-[9px] font-medium",
+              "px-1 py-0.5 rounded-pill text-[9px] font-medium",
               "bg-red-50 text-red-600",
               "dark:bg-red-900/20 dark:text-red-400",
             ].join(" ")}
@@ -201,7 +191,7 @@ export default memo(function UserNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-1",
-              "px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "px-1.5 py-0.5 rounded-pill text-[10px] font-medium",
               "bg-red-100 text-red-700",
               "dark:bg-red-900/30 dark:text-red-400",
             ].join(" ")}
@@ -213,7 +203,7 @@ export default memo(function UserNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-1",
-              "px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "px-1.5 py-0.5 rounded-pill text-[10px] font-medium",
               "bg-green-100 text-green-700",
               "dark:bg-green-900/30 dark:text-green-400",
             ].join(" ")}
@@ -227,12 +217,12 @@ export default memo(function UserNodeComponent({
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-indigo-400 !border-indigo-600"
+        className="!bg-ink-black/40 !border-ink-black/20"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-gray-400 !border-gray-500"
+        className="!bg-ghost-cream !border-dust-taupe"
       />
     </div>
   );

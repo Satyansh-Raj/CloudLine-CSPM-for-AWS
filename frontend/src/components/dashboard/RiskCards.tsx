@@ -39,8 +39,8 @@ const CATEGORY_ORDER: RiskCategory[] = [
 
 export default function RiskCards({ data }: Props) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 p-6">
+      <h3 className="text-sm font-medium text-slate-gray mb-4">
         Risk Summary
       </h3>
 
@@ -51,14 +51,12 @@ export default function RiskCards({ data }: Props) {
           return (
             <div
               key={cat}
-              className={`${style.bg} ${style.border} border rounded-lg p-3`}
+              className={`${style.bg} ${style.border} border rounded-btn p-3`}
             >
-              <p
-                className={`text-2xl font-bold ${style.text}`}
-              >
+              <p className={`text-2xl font-bold ${style.text}`}>
                 {count}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+              <p className="text-xs text-slate-gray capitalize">
                 {cat}
               </p>
             </div>
@@ -66,8 +64,8 @@ export default function RiskCards({ data }: Props) {
         })}
       </div>
 
-      <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+      <div className="border-t border-ghost-cream dark:border-white/5 pt-3">
+        <p className="text-xs font-medium text-slate-gray mb-2">
           Highest Risk Resources
         </p>
         <div className="space-y-2">
@@ -76,7 +74,7 @@ export default function RiskCards({ data }: Props) {
               key={i}
               className="flex items-center justify-between text-xs"
             >
-              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[180px]">
+              <span className="text-ink-black dark:text-canvas-cream truncate max-w-[180px]">
                 {item.check_id}
               </span>
               <span
@@ -95,8 +93,8 @@ export default function RiskCards({ data }: Props) {
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-        <p className="text-xs text-gray-400">
+      <div className="mt-3 pt-3 border-t border-ghost-cream dark:border-white/5">
+        <p className="text-xs text-slate-gray">
           Total scored: {data.total_scored}
         </p>
       </div>

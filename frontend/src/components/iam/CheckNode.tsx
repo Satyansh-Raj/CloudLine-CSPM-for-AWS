@@ -9,7 +9,7 @@ const STATUS_BG: Record<string, string> = {
   ok: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40",
   error:
     "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40",
-  skip: "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-white/10",
+  skip: "bg-lifted-cream dark:bg-[#1c1c1b] border-ghost-cream dark:border-white/10",
 };
 
 export default memo(function CheckNodeComponent({
@@ -20,25 +20,19 @@ export default memo(function CheckNodeComponent({
 
   const bgCls =
     STATUS_BG[status] ??
-    "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-white/10";
+    "bg-lifted-cream dark:bg-[#1c1c1b] border-ghost-cream dark:border-white/10";
 
   return (
     <div
       className={[
-        "w-44 rounded-lg shadow-sm border select-none cursor-pointer",
-        "transition-shadow hover:shadow-md",
+        "w-44 rounded-xl shadow-elev-1 border select-none cursor-pointer",
+        "transition-shadow hover:shadow-elev-2",
         bgCls,
       ].join(" ")}
-      /* click handled via onNodeClick in FlowCanvas */
     >
       <div className="px-3 pt-2.5 pb-2">
         {/* Check name */}
-        <p
-          className={[
-            "text-[11px] font-medium leading-tight mb-2",
-            "text-gray-800 dark:text-gray-100",
-          ].join(" ")}
-        >
+        <p className="text-[11px] font-medium leading-tight mb-2 text-ink-black dark:text-gray-100">
           {getCheckName(checkId)}
         </p>
 
@@ -46,10 +40,10 @@ export default memo(function CheckNodeComponent({
           {/* check_id badge */}
           <span
             className={[
-              "px-1.5 py-0.5 rounded text-[9px] font-mono",
-              "bg-white/60 dark:bg-black/30",
-              "text-gray-500 dark:text-gray-400",
-              "border border-gray-200 dark:border-white/10",
+              "px-1.5 py-0.5 rounded-pill text-[9px] font-mono",
+              "bg-ghost-cream dark:bg-black/30",
+              "text-slate-gray dark:text-gray-400",
+              "border border-ghost-cream dark:border-white/10",
             ].join(" ")}
           >
             {checkId}
@@ -63,11 +57,11 @@ export default memo(function CheckNodeComponent({
           <div className="mt-1.5">
             <span
               className={[
-                "inline-block px-1.5 py-0.5 rounded",
+                "inline-block px-1.5 py-0.5 rounded-pill",
                 "text-[9px] font-medium",
-                "bg-white/60 dark:bg-black/30",
-                "text-gray-600 dark:text-gray-400",
-                "border border-gray-200 dark:border-white/10",
+                "bg-ghost-cream dark:bg-black/30",
+                "text-slate-gray dark:text-gray-400",
+                "border border-ghost-cream dark:border-white/10",
               ].join(" ")}
             >
               Risk: {risk_score}
@@ -79,7 +73,7 @@ export default memo(function CheckNodeComponent({
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-gray-400 !border-gray-500"
+        className="!bg-ghost-cream !border-dust-taupe"
       />
     </div>
   );

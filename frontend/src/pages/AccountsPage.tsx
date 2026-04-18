@@ -6,6 +6,7 @@ import {
   deleteAccount,
 } from "@/api/accounts";
 import type { PreflightResponse } from "@/types/account";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 type Step = 1 | 2 | 3;
 type ScriptTab = "bash" | "cf";
@@ -15,6 +16,15 @@ const STEPS = [
   "Run Script",
   "Connect",
 ];
+
+const inputCls = [
+  "w-full px-3 py-2 text-sm",
+  "rounded-pill border border-ghost-cream dark:border-white/10",
+  "bg-canvas-cream dark:bg-black",
+  "text-ink-black dark:text-white",
+  "placeholder:text-slate-gray dark:placeholder:text-gray-600",
+  "outline-none focus:ring-2 focus:ring-ink-black/20",
+].join(" ");
 
 function StepIndicator({ current }: { current: Step }) {
   return (
@@ -33,12 +43,12 @@ function StepIndicator({ current }: { current: Step }) {
                 "w-6 h-6 rounded-full flex items-center",
                 "justify-center text-xs font-bold",
                 active
-                  ? "bg-blue-600 text-white"
+                  ? "bg-ink-black text-canvas-cream"
                   : done
-                    ? "bg-blue-200 dark:bg-blue-900"
-                      + " text-blue-700 dark:text-blue-300"
-                    : "bg-gray-100 dark:bg-white/5"
-                      + " text-gray-400",
+                    ? "bg-ghost-cream dark:bg-white/10"
+                      + " text-ink-black dark:text-gray-300"
+                    : "bg-ghost-cream dark:bg-white/5"
+                      + " text-slate-gray dark:text-gray-600",
               ].join(" ")}
             >
               {done ? "✓" : n}
@@ -47,14 +57,14 @@ function StepIndicator({ current }: { current: Step }) {
               className={[
                 "text-xs font-medium",
                 active
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-400 dark:text-gray-600",
+                  ? "text-ink-black dark:text-white"
+                  : "text-slate-gray dark:text-gray-600",
               ].join(" ")}
             >
               {label}
             </span>
             {i < STEPS.length - 1 && (
-              <div className="w-6 h-px bg-gray-200 dark:bg-white/10 mx-1" />
+              <div className="w-6 h-px bg-ghost-cream dark:bg-white/10 mx-1" />
             )}
           </div>
         );
@@ -76,13 +86,13 @@ function CopyButton({ text }: { text: string }) {
     <button
       onClick={copy}
       className={[
-        "text-xs px-2 py-1 rounded font-medium transition-colors",
+        "text-xs px-2 py-1 rounded-pill font-medium transition-colors",
         copied
           ? "bg-green-100 dark:bg-green-900/30"
             + " text-green-700 dark:text-green-400"
-          : "bg-gray-100 dark:bg-white/5"
-            + " text-gray-500 dark:text-gray-400"
-            + " hover:bg-gray-200 dark:hover:bg-white/10",
+          : "bg-ghost-cream dark:bg-white/10"
+            + " text-slate-gray dark:text-gray-400"
+            + " hover:bg-[#E8E2DA] dark:hover:bg-white/20",
       ].join(" ")}
     >
       {copied ? "Copied!" : "Copy"}
@@ -164,20 +174,37 @@ export default function AccountsPage() {
     deleteAccount(id).then(refresh);
   }
 
+  const btnPrimary = [
+    "px-4 py-2 text-sm font-medium rounded-btn",
+    "bg-ink-black text-canvas-cream",
+    "hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed",
+    "transition-opacity",
+  ].join(" ");
+
+  const btnSecondary = [
+    "px-4 py-2 text-sm font-medium rounded-btn",
+    "border border-ghost-cream dark:border-white/10",
+    "text-slate-gray dark:text-gray-400",
+    "hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors",
+  ].join(" ");
+
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-        Accounts
-      </h2>
+      <div>
+        <EyebrowLabel className="mb-1">Accounts</EyebrowLabel>
+        <h2 className="text-xl font-bold text-ink-black dark:text-white tracking-tight">
+          AWS Accounts
+        </h2>
+      </div>
 
       {/* Wizard card */}
-      <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm">
+      <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
         <StepIndicator current={step} />
 
         {/* Step 1 — Generate */}
         {step === 1 && (
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-600">
               Enter account details
             </p>
             <div className="flex flex-wrap gap-3">
@@ -189,7 +216,7 @@ export default function AccountsPage() {
                   onChange={(e) =>
                     setAccountName(e.target.value)
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
+                  className={inputCls}
                 />
               </div>
               <div className="flex-1 min-w-[140px]">
@@ -200,7 +227,7 @@ export default function AccountsPage() {
                   onChange={(e) =>
                     setAccountId(e.target.value)
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none"
+                  className={inputCls}
                 />
               </div>
             </div>
@@ -214,7 +241,7 @@ export default function AccountsPage() {
               disabled={
                 submitting || !accountName || !accountId
               }
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className={btnPrimary}
             >
               {submitting
                 ? "Generating…"
@@ -226,30 +253,29 @@ export default function AccountsPage() {
         {/* Step 2 — Run Script */}
         {step === 2 && preflightData && (
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-600">
               Run the setup script in your AWS account
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-slate-gray dark:text-gray-400">
               External ID:{" "}
-              <span className="font-mono text-gray-700 dark:text-gray-300">
+              <span className="font-mono text-ink-black dark:text-gray-300">
                 {preflightData.external_id}
               </span>
             </p>
 
-            {/* Tab selector */}
-            <div className="flex gap-1 p-1 bg-gray-100 dark:bg-white/5 rounded-lg w-fit">
+            {/* Pill tab selector */}
+            <div className="inline-flex p-1 gap-1 bg-ghost-cream dark:bg-white/5 rounded-pill">
               {(["bash", "cf"] as ScriptTab[]).map(
                 (tab) => (
                   <button
                     key={tab}
                     onClick={() => setScriptTab(tab)}
                     className={[
-                      "px-3 py-1 text-xs font-medium rounded-md transition-colors",
+                      "px-3 py-1 text-xs font-medium rounded-pill transition-colors",
                       scriptTab === tab
-                        ? "bg-white dark:bg-black"
-                          + " text-gray-900 dark:text-white"
-                          + " shadow-sm"
-                        : "text-gray-500 dark:text-gray-400",
+                        ? "bg-ink-black text-canvas-cream"
+                        : "text-slate-gray dark:text-gray-400"
+                          + " hover:text-ink-black dark:hover:text-gray-200",
                     ].join(" ")}
                   >
                     {tab === "bash"
@@ -272,7 +298,7 @@ export default function AccountsPage() {
                   }
                 />
               </div>
-              <pre className="text-xs font-mono bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl p-4 overflow-x-auto max-h-64 whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+              <pre className="text-xs font-mono bg-ink-black text-canvas-cream rounded-hero p-4 overflow-x-auto max-h-64 whitespace-pre-wrap">
                 {scriptTab === "bash"
                   ? preflightData.bash_script
                   : preflightData.cloudformation_template}
@@ -287,9 +313,9 @@ export default function AccountsPage() {
                 onChange={(e) =>
                   setConfirmed(e.target.checked)
                 }
-                className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                className="w-4 h-4 rounded border-ghost-cream"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-ink-black dark:text-gray-300">
                 I've run the script successfully
               </span>
             </label>
@@ -297,14 +323,14 @@ export default function AccountsPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setStep(1)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                className={btnSecondary}
               >
                 Back
               </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={!confirmed}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className={btnPrimary}
               >
                 Continue
               </button>
@@ -315,7 +341,7 @@ export default function AccountsPage() {
         {/* Step 3 — Connect */}
         {step === 3 && (
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-600">
               Enter the role ARN to connect
             </p>
             <input
@@ -323,7 +349,7 @@ export default function AccountsPage() {
               placeholder="arn:aws:iam::123456789012:role/CloudLineScanner"
               value={roleArn}
               onChange={(e) => setRoleArn(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none font-mono"
+              className={`${inputCls} font-mono`}
             />
             {error && (
               <p className="text-xs text-red-500">
@@ -333,14 +359,14 @@ export default function AccountsPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setStep(2)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                className={btnSecondary}
               >
                 Back
               </button>
               <button
                 onClick={handleConnect}
                 disabled={submitting || !roleArn}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className={btnPrimary}
               >
                 {submitting
                   ? "Connecting…"
@@ -353,11 +379,11 @@ export default function AccountsPage() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm animate-pulse space-y-3">
+        <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-16 bg-gray-100 dark:bg-white/5 rounded-xl"
+              className="h-16 bg-ghost-cream dark:bg-white/5 rounded-hero"
             />
           ))}
         </div>
@@ -365,54 +391,57 @@ export default function AccountsPage() {
 
       {/* Empty state */}
       {!isLoading && accounts.length === 0 && (
-        <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-8 text-center shadow-sm">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-8 text-center shadow-elev-1">
+          <p className="text-sm text-slate-gray dark:text-gray-400">
             No target accounts configured. Use the wizard
             above to add one.
           </p>
         </div>
       )}
 
-      {/* Account list */}
+      {/* Account list — stadium cards */}
       {accounts.length > 0 && (
         <div className="space-y-3">
           {accounts.map((a) => (
             <div
               key={a.account_id}
-              className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm"
+              className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-semibold text-ink-black dark:text-white">
                       {a.account_name}
                     </p>
-                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+                    <span className="text-xs font-mono px-1.5 py-0.5 rounded-pill bg-ghost-cream dark:bg-white/5 text-slate-gray dark:text-gray-500">
                       {a.account_id}
                     </span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-pill bg-ghost-cream dark:bg-white/5 text-slate-gray dark:text-gray-400 font-medium">
+                      Connected
+                    </span>
                   </div>
-                  <p className="text-xs font-mono text-gray-400 dark:text-gray-600 truncate">
+                  <p className="text-xs font-mono text-slate-gray dark:text-gray-600 truncate">
                     {a.role_arn}
                   </p>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600">
+                      <span className="text-[10px] uppercase tracking-wider text-slate-gray dark:text-gray-600">
                         Regions:
                       </span>
                       {a.regions.map((r) => (
                         <span
                           key={r}
-                          className="text-xs px-1.5 py-0.5 rounded bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400"
+                          className="text-xs px-1.5 py-0.5 rounded-pill bg-ghost-cream dark:bg-white/5 text-ink-black dark:text-gray-400"
                         >
                           {r}
                         </span>
                       ))}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600">
+                      <span className="text-[10px] uppercase tracking-wider text-slate-gray dark:text-gray-600">
                         Last scanned:
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-slate-gray dark:text-gray-400">
                         {a.last_scanned
                           ? new Date(
                               a.last_scanned,
@@ -426,7 +455,7 @@ export default function AccountsPage() {
                   onClick={() =>
                     handleRemove(a.account_id)
                   }
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium rounded-btn border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                 >
                   Remove
                 </button>

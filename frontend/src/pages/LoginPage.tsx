@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { requestPasswordReset } from "@/api/auth";
+import GhostHeadline from "@/components/shared/GhostHeadline";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -58,13 +60,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black px-4">
+    <div className="min-h-screen flex items-center justify-center bg-canvas-cream dark:bg-ink-black px-4">
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-ink-black dark:bg-canvas-cream flex items-center justify-center">
             <svg
-              className="w-4 h-4 text-white"
+              className="w-4 h-4 text-canvas-cream dark:text-ink-black"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -74,24 +76,27 @@ export default function LoginPage() {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold tracking-tight text-gray-900 dark:text-white leading-none">
+            <p className="text-sm font-bold tracking-tight text-ink-black dark:text-canvas-cream leading-none">
               CloudLine
             </p>
-            <p className="text-[10px] text-gray-400 mt-0.5">
+            <p className="text-[10px] text-slate-gray mt-0.5">
               AWS Security
             </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm p-6">
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white mb-5">
+        <div className="relative overflow-hidden bg-lifted-cream dark:bg-ink-black rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
+          <GhostHeadline className="-bottom-4 -right-6">AUTH</GhostHeadline>
+
+          <EyebrowLabel className="mb-3">Secure Access</EyebrowLabel>
+          <h1 className="text-base font-semibold text-ink-black dark:text-canvas-cream mb-5">
             Sign in
           </h1>
 
           {error && (
             <div
               role="alert"
-              className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+              className="mb-4 px-3 py-2 rounded-btn bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
             >
               {error}
             </div>
@@ -103,7 +108,7 @@ export default function LoginPage() {
                 <div>
                   <label
                     htmlFor="login-email"
-                    className="block text-[12px] font-medium text-gray-600 dark:text-gray-400 mb-1"
+                    className="block text-[12px] font-medium text-slate-gray mb-1"
                   >
                     Email
                   </label>
@@ -113,13 +118,13 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="login-password"
-                    className="block text-[12px] font-medium text-gray-600 dark:text-gray-400 mb-1"
+                    className="block text-[12px] font-medium text-slate-gray mb-1"
                   >
                     Password
                   </label>
@@ -129,13 +134,13 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-2 text-[13px] font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+                  className="w-full py-2 text-[13px] font-medium rounded-btn bg-ink-black text-canvas-cream hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed mt-1"
                 >
                   {submitting ? "Signing in…" : "Sign In"}
                 </button>
@@ -145,7 +150,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowReset(true)}
-                  className="text-[12px] text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-[12px] text-ink-black dark:text-canvas-cream hover:underline"
                 >
                   Forgot password? Request reset
                 </button>
@@ -153,7 +158,7 @@ export default function LoginPage() {
             </>
           ) : (
             <div>
-              <p className="text-[13px] text-gray-600 dark:text-gray-400 mb-3">
+              <p className="text-[13px] text-slate-gray mb-3">
                 Enter your email to request a password reset. An
                 admin will approve it.
               </p>
@@ -173,20 +178,20 @@ export default function LoginPage() {
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
                   />
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setShowReset(false)}
-                      className="flex-1 py-2 text-[13px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                      className="flex-1 py-2 text-[13px] rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5"
                     >
                       Back
                     </button>
                     <button
                       type="submit"
                       disabled={resetSubmitting}
-                      className="flex-1 py-2 text-[13px] font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="flex-1 py-2 text-[13px] font-medium rounded-btn bg-ink-black text-canvas-cream hover:opacity-90 disabled:opacity-40"
                     >
                       {resetSubmitting ? "Sending…" : "Send Reset"}
                     </button>

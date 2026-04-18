@@ -24,21 +24,21 @@ export default memo(function RoleNodeComponent({
 
   const ringCls =
     worstSeverity && alarmCount > 0
-      ? (SEVERITY_RING[worstSeverity] ?? "border-gray-300")
-      : "border-gray-200 dark:border-white/10";
+      ? (SEVERITY_RING[worstSeverity] ?? "border-ghost-cream")
+      : "border-ghost-cream dark:border-white/10";
 
   return (
     <div
       className={[
-        "w-40 rounded-lg shadow-md border-2 select-none",
-        "bg-white dark:bg-[#111]",
+        "w-40 rounded-xl shadow-elev-1 border-2 select-none",
+        "bg-lifted-cream dark:bg-[#1c1c1b]",
         ringCls,
       ].join(" ")}
     >
       <div className="flex items-center gap-2 px-3 pt-3 pb-1">
         {/* Key icon */}
         <svg
-          className="w-4 h-4 shrink-0 text-purple-500"
+          className="w-4 h-4 shrink-0 text-slate-gray"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.8"
@@ -56,15 +56,12 @@ export default memo(function RoleNodeComponent({
         </svg>
         <div className="flex-1 min-w-0">
           <span
-            className={[
-              "block text-xs font-semibold truncate",
-              "text-gray-700 dark:text-gray-200",
-            ].join(" ")}
+            className="block text-xs font-semibold truncate text-ink-black dark:text-gray-200"
             title={rolename}
           >
             {rolename}
           </span>
-          <span className="block text-[9px] text-purple-500 dark:text-purple-400">
+          <span className="block text-[9px] text-slate-gray dark:text-gray-500">
             Role
           </span>
         </div>
@@ -72,8 +69,8 @@ export default memo(function RoleNodeComponent({
         <button
           onClick={() => onToggleCollapse(id)}
           className={[
-            "shrink-0 text-gray-400 dark:text-gray-600",
-            "hover:text-gray-700 dark:hover:text-gray-300",
+            "shrink-0 text-slate-gray dark:text-gray-600",
+            "hover:text-ink-black dark:hover:text-gray-300",
             "transition-transform duration-200",
             isCollapsed ? "rotate-180" : "",
           ].join(" ")}
@@ -97,10 +94,7 @@ export default memo(function RoleNodeComponent({
 
       {/* ARN */}
       <p
-        className={[
-          "px-3 pb-1 text-[9px] truncate",
-          "text-gray-400 dark:text-gray-600",
-        ].join(" ")}
+        className="px-3 pb-1 text-[9px] truncate text-slate-gray dark:text-gray-600"
         title={arn}
       >
         {arn}
@@ -112,7 +106,7 @@ export default memo(function RoleNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-1",
-              "px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "px-1.5 py-0.5 rounded-pill text-[10px] font-medium",
               "bg-red-100 text-red-700",
               "dark:bg-red-900/30 dark:text-red-400",
             ].join(" ")}
@@ -124,7 +118,7 @@ export default memo(function RoleNodeComponent({
           <span
             className={[
               "inline-flex items-center gap-1",
-              "px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "px-1.5 py-0.5 rounded-pill text-[10px] font-medium",
               "bg-green-100 text-green-700",
               "dark:bg-green-900/30 dark:text-green-400",
             ].join(" ")}
@@ -138,12 +132,12 @@ export default memo(function RoleNodeComponent({
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-indigo-400 !border-indigo-600"
+        className="!bg-ink-black/40 !border-ink-black/20"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-gray-400 !border-gray-500"
+        className="!bg-ghost-cream !border-dust-taupe"
       />
     </div>
   );

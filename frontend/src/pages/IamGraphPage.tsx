@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react";
 import { useIamGraph } from "@/hooks";
 import { useAccount } from "@/hooks/useAccount";
-import { AccountBadge } from "@/components/shared";
+import { AccountBadge, EyebrowLabel } from "@/components/shared";
 import {
   buildIamGraph,
   getInitialCollapsedIds,
@@ -55,7 +55,7 @@ function toggleSet(set: Set<string>, val: string): Set<string> {
 function LegendRow({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className={`w-2.5 h-2.5 rounded-sm ${color} shrink-0`} />
+      <span className={`w-2.5 h-2.5 rounded-full ${color} shrink-0`} />
       <span className="capitalize">{label}</span>
     </div>
   );
@@ -66,21 +66,21 @@ function Legend() {
     <div
       className={[
         "absolute top-3 left-3 z-10 pointer-events-none",
-        "bg-white/90 dark:bg-[#111]/90 backdrop-blur-sm",
-        "border border-gray-100 dark:border-white/5",
-        "rounded-xl px-3 py-2.5 shadow-sm",
-        "text-[10px] text-gray-600 dark:text-gray-400",
+        "bg-lifted-cream/95 dark:bg-[#1c1c1b]/95 backdrop-blur-sm",
+        "border border-ghost-cream dark:border-white/5",
+        "rounded-hero px-3 py-2.5 shadow-elev-1",
+        "text-[10px] text-slate-gray dark:text-gray-400",
       ].join(" ")}
     >
-      <p className="font-semibold text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-600 mb-2">
+      <p className="font-semibold text-[9px] uppercase tracking-wider text-slate-gray/70 dark:text-gray-600 mb-2">
         Legend
       </p>
       <div className="space-y-1">
-        <LegendRow color="bg-indigo-500" label="Account" />
-        <LegendRow color="bg-blue-500" label="User" />
-        <LegendRow color="bg-blue-400" label="Policy" />
-        <LegendRow color="bg-teal-500" label="Service" />
-        <div className="border-t border-gray-100 dark:border-white/5 my-1.5" />
+        <LegendRow color="bg-ink-black" label="Account" />
+        <LegendRow color="bg-slate-gray" label="User" />
+        <LegendRow color="bg-dust-taupe" label="Policy" />
+        <LegendRow color="bg-slate-gray/60" label="Service" />
+        <div className="border-t border-ghost-cream dark:border-white/5 my-1.5" />
         <LegendRow color="bg-red-400" label="Alarm" />
         <LegendRow color="bg-green-400" label="OK" />
       </div>
@@ -100,14 +100,19 @@ function ComplianceRow({
   if (!controls || controls.length === 0) return null;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-gray dark:text-gray-500 mb-1">
         {label}
       </p>
       <div className="flex flex-wrap gap-1">
         {controls.map((c) => (
           <span
             key={c}
-            className="inline-block px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 text-xs rounded text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10"
+            className={[
+              "inline-block px-1.5 py-0.5 rounded-pill",
+              "bg-ghost-cream dark:bg-white/5",
+              "text-xs text-ink-black dark:text-gray-300",
+              "border border-ghost-cream dark:border-white/10",
+            ].join(" ")}
           >
             {c}
           </span>
@@ -140,19 +145,19 @@ function DetailPanel({
     <div
       className={[
         "absolute top-0 right-0 w-80 h-full z-10",
-        "bg-white dark:bg-[#111]",
-        "border-l border-gray-100 dark:border-white/5",
-        "shadow-2xl overflow-y-auto flex flex-col",
+        "bg-lifted-cream dark:bg-[#1c1c1b]",
+        "border-l border-ghost-cream dark:border-white/5",
+        "shadow-elev-2 overflow-y-auto flex flex-col",
       ].join(" ")}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-ghost-cream dark:border-white/5">
+        <p className="text-sm font-semibold text-ink-black dark:text-white">
           Check Detail
         </p>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          className="text-slate-gray hover:text-ink-black dark:hover:text-gray-200 transition-colors"
           aria-label="Close panel"
         >
           <svg
@@ -174,13 +179,20 @@ function DetailPanel({
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {/* Check name + ID */}
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-gray mb-1">
             Check
           </p>
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
+          <p className="text-sm font-medium text-ink-black dark:text-white">
             {getCheckName(violation.check_id)}
           </p>
-          <span className="inline-block mt-1 px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 text-xs font-mono text-gray-500 dark:text-gray-400 rounded border border-gray-200 dark:border-white/10">
+          <span
+            className={[
+              "inline-block mt-1 px-1.5 py-0.5 rounded-pill",
+              "bg-ghost-cream dark:bg-white/5",
+              "text-xs font-mono text-slate-gray dark:text-gray-400",
+              "border border-ghost-cream dark:border-white/10",
+            ].join(" ")}
+          >
             {violation.check_id}
           </span>
         </div>
@@ -193,10 +205,10 @@ function DetailPanel({
 
         {/* Resource */}
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-gray mb-1">
             Resource
           </p>
-          <p className="text-xs font-mono break-all text-gray-600 dark:text-gray-400">
+          <p className="text-xs font-mono break-all text-slate-gray dark:text-gray-400">
             {violation.resource}
           </p>
         </div>
@@ -204,10 +216,10 @@ function DetailPanel({
         {/* Reason */}
         {violation.reason && (
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-gray mb-1">
               Reason
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-slate-gray dark:text-gray-400">
               {violation.reason}
             </p>
           </div>
@@ -216,18 +228,18 @@ function DetailPanel({
         {/* Risk score */}
         {violation.risk_score !== undefined && (
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-gray mb-1">
               Risk Score
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-gray-900 dark:text-white">
+              <span className="text-2xl font-black text-ink-black dark:text-white">
                 {violation.risk_score}
               </span>
-              <span className="text-sm text-gray-400">/ 100</span>
+              <span className="text-sm text-slate-gray">/ 100</span>
             </div>
-            <div className="h-1.5 bg-gray-100 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
+            <div className="h-1.5 bg-ghost-cream dark:bg-white/10 rounded-full mt-1 overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full"
+                className="h-full bg-ink-black dark:bg-canvas-cream rounded-full"
                 style={{
                   width: `${violation.risk_score}%`,
                 }}
@@ -239,7 +251,7 @@ function DetailPanel({
         {/* Compliance */}
         {hasComp && (
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-gray">
               Compliance
             </p>
             <ComplianceRow label="CIS AWS" controls={comp.cis_aws ?? []} />
@@ -313,6 +325,7 @@ function FlowCanvas({
       <Background
         variant={BackgroundVariant.Dots}
         gap={20}
+        color="#E8E2DA"
         className="dark:opacity-20"
       />
     </ReactFlow>
@@ -378,7 +391,7 @@ export default function IamGraphPage() {
     <div
       className={
         isFullscreen
-          ? "fixed inset-0 z-50 bg-white dark:bg-[#0d0d0d] flex flex-col"
+          ? "fixed inset-0 z-50 bg-canvas-cream dark:bg-ink-black flex flex-col"
           : "space-y-4"
       }
     >
@@ -386,19 +399,22 @@ export default function IamGraphPage() {
       <div
         className={
           isFullscreen
-            ? "flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/5"
+            ? "flex items-center justify-between px-4 py-2 border-b border-ghost-cream dark:border-white/5"
             : ""
         }
       >
         <div>
+          {!isFullscreen && (
+            <EyebrowLabel className="mb-1">IAM Permissions</EyebrowLabel>
+          )}
           <div className="flex items-baseline gap-3">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h2 className="text-xl font-bold text-ink-black dark:text-white tracking-tight">
               IAM Graph
             </h2>
             {!isFullscreen && <AccountBadge />}
           </div>
           {!isFullscreen && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-sm text-slate-gray dark:text-gray-400 mt-0.5">
               IAM permission surface — users, policies, effective permissions
             </p>
           )}
@@ -406,7 +422,12 @@ export default function IamGraphPage() {
         {isFullscreen && (
           <button
             onClick={() => setIsFullscreen(false)}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            className={[
+              "px-3 py-1.5 text-xs font-medium rounded-btn",
+              "border border-ghost-cream dark:border-white/10",
+              "text-slate-gray dark:text-gray-400",
+              "hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors",
+            ].join(" ")}
             aria-label="Exit fullscreen"
           >
             Exit Fullscreen
@@ -417,8 +438,8 @@ export default function IamGraphPage() {
       {/* Filter bar */}
       <div
         className={[
-          "bg-white dark:bg-[#111] border border-gray-100",
-          "dark:border-white/5 rounded-2xl p-4 shadow-sm",
+          "bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream",
+          "dark:border-white/5 rounded-hero p-4 shadow-elev-1",
           isFullscreen ? "mx-4" : "",
         ].join(" ")}
       >
@@ -431,11 +452,11 @@ export default function IamGraphPage() {
             onChange={(e) => setSearch(e.target.value)}
             className={[
               "flex-1 min-w-[180px] px-3 py-1.5 text-sm",
-              "bg-gray-50 dark:bg-white/5",
-              "border border-gray-200 dark:border-white/10",
-              "rounded-lg text-gray-900 dark:text-gray-100",
-              "placeholder-gray-400 dark:placeholder-gray-600",
-              "outline-none focus:ring-2 focus:ring-indigo-500/40",
+              "bg-canvas-cream dark:bg-white/5",
+              "border border-ghost-cream dark:border-white/10",
+              "rounded-pill text-ink-black dark:text-gray-100",
+              "placeholder-slate-gray dark:placeholder-gray-600",
+              "outline-none focus:ring-2 focus:ring-ink-black/20",
             ].join(" ")}
           />
 
@@ -444,10 +465,10 @@ export default function IamGraphPage() {
             <button
               onClick={() => setIsFullscreen(true)}
               className={[
-                "px-3 py-1.5 text-xs font-medium rounded-lg",
-                "border border-gray-200 dark:border-white/10",
-                "text-gray-600 dark:text-gray-400",
-                "hover:bg-gray-50 dark:hover:bg-white/5",
+                "px-3 py-1.5 text-xs font-medium rounded-btn",
+                "border border-ghost-cream dark:border-white/10",
+                "text-slate-gray dark:text-gray-400",
+                "hover:bg-ghost-cream dark:hover:bg-white/5",
                 "transition-colors",
               ].join(" ")}
               aria-label="Enter fullscreen"
@@ -464,7 +485,7 @@ export default function IamGraphPage() {
           "relative overflow-hidden",
           isFullscreen
             ? "flex-1"
-            : "rounded-2xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#0d0d0d]",
+            : "rounded-hero border border-ghost-cream dark:border-white/5 bg-canvas-cream dark:bg-ink-black",
         ].join(" ")}
         style={
           isFullscreen
@@ -482,7 +503,7 @@ export default function IamGraphPage() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-12 bg-gray-100 dark:bg-white/5 rounded-xl"
+                  className="h-12 bg-ghost-cream dark:bg-white/5 rounded-hero"
                 />
               ))}
             </div>
@@ -492,7 +513,7 @@ export default function IamGraphPage() {
         {/* Error */}
         {isError && !isLoading && (
           <div className="absolute inset-0 flex items-center justify-center p-8">
-            <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6 max-w-sm text-center">
+            <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-hero p-6 max-w-sm text-center">
               <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">
                 Failed to load IAM data
               </p>
@@ -507,7 +528,7 @@ export default function IamGraphPage() {
         {!isLoading && !isError && !hasData && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8">
             <svg
-              className="w-12 h-12 text-gray-300 dark:text-gray-700"
+              className="w-12 h-12 text-ghost-cream dark:text-gray-700"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.2"
@@ -516,10 +537,10 @@ export default function IamGraphPage() {
               <circle cx="12" cy="12" r="10" />
               <path strokeLinecap="round" d="M8 12h8M12 8v8" />
             </svg>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <p className="text-sm font-medium text-slate-gray dark:text-gray-400">
               No IAM data — run a scan first
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-600 text-center max-w-xs">
+            <p className="text-xs text-slate-gray/70 dark:text-gray-600 text-center max-w-xs">
               Trigger a scan to populate IAM checks and see the permission graph
               here.
             </p>
@@ -539,8 +560,8 @@ export default function IamGraphPage() {
 
             {/* No-matches overlay */}
             {noMatches && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 dark:bg-[#0d0d0d]/80">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="absolute inset-0 flex items-center justify-center bg-canvas-cream/80 dark:bg-ink-black/80">
+                <p className="text-sm text-slate-gray dark:text-gray-400">
                   No users match your search
                 </p>
               </div>

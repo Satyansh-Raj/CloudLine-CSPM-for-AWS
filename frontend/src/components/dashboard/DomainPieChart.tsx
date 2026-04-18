@@ -1,7 +1,3 @@
-/**
- * Domain pie chart — shows risk distribution by AWS domain.
- * Fills the third column next to the violations table + severity bar.
- */
 import {
   PieChart,
   Pie,
@@ -10,20 +6,21 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 interface Props {
   byDomain: Record<string, number>;
 }
 
 const PALETTE = [
-  "#3b82f6", // blue
-  "#8b5cf6", // violet
-  "#f97316", // orange
-  "#22c55e", // green
-  "#ec4899", // pink
-  "#14b8a6", // teal
-  "#eab308", // yellow
-  "#ef4444", // red
+  "#3b82f6",
+  "#8b5cf6",
+  "#f97316",
+  "#22c55e",
+  "#ec4899",
+  "#14b8a6",
+  "#eab308",
+  "#ef4444",
 ];
 
 function formatLabel(domain: string) {
@@ -42,8 +39,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const { name, payload: itemPayload } = payload[0];
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs">
-      <div className="flex items-center gap-1.5 font-semibold text-gray-700 dark:text-gray-200">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-3 py-2 shadow-elev-1 text-xs">
+      <div className="flex items-center gap-1.5 font-semibold text-ink-black dark:text-canvas-cream">
         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: itemPayload.color }} />
         {name}: {itemPayload.displayValue}
       </div>
@@ -66,7 +63,7 @@ export default function DomainPieChart({ byDomain }: Props) {
     const sharePct = Math.round((e.count / total) * 100);
     return {
       name: formatLabel(e.domain),
-      value: e.count, // render size based on count
+      value: e.count,
       displayValue: `${sharePct}%`,
       color: PALETTE[i % PALETTE.length],
     };
@@ -74,23 +71,22 @@ export default function DomainPieChart({ byDomain }: Props) {
 
   const isEmpty = data.length === 0;
   const displayData = isEmpty
-    ? [{ name: "No data", value: 1, displayValue: "0%", color: "#e5e7eb" }]
+    ? [{ name: "No data", value: 1, displayValue: "0%", color: "#E8E2DA" }]
     : data;
 
-  // The pie chart is rendered as a solid pie (innerRadius=0) without centre text.
-
   return (
-    <div className="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/5 rounded-2xl p-5 shadow-sm h-full flex flex-col">
-      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1">
+    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
+      <EyebrowLabel className="mb-1">Domains</EyebrowLabel>
+      <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-1">
         Violations by Domain
       </h3>
-      <p className="text-xs text-gray-400 dark:text-gray-600 mb-3">
+      <p className="text-xs text-slate-gray mb-3">
         Distribution of active alarms
       </p>
 
       {isEmpty ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-gray-300 dark:text-gray-700">
-          <svg className="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex flex-col items-center justify-center flex-1 text-slate-gray">
+          <svg className="w-10 h-10 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
               d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
           </svg>
@@ -108,14 +104,13 @@ export default function DomainPieChart({ byDomain }: Props) {
                 outerRadius={75}
                 dataKey="value"
                 strokeWidth={4}
-                stroke="#fff" // white thick borders look great with translucency on white backgrounds. On dark, use tailwind trick.
-                className="stroke-white dark:stroke-[#111]"
+                className="stroke-lifted-cream dark:stroke-ink-black"
               >
                 {displayData.map((entry, i) => (
-                  <Cell 
-                    key={i} 
-                    fill={entry.color} 
-                    fillOpacity={0.65} // Translucent!
+                  <Cell
+                    key={i}
+                    fill={entry.color}
+                    fillOpacity={0.65}
                   />
                 ))}
               </Pie>
@@ -125,8 +120,8 @@ export default function DomainPieChart({ byDomain }: Props) {
                 iconSize={7}
                 wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
                 formatter={(value: string, entry: any) => (
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {value} <span className="font-bold text-gray-800 dark:text-gray-200">{entry.payload?.displayValue}</span>
+                  <span className="text-slate-gray">
+                    {value} <span className="font-bold text-ink-black dark:text-canvas-cream">{entry.payload?.displayValue}</span>
                   </span>
                 )}
               />

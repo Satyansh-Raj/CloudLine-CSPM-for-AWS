@@ -32,13 +32,13 @@ function Select({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+      <label className="block text-xs font-medium text-slate-gray mb-1">
         {label}
       </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="block w-full rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="block w-full rounded-pill border border-ghost-cream dark:border-white/10 bg-canvas-cream dark:bg-ink-black text-sm text-ink-black dark:text-canvas-cream px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-black"
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>
@@ -75,7 +75,7 @@ export default function ViolationFilters({ filters, onChange }: Props) {
         <div className="flex items-end">
           <button
             onClick={() => onChange({ severity: "", domain: "" })}
-            className="text-xs text-primary-600 dark:text-primary-400 hover:underline py-1.5"
+            className="text-xs text-ink-black dark:text-canvas-cream hover:underline py-1.5"
           >
             Clear filters
           </button>
