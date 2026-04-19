@@ -143,6 +143,27 @@ _SCANNER_POLICY = {
                 "ecr:DescribeRepositories",
                 "ecr:GetRepositoryPolicy",
                 "ecr:ListImages",
+                "eks:DescribeCluster",
+                "eks:ListClusters",
+                "eks:ListNodegroups",
+                "autoscaling:DescribeAutoScalingGroups",
+                "backup:ListBackupPlans",
+                "backup:ListBackupSelections",
+                "backup:ListProtectedResources",
+                "config:DescribeConfigRules",
+                "config:DescribeConfigurationAggregators",
+                "config:DescribeConfigurationRecorders",
+                "config:DescribeConfigurationRecorderStatus",
+                "config:DescribeConformancePacks",
+                "config:DescribeDeliveryChannels",
+                "config:GetComplianceDetailsByConfigRule",
+                "route53:ListHostedZones",
+                "route53:ListResourceRecordSets",
+                "secretsmanager:GetResourcePolicy",
+                "network-firewall:ListFirewalls",
+                "network-firewall:DescribeFirewall",
+                "wafv2:ListWebACLs",
+                "wafv2:GetWebACL",
                 "sts:GetCallerIdentity",
             ],
             "Resource": "*",
@@ -193,10 +214,18 @@ def _build_bash_script(
         TRUST_POLICY='{trust_json}'
         SCANNER_POLICY='{policy_json}'
 
-        echo "Creating IAM role $ROLE_NAME ..."
-        aws iam create-role \\
-          --role-name "$ROLE_NAME" \\
-          --assume-role-policy-document "$TRUST_POLICY"
+        if aws iam get-role --role-name "$ROLE_NAME" \\
+             > /dev/null 2>&1; then
+          echo "Role $ROLE_NAME already exists — updating trust policy ..."
+          aws iam update-assume-role-policy \\
+            --role-name "$ROLE_NAME" \\
+            --policy-document "$TRUST_POLICY"
+        else
+          echo "Creating IAM role $ROLE_NAME ..."
+          aws iam create-role \\
+            --role-name "$ROLE_NAME" \\
+            --assume-role-policy-document "$TRUST_POLICY"
+        fi
 
         echo "Attaching inline policy ..."
         aws iam put-role-policy \\
@@ -308,6 +337,23 @@ def _build_cf_template(
                           - ecr:DescribeRepositories
                           - ecr:GetRepositoryPolicy
                           - ecr:ListImages
+                          - eks:DescribeCluster
+                          - eks:ListClusters
+                          - eks:ListNodegroups
+                          - autoscaling:DescribeAutoScalingGroups
+                          - backup:ListBackupPlans
+                          - backup:ListBackupSelections
+                          - backup:ListProtectedResources
+                          - config:DescribeConfigRules
+                          - config:DescribeConfigurationAggregators
+                          - config:DescribeConformancePacks
+                          - route53:ListHostedZones
+                          - route53:ListResourceRecordSets
+                          - secretsmanager:GetResourcePolicy
+                          - network-firewall:ListFirewalls
+                          - network-firewall:DescribeFirewall
+                          - wafv2:ListWebACLs
+                          - wafv2:GetWebACL
                           - sts:GetCallerIdentity
 
         Outputs:

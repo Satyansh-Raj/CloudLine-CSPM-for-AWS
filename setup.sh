@@ -381,6 +381,23 @@ else
   success "Access key generated: $ACCESS_KEY"
 fi
 
+# Always ensure cross-account AssumeRole policy is attached
+# (idempotent — put-user-policy overwrites if already exists)
+info "Ensuring cross-account AssumeRole policy on '$IAM_USER'..."
+aws iam put-user-policy \
+  --user-name "$IAM_USER" \
+  --policy-name "CloudLineCrossAccountAssumeRole" \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Sid": "CrossAccountScan",
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::*:role/CloudLineScanner"
+    }]
+  }' >/dev/null
+success "Cross-account AssumeRole policy applied"
+
 # ═══════════════════════════════════════════════════
 # PHASE 3 — Generate .env
 # ═══════════════════════════════════════════════════

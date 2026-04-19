@@ -1,5 +1,10 @@
 # modules/iam/main.tf
 # IAM role and policies for the CloudLine Lambda function.
+# Also manages the CloudLine scanner IAM user used by the
+# backend to scan AWS accounts and assume cross-account roles.
+#
+# If setup.sh already created the user via AWS CLI, import it:
+#   terraform import aws_iam_user.cloudline_scanner Cloudline_Scanner
 
 # ---------------------------------------------------------------------------
 # Trust policy — allow Lambda service to assume this role
@@ -211,6 +216,42 @@ resource "aws_iam_role_policy" "lambda_aws_read" {
           "kms:GetKeyRotationStatus",
         ]
         Resource = "*"
+      }
+    ]
+  })
+}
+
+# ---------------------------------------------------------------------------
+# CloudLine scanner IAM user
+# Used by the backend service to collect AWS resource data and to
+# assume cross-account roles (CloudLineScanner) in target accounts.
+# ---------------------------------------------------------------------------
+resource "aws_iam_user" "cloudline_scanner" {
+  name = "Cloudline_Scanner"
+
+  tags = {
+    Project     = "CloudLine"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_user_policy_attachment" "security_audit" {
+  user       = aws_iam_user.cloudline_scanner.name
+  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+}
+
+resource "aws_iam_user_policy" "cross_account_assume_role" {
+  name = "CloudLineCrossAccountAssumeRole"
+  user = aws_iam_user.cloudline_scanner.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "CrossAccountScan"
+        Effect   = "Allow"
+        Action   = "sts:AssumeRole"
+        Resource = "arn:aws:iam::*:role/CloudLineScanner"
       }
     ]
   })
