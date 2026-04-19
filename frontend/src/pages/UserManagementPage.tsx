@@ -12,6 +12,7 @@ import type { ApiError } from "@/api/client";
 import type { CreateUserRequest, LoginEvent } from "@/api/users";
 import type { User, UserRole } from "@/types/auth";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
+import CustomSelect from "@/components/shared/CustomSelect";
 
 type Tab = "users" | "reset_requests";
 
@@ -276,15 +277,16 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
               Min 12 chars · at least 1 digit · at least 1 symbol
             </p>
           </div>
-          <select
+          <CustomSelect
             value={role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            className={inputCls}
-          >
-            <option value="viewer">Viewer</option>
-            <option value="operator">Operator</option>
-            <option value="admin">Admin</option>
-          </select>
+            onChange={(v) => setRole(v as UserRole)}
+            options={[
+              { value: "viewer", label: "Viewer" },
+              { value: "operator", label: "Operator" },
+              { value: "admin", label: "Admin" },
+            ]}
+            aria-label="Role"
+          />
           <div className="flex gap-2 justify-end pt-1">
             <button
               type="button"

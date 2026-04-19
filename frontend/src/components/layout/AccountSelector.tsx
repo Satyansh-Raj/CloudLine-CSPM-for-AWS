@@ -1,4 +1,5 @@
 import { useAccount } from "@/hooks/useAccount";
+import CustomSelect from "@/components/shared/CustomSelect";
 
 function BuildingIcon() {
   return (
@@ -23,33 +24,25 @@ function BuildingIcon() {
 }
 
 export default function AccountSelector() {
-  const {
-    selectedAccount,
-    accounts,
-    setSelectedAccount,
-  } = useAccount();
+  const { selectedAccount, accounts, setSelectedAccount } = useAccount();
+
+  const options = [
+    { value: "", label: "Root Account" },
+    ...accounts.map((a) => ({
+      value: a.account_id,
+      label: `${a.account_name} (${a.account_id})`,
+    })),
+  ];
 
   return (
-    <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-600">
+    <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-600 -ml-[3px]">
       <BuildingIcon />
-      <select
+      <CustomSelect
         value={selectedAccount}
-        onChange={(e) =>
-          setSelectedAccount(e.target.value)
-        }
-        className="text-xs bg-transparent border-none outline-none cursor-pointer text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        onChange={setSelectedAccount}
+        options={options}
         aria-label="Select account"
-      >
-        <option value="">All Accounts</option>
-        {accounts.map((a) => (
-          <option
-            key={a.account_id}
-            value={a.account_id}
-          >
-            {a.account_name} ({a.account_id})
-          </option>
-        ))}
-      </select>
+      />
     </div>
   );
 }

@@ -262,7 +262,7 @@ export default function Sidebar() {
   const activeAccount = accounts.find((a) => a.account_id === selectedAccount);
   const buttonLabel = activeAccount
     ? activeAccount.account_name
-    : "All Accounts";
+    : "Root Account";
 
   async function handleScanNow(acct: TargetAccount) {
     try {
@@ -346,14 +346,19 @@ export default function Sidebar() {
                 setSelectedAccount("");
                 setPopoverOpen(false);
               }}
-              className={`px-10 py-2 text-[13px] cursor-pointer flex items-center gap-2 hover:bg-ghost-cream dark:hover:bg-white/5 ${
+              className={`px-6 py-2 text-[13px] cursor-pointer flex items-center gap-2 hover:bg-ghost-cream dark:hover:bg-white/5 ${
                 selectedAccount === ""
-                  ? "text-ink-black dark:text-canvas-cream font-medium"
+                  ? "bg-ghost-cream dark:bg-white/5 text-ink-black dark:text-canvas-cream font-medium"
                   : "text-slate-gray dark:text-ghost-cream"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-dust-taupe dark:bg-slate-gray shrink-0" />
-              All Accounts
+              <span
+                className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedAccount === "" ? "bg-ink-black dark:bg-canvas-cream" : "bg-dust-taupe dark:bg-slate-gray"}`}
+              />
+              Root Account
+              {selectedAccount === "" && (
+                <span className="ml-auto text-[11px]">✓</span>
+              )}
             </div>
             {accounts.map((a) => (
               <div
@@ -364,13 +369,18 @@ export default function Sidebar() {
                   setSelectedAccount(a.account_id);
                   setPopoverOpen(false);
                 }}
-                className={`px-10 py-2 text-[13px] cursor-pointer hover:bg-ghost-cream dark:hover:bg-white/5 ${
+                className={`px-6 py-2 text-[13px] cursor-pointer hover:bg-ghost-cream dark:hover:bg-white/5 ${
                   selectedAccount === a.account_id
-                    ? "text-ink-black dark:text-canvas-cream font-medium"
+                    ? "bg-ghost-cream dark:bg-white/5 text-ink-black dark:text-canvas-cream font-medium"
                     : "text-slate-gray dark:text-ghost-cream"
                 }`}
               >
-                <p className="truncate">{a.account_name}</p>
+                <div className="flex items-center justify-between">
+                  <p className="truncate">{a.account_name}</p>
+                  {selectedAccount === a.account_id && (
+                    <span className="text-[11px] shrink-0">✓</span>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-gray truncate">
                   {a.account_id}
                 </p>
