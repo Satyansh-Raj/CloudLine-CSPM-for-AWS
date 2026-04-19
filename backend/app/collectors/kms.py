@@ -155,7 +155,11 @@ class KMSCollector(BaseCollector):
         key_manager = meta.get(
             "KeyManager", "AWS"
         )
-        if key_manager == "AWS":
+        key_state = meta.get("KeyState", "Enabled")
+        if key_manager == "AWS" or key_state in (
+            "PendingDeletion",
+            "PendingReplicaDeletion",
+        ):
             return None
         rotation = self._get_rotation(
             kms, key_id

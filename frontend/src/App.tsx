@@ -26,6 +26,7 @@ import {
   LoginPage,
   ForcePasswordChangePage,
   UserManagementPage,
+  AccountsPage,
 } from "@/pages";
 
 const IamGraphPage = lazy(() => import("@/pages/IamGraphPage"));
@@ -121,6 +122,10 @@ const router = createBrowserRouter([
           {
             path: "users",
             element: <UserManagementPage />,
+          },
+          {
+            path: "accounts",
+            element: <AccountsPage />,
           },
         ],
       },

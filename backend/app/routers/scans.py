@@ -137,6 +137,30 @@ def _strip_internal_tables(
 # Per-region processing helpers
 # ---------------------------------------------------------------------------
 
+# Map from input_data service keys to the resource_type
+# values the classifier produces for that service. Used
+# to determine which types are safe to deactivate even
+# when a collector returned 0 results — as long as its
+# service key is present in input_data, the collector
+# ran without error.
+_SERVICE_RESOURCE_TYPES: dict[str, set[str]] = {
+    "kms": {"kms_key"},
+    "secrets_manager": {"secret"},
+    "ec2": {"ec2_instance", "ebs_volume", "security_group"},
+    "vpc": {"vpc", "network_acl", "subnet", "internet_gateway"},
+    "s3": {"s3_bucket"},
+    "rds": {"rds_instance"},
+    "lambda_functions": {"lambda_function"},
+    "iam": {
+        "iam_user", "iam_group",
+        "iam_role", "iam_policy",
+    },
+    "cloudtrail": {"cloudtrail"},
+    "guardduty": {"guardduty"},
+    "cloudwatch": {"cloudwatch_alarm"},
+}
+
+
 def _process_region(
     region: str,
     input_data: dict,
@@ -427,17 +451,25 @@ def _process_region(
                 for r in resource_records
                 if r.region == region
             }
-            # Track which resource types the collectors
-            # actually returned data for.  If a collector
-            # fails (permissions, rate-limit, timeout),
-            # its type won't appear here and we skip
-            # deactivation for that type — preventing
-            # mass false-positive deactivation.
-            collected_types = {
-                r.resource_type
-                for r in resource_records
-                if r.region == region
-            }
+            # Determine which resource types are safe
+            # to deactivate. A type is safe if its
+            # collector service key is present in
+            # input_data (key present = collector ran,
+            # even if it returned 0 resources). Types
+            # whose service key is absent (collector
+            # errored) are skipped to avoid false
+            # deactivation.
+            collected_types: set[str] = set()
+            for svc_key, types in (
+                _SERVICE_RESOURCE_TYPES.items()
+            ):
+                if svc_key in input_data:
+                    collected_types.update(types)
+            # Also include types that appeared in
+            # results but aren't in the static map.
+            for r in resource_records:
+                if r.region == region:
+                    collected_types.add(r.resource_type)
 
             # Build lookup of violation states by
             # resource_arn to resolve them when a

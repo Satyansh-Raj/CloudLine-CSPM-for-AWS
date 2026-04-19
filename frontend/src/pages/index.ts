@@ -15,3 +15,4 @@ export { default as ResolvedDetailPage } from "./ResolvedDetailPage";
 export { default as LoginPage } from "./LoginPage";
 export { default as ForcePasswordChangePage } from "./ForcePasswordChangePage";
 export { default as UserManagementPage } from "./UserManagementPage";
+export { default as AccountsPage } from "./AccountsPage";
