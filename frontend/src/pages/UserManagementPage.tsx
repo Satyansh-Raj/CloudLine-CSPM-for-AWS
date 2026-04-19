@@ -475,26 +475,20 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="space-y-4 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <EyebrowLabel className="mb-1">User Management</EyebrowLabel>
-          <h1 className="text-lg font-semibold text-ink-black dark:text-white">
-            Users
-          </h1>
-          <p className="text-[13px] text-slate-gray dark:text-gray-400 mt-0.5">
-            Manage users and password reset requests.
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* Header — full width above both panes */}
+      <div>
+        <EyebrowLabel className="mb-1">User Management</EyebrowLabel>
+        <h1 className="text-lg font-semibold text-ink-black dark:text-white">
+          Users
+        </h1>
+        <p className="text-[13px] text-slate-gray dark:text-gray-400 mt-0.5">
+          Manage users and password reset requests.
+        </p>
       </div>
 
-      {/* Pill segment tabs */}
-      <div
-        className={[
-          "inline-flex p-1 gap-1",
-          "bg-ghost-cream dark:bg-white/5 rounded-pill",
-        ].join(" ")}
-      >
+      {/* Pill segment tabs — full width above both panes */}
+      <div className="inline-flex p-1 gap-1 bg-ghost-cream dark:bg-white/5 rounded-pill">
         <button
           type="button"
           onClick={() => setTab("users")}
@@ -527,215 +521,289 @@ export default function UserManagementPage() {
         </button>
       </div>
 
-      {/* Users Tab */}
-      {tab === "users" && (
-        <div>
-          <div className="flex justify-end mb-3">
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
-            >
-              + Add User
-            </button>
-          </div>
+      {/* Two-pane grid — starts at same row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        <div className="space-y-3">
+          {/* Users Tab */}
+          {tab === "users" && (
+            <div>
+              <div className="flex justify-end mb-3">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(true)}
+                  className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
+                >
+                  + Add User
+                </button>
+              </div>
 
-          {deleteError && (
-            <div
-              role="alert"
-              className="mb-3 px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
-            >
-              {deleteError}
+              {deleteError && (
+                <div
+                  role="alert"
+                  className="mb-3 px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+                >
+                  {deleteError}
+                </div>
+              )}
+
+              {loading ? (
+                <div className="py-12 text-center text-[13px] text-slate-gray">
+                  Loading…
+                </div>
+              ) : (
+                <div className="rounded-hero border border-ghost-cream dark:border-white/5 overflow-hidden shadow-elev-1">
+                  <table className="w-full text-[13px]">
+                    <thead>
+                      <tr className="bg-canvas-cream dark:bg-white/[0.02] border-b border-ghost-cream dark:border-white/5">
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Name
+                        </th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Email
+                        </th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Role
+                        </th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Status
+                        </th>
+                        <th className="px-4 py-2.5" />
+                      </tr>
+                    </thead>
+                    <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
+                      {users.map((u) => (
+                        <tr
+                          key={u.sk}
+                          className="border-b border-ghost-cream dark:border-white/5 last:border-0 hover:bg-canvas-cream dark:hover:bg-white/[0.02]"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <InitialsAvatar name={u.full_name} />
+                              <span className="text-ink-black dark:text-white font-medium">
+                                {u.full_name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-gray dark:text-gray-400">
+                            {u.email}
+                          </td>
+                          <td className="px-4 py-3">
+                            <RoleBadge role={u.role} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-[11px] font-medium ${
+                                u.is_active
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-slate-gray"
+                              }`}
+                            >
+                              {u.is_active ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex gap-1.5 justify-end">
+                              <button
+                                type="button"
+                                onClick={() => setPasswordUser(u)}
+                                className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
+                              >
+                                Set Password
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setHistoryUser(u)}
+                                className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
+                              >
+                                History
+                              </button>
+                              {u.is_active && (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDeleteUser(u.sk)}
+                                  className="px-2.5 py-1 text-[11px] rounded-btn border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                >
+                                  Deactivate
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {users.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-4 py-8 text-center text-slate-gray"
+                          >
+                            No users found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
-          {loading ? (
-            <div className="py-12 text-center text-[13px] text-slate-gray">
-              Loading…
-            </div>
-          ) : (
-            <div className="rounded-hero border border-ghost-cream dark:border-white/5 overflow-hidden shadow-elev-1">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="bg-canvas-cream dark:bg-white/[0.02] border-b border-ghost-cream dark:border-white/5">
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Name
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Email
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Role
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Status
-                    </th>
-                    <th className="px-4 py-2.5" />
-                  </tr>
-                </thead>
-                <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
-                  {users.map((u) => (
-                    <tr
-                      key={u.sk}
-                      className="border-b border-ghost-cream dark:border-white/5 last:border-0 hover:bg-canvas-cream dark:hover:bg-white/[0.02]"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <InitialsAvatar name={u.full_name} />
-                          <span className="text-ink-black dark:text-white font-medium">
-                            {u.full_name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-gray dark:text-gray-400">
-                        {u.email}
-                      </td>
-                      <td className="px-4 py-3">
-                        <RoleBadge role={u.role} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-[11px] font-medium ${
-                            u.is_active
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-slate-gray"
-                          }`}
+          {historyUser && (
+            <LoginHistoryModal
+              user={historyUser}
+              onClose={() => setHistoryUser(null)}
+            />
+          )}
+
+          {passwordUser && (
+            <SetPasswordModal
+              user={passwordUser}
+              onClose={() => setPasswordUser(null)}
+            />
+          )}
+
+          {/* Reset Requests Tab */}
+          {tab === "reset_requests" && (
+            <div>
+              {loading ? (
+                <div className="py-12 text-center text-[13px] text-slate-gray">
+                  Loading…
+                </div>
+              ) : resets.length === 0 ? (
+                <div className="py-12 text-center text-[13px] text-slate-gray">
+                  No pending reset requests.
+                </div>
+              ) : (
+                <div className="rounded-hero border border-ghost-cream dark:border-white/5 overflow-hidden shadow-elev-1">
+                  <table className="w-full text-[13px]">
+                    <thead>
+                      <tr className="bg-canvas-cream dark:bg-white/[0.02] border-b border-ghost-cream dark:border-white/5">
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Name
+                        </th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Email
+                        </th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Role
+                        </th>
+                        <th className="px-4 py-2.5" />
+                      </tr>
+                    </thead>
+                    <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
+                      {resets.map((u) => (
+                        <tr
+                          key={u.sk}
+                          className="border-b border-ghost-cream dark:border-white/5 last:border-0"
                         >
-                          {u.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex gap-1.5 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setPasswordUser(u)}
-                            className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
-                          >
-                            Set Password
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setHistoryUser(u)}
-                            className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
-                          >
-                            History
-                          </button>
-                          {u.is_active && (
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <InitialsAvatar name={u.full_name} />
+                              <span className="text-ink-black dark:text-white font-medium">
+                                {u.full_name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-gray dark:text-gray-400">
+                            {u.email}
+                          </td>
+                          <td className="px-4 py-3">
+                            <RoleBadge role={u.role} />
+                          </td>
+                          <td className="px-4 py-3 text-right">
                             <button
                               type="button"
-                              onClick={() => void handleDeleteUser(u.sk)}
-                              className="px-2.5 py-1 text-[11px] rounded-btn border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                              onClick={() => void handleApproveReset(u.sk)}
+                              className="px-3 py-1 text-[12px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
                             >
-                              Deactivate
+                              Approve
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {users.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-4 py-8 text-center text-slate-gray"
-                      >
-                        No users found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
+
+          {showModal && (
+            <AddUserModal
+              onClose={() => setShowModal(false)}
+              onCreated={() => void fetchUsers()}
+            />
+          )}
         </div>
-      )}
 
-      {historyUser && (
-        <LoginHistoryModal
-          user={historyUser}
-          onClose={() => setHistoryUser(null)}
-        />
-      )}
+        {/* Right pane — role permissions matrix */}
+        <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1 sticky top-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-600 mb-1">
+            Reference
+          </p>
+          <h3 className="text-sm font-bold text-ink-black dark:text-white mb-4">
+            Role Permissions
+          </h3>
 
-      {passwordUser && (
-        <SetPasswordModal
-          user={passwordUser}
-          onClose={() => setPasswordUser(null)}
-        />
-      )}
-
-      {/* Reset Requests Tab */}
-      {tab === "reset_requests" && (
-        <div>
-          {loading ? (
-            <div className="py-12 text-center text-[13px] text-slate-gray">
-              Loading…
-            </div>
-          ) : resets.length === 0 ? (
-            <div className="py-12 text-center text-[13px] text-slate-gray">
-              No pending reset requests.
-            </div>
-          ) : (
-            <div className="rounded-hero border border-ghost-cream dark:border-white/5 overflow-hidden shadow-elev-1">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="bg-canvas-cream dark:bg-white/[0.02] border-b border-ghost-cream dark:border-white/5">
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Name
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Email
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
-                      Role
-                    </th>
-                    <th className="px-4 py-2.5" />
-                  </tr>
-                </thead>
-                <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
-                  {resets.map((u) => (
-                    <tr
-                      key={u.sk}
-                      className="border-b border-ghost-cream dark:border-white/5 last:border-0"
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px] table-fixed">
+              <colgroup>
+                <col className="w-[45%]" />
+                <col className="w-[18%]" />
+                <col className="w-[18%]" />
+                <col className="w-[19%]" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="text-left pb-3 text-slate-gray dark:text-gray-500 font-medium" />
+                  {(["Viewer", "Operator", "Admin"] as const).map((r) => (
+                    <th
+                      key={r}
+                      className="pb-3 text-center font-semibold text-ink-black dark:text-gray-300"
                     >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <InitialsAvatar name={u.full_name} />
-                          <span className="text-ink-black dark:text-white font-medium">
-                            {u.full_name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-gray dark:text-gray-400">
-                        {u.email}
-                      </td>
-                      <td className="px-4 py-3">
-                        <RoleBadge role={u.role} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => void handleApproveReset(u.sk)}
-                          className="px-3 py-1 text-[12px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90"
-                        >
-                          Approve
-                        </button>
-                      </td>
-                    </tr>
+                      {r}
+                    </th>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ghost-cream dark:divide-white/5">
+                {[
+                  { label: "View dashboard", v: true, o: true, a: true },
+                  { label: "View inventory", v: true, o: true, a: true },
+                  { label: "View violations", v: true, o: true, a: true },
+                  { label: "Trigger scans", v: false, o: true, a: true },
+                  { label: "Approve resets", v: false, o: true, a: true },
+                  { label: "Jira ticket creation", v: false, o: true, a: true },
+                  { label: "Manage users", v: false, o: false, a: true },
+                  { label: "Add accounts", v: false, o: false, a: true },
+                  { label: "Deactivate users", v: false, o: false, a: true },
+                ].map(({ label, v, o, a }) => (
+                  <tr
+                    key={label}
+                    className="hover:bg-ghost-cream/50 dark:hover:bg-white/[0.02]"
+                  >
+                    <td className="py-1.5 text-slate-gray dark:text-gray-400">
+                      {label}
+                    </td>
+                    {[v, o, a].map((allowed, i) => (
+                      <td key={i} className="py-1.5 text-center">
+                        {allowed ? (
+                          <span className="text-green-600 dark:text-green-400 font-bold">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="text-dust-taupe dark:text-gray-600">
+                            —
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
-
-      {showModal && (
-        <AddUserModal
-          onClose={() => setShowModal(false)}
-          onCreated={() => void fetchUsers()}
-        />
-      )}
+      </div>
     </div>
   );
 }
