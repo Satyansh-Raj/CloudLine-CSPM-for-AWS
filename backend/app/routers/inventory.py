@@ -10,10 +10,12 @@ from fastapi.responses import JSONResponse
 
 from app.auth.dependencies import require_any_authenticated
 from app.dependencies import (
+    get_account_store,
     get_boto3_session,
     get_resource_store,
     get_settings,
 )
+from app.pipeline.account_store import AccountStore
 from app.pipeline.resource_store import ResourceStore
 
 logger = logging.getLogger(__name__)
@@ -150,6 +152,9 @@ def list_inventory(
     store: ResourceStore = Depends(
         get_resource_store
     ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     settings=Depends(get_settings),
 ) -> list[dict]:
     """List resources with optional filters.
@@ -162,6 +167,21 @@ def list_inventory(
     effective_account = (
         account_id or settings.aws_account_id
     )
+    is_cross_account = (
+        account_id
+        and account_id != settings.aws_account_id
+    )
+    if is_cross_account:
+        acct_obj = account_store.get_account(account_id)
+        acct_regions = (
+            acct_obj.regions
+            if acct_obj and acct_obj.regions
+            else [settings.aws_region]
+        )
+    else:
+        acct_obj = None
+        acct_regions = None
+
     if category:
         resources = store.query_by_category(
             category, limit=limit
@@ -175,14 +195,25 @@ def list_inventory(
             service, limit=limit
         )
     else:
-        effective_region = (
-            region if region else settings.aws_region
-        )
-        resources = store.query_by_account(
-            effective_account,
-            effective_region,
-            limit=limit,
-        )
+        if region:
+            resources = store.query_by_account(
+                effective_account, region, limit=limit
+            )
+        else:
+            resources = []
+            for r in (acct_regions or [settings.aws_region]):
+                resources.extend(
+                    store.query_by_account(
+                        effective_account, r, limit=limit
+                    )
+                )
+
+    # For GSI paths, filter by account_id in-memory
+    if (category or exposure or service) and account_id:
+        resources = [
+            r for r in resources
+            if r.account_id == account_id
+        ]
 
     # Region filter for GSI paths (category/exposure/
     # service) which cannot filter by PK in DynamoDB.
@@ -224,6 +255,9 @@ def inventory_summary(
     store: ResourceStore = Depends(
         get_resource_store
     ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     session=Depends(get_boto3_session),
     settings=Depends(get_settings),
 ) -> dict:
@@ -233,17 +267,27 @@ def inventory_summary(
     scanned regions (discovered + configured). Only
     active resources (is_active=true) are counted.
     """
+    effective_account = (
+        account_id or settings.aws_account_id
+    )
+    is_cross_account = (
+        account_id
+        and account_id != settings.aws_account_id
+    )
     if region:
         target_regions = [region]
+    elif is_cross_account:
+        acct_obj = account_store.get_account(account_id)
+        target_regions = (
+            acct_obj.regions
+            if acct_obj and acct_obj.regions
+            else settings.aws_regions
+        )
     else:
         discovered = _discover_regions(session)
         target_regions = (
             discovered or settings.aws_regions
         )
-
-    effective_account = (
-        account_id or settings.aws_account_id
-    )
     items = store.summary_by_account(
         effective_account,
         regions=target_regions,

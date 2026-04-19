@@ -6,9 +6,11 @@ from fastapi import APIRouter, Depends, Query
 
 from app.auth.dependencies import require_any_authenticated
 from app.dependencies import (
+    get_account_store,
     get_settings,
     get_state_manager,
 )
+from app.pipeline.account_store import AccountStore
 from app.pipeline.state_manager import StateManager
 
 logger = logging.getLogger(__name__)
@@ -54,6 +56,9 @@ def list_violations(
     state_manager: StateManager = Depends(
         get_state_manager
     ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     settings=Depends(get_settings),
 ) -> list[dict]:
     """List violations from the last scan.
@@ -73,8 +78,22 @@ def list_violations(
             limit=limit,
         )
     else:
+        if (
+            account_id
+            and account_id != settings.aws_account_id
+        ):
+            acct_obj = account_store.get_account(
+                account_id
+            )
+            regions = (
+                acct_obj.regions
+                if acct_obj and acct_obj.regions
+                else settings.aws_regions
+            )
+        else:
+            regions = settings.aws_regions
         states = []
-        for r in settings.aws_regions:
+        for r in regions:
             states.extend(
                 state_manager.query_by_account(
                     effective_account,

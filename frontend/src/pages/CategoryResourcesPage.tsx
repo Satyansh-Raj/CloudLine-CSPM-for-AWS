@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useInventory } from "@/hooks/useInventory";
 import { useRegion } from "@/hooks/useRegion";
+import { useAccount } from "@/hooks/useAccount";
 import { ExposureBadge } from "@/components/inventory";
 import { CustomSelect, EyebrowLabel } from "@/components/shared";
 import type { Resource } from "@/types/inventory";
@@ -58,9 +59,11 @@ export default function CategoryResourcesPage() {
   const { category = "" } = useParams<{ category: string }>();
   const [region, setRegion] = useState("");
   const { regions } = useRegion();
+  const { selectedAccount } = useAccount();
   const { data, isLoading, error } = useInventory({
     category,
     ...(region ? { region } : {}),
+    ...(selectedAccount ? { account_id: selectedAccount } : {}),
   });
 
   return (

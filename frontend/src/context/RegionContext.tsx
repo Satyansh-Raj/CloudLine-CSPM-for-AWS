@@ -1,28 +1,14 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { getRegions } from "@/api/regions";
 import { AccountContext } from "./accountContextValue";
 import { RegionContext } from "./regionContextValue";
 
-export function RegionProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const { selectedAccount, accounts } =
-    useContext(AccountContext);
+export function RegionProvider({ children }: { children: ReactNode }) {
+  const { selectedAccount, accounts } = useContext(AccountContext);
 
-  const [selectedRegion, setSelectedRegionState] =
-    useState<string>("");
-  const [masterRegions, setMasterRegions] = useState<
-    string[]
-  >([]);
+  const [selectedRegion, setSelectedRegionState] = useState<string>("");
+  const [masterRegions, setMasterRegions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch master account regions once
@@ -49,32 +35,23 @@ export function RegionProvider({
   // Derive active regions from selected account or master
   const regions = useMemo(() => {
     if (!selectedAccount) return masterRegions;
-    const acct = accounts.find(
-      (a) => a.account_id === selectedAccount,
-    );
-    return acct?.regions?.length
-      ? acct.regions
-      : masterRegions;
+    const acct = accounts.find((a) => a.account_id === selectedAccount);
+    return acct?.regions?.length ? acct.regions : masterRegions;
   }, [selectedAccount, accounts, masterRegions]);
 
-  // Reset region when account changes if current region
-  // not available in new account's region list
+  // When account changes, keep region if valid,
+  // otherwise auto-select first region of new account.
   useEffect(() => {
-    if (
-      selectedRegion &&
-      regions.length > 0 &&
-      !regions.includes(selectedRegion)
-    ) {
-      setSelectedRegionState("");
+    if (regions.length === 0) return;
+    if (selectedRegion && regions.includes(selectedRegion)) {
+      return;
     }
-  }, [regions, selectedRegion]);
+    setSelectedRegionState(regions[0]);
+  }, [regions]); // intentionally omit selectedRegion
 
-  const setSelectedRegion = useCallback(
-    (region: string) => {
-      setSelectedRegionState(region);
-    },
-    [],
-  );
+  const setSelectedRegion = useCallback((region: string) => {
+    setSelectedRegionState(region);
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -87,8 +64,6 @@ export function RegionProvider({
   );
 
   return (
-    <RegionContext.Provider value={value}>
-      {children}
-    </RegionContext.Provider>
+    <RegionContext.Provider value={value}>{children}</RegionContext.Provider>
   );
 }

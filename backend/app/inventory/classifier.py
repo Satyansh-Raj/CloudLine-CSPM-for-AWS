@@ -521,7 +521,7 @@ class ResourceClassifier:
         return self._make_record(
             "iam_user",
             user.arn,
-            user.name,
+            user.username,
             now,
             exposure="private",
         )

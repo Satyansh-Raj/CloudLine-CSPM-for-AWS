@@ -8,10 +8,14 @@ from fastapi import APIRouter, Depends, Query
 from app.auth.dependencies import require_any_authenticated
 from app.collectors.iam import IAMCollector
 from app.dependencies import (
+    get_account_store,
     get_boto3_session,
+    get_session_factory,
     get_settings,
     get_state_manager,
 )
+from app.pipeline.account_store import AccountStore
+from app.pipeline.session_factory import AWSSessionFactory
 from app.pipeline.state_manager import StateManager
 
 logger = logging.getLogger(__name__)
@@ -43,6 +47,12 @@ def get_iam_graph(
         description="AWS account ID override",
     ),
     session=Depends(get_boto3_session),
+    session_factory: AWSSessionFactory = Depends(
+        get_session_factory
+    ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     state_manager: StateManager = Depends(
         get_state_manager
     ),
@@ -67,7 +77,29 @@ def get_iam_graph(
     ):
         return cached["data"]
 
-    collector = IAMCollector(session)
+    # Use cross-account session when querying a target account
+    is_cross_account = (
+        account_id
+        and account_id != settings.aws_account_id
+    )
+    acct_obj = None
+    if is_cross_account:
+        acct_obj = account_store.get_account(account_id)
+
+    if is_cross_account and acct_obj:
+        try:
+            iam_session = session_factory.get_session(
+                acct_obj
+            )
+        except Exception:
+            logger.exception(
+                "AssumeRole failed for %s", account_id
+            )
+            iam_session = session
+    else:
+        iam_session = session
+
+    collector = IAMCollector(iam_session)
     try:
         users = collector.collect_graph_data()
     except Exception:
@@ -77,10 +109,18 @@ def get_iam_graph(
         users = []
 
     # Fetch identity-domain violations for this account
-    states = state_manager.query_by_account(
-        effective_account,
-        settings.aws_region,
+    regions = (
+        acct_obj.regions
+        if acct_obj and acct_obj.regions
+        else [settings.aws_region]
     )
+    states = []
+    for r in regions:
+        states.extend(
+            state_manager.query_by_account(
+                effective_account, r
+            )
+        )
     identity = [
         s for s in states if s.domain == "identity"
     ]

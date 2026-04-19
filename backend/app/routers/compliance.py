@@ -12,9 +12,11 @@ from app.compliance.scorer import (
     FrameworkScore,
 )
 from app.dependencies import (
+    get_account_store,
     get_settings,
     get_state_manager,
 )
+from app.pipeline.account_store import AccountStore
 from app.pipeline.state_manager import StateManager
 
 router = APIRouter(
@@ -75,6 +77,9 @@ def get_framework_score(
     state_manager: StateManager = Depends(
         get_state_manager
     ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     settings=Depends(get_settings),
     registry: ComplianceMappingRegistry = Depends(
         _get_registry
@@ -116,8 +121,22 @@ def get_framework_score(
             eff_account, region, limit=5000
         )
     else:
+        if (
+            account_id
+            and account_id != settings.aws_account_id
+        ):
+            acct_obj = account_store.get_account(
+                account_id
+            )
+            regions = (
+                acct_obj.regions
+                if acct_obj and acct_obj.regions
+                else settings.aws_regions
+            )
+        else:
+            regions = settings.aws_regions
         states = []
-        for r in settings.aws_regions:
+        for r in regions:
             states.extend(
                 state_manager.query_by_account(
                     eff_account, r, limit=5000
@@ -138,6 +157,9 @@ def get_compliance_score(
     account_id: str | None = None,
     state_manager: StateManager = Depends(
         get_state_manager
+    ),
+    account_store: AccountStore = Depends(
+        get_account_store
     ),
     settings=Depends(get_settings),
     registry: ComplianceMappingRegistry = Depends(
@@ -162,8 +184,22 @@ def get_compliance_score(
             eff_account, region, limit=5000
         )
     else:
+        if (
+            account_id
+            and account_id != settings.aws_account_id
+        ):
+            acct_obj = account_store.get_account(
+                account_id
+            )
+            regions = (
+                acct_obj.regions
+                if acct_obj and acct_obj.regions
+                else settings.aws_regions
+            )
+        else:
+            regions = settings.aws_regions
         states = []
-        for r in settings.aws_regions:
+        for r in regions:
             states.extend(
                 state_manager.query_by_account(
                     eff_account, r, limit=5000

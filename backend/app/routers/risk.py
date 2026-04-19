@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, Query
 
 from app.auth.dependencies import require_any_authenticated
 from app.dependencies import (
+    get_account_store,
     get_settings,
     get_state_manager,
 )
+from app.pipeline.account_store import AccountStore
 from app.pipeline.risk_scorer import RiskScorer
 from app.pipeline.state_manager import StateManager
 
@@ -58,6 +60,9 @@ def list_risk_scores(
     state_manager: StateManager = Depends(
         get_state_manager
     ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     settings=Depends(get_settings),
 ) -> dict:
     """List violations sorted by risk score.
@@ -69,11 +74,27 @@ def list_risk_scores(
     effective_account = (
         account_id or settings.aws_account_id
     )
-    states = state_manager.query_by_account(
-        effective_account,
-        settings.aws_region,
-        limit=limit * 2,
-    )
+    if (
+        account_id
+        and account_id != settings.aws_account_id
+    ):
+        acct_obj = account_store.get_account(account_id)
+        regions = (
+            acct_obj.regions
+            if acct_obj and acct_obj.regions
+            else [settings.aws_region]
+        )
+    else:
+        regions = [settings.aws_region]
+    states = []
+    for r in regions:
+        states.extend(
+            state_manager.query_by_account(
+                effective_account,
+                r,
+                limit=limit * 2,
+            )
+        )
     states = [
         s for s in states
         if s.status == "alarm"
@@ -114,6 +135,9 @@ def risk_summary(
     state_manager: StateManager = Depends(
         get_state_manager
     ),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
     settings=Depends(get_settings),
 ) -> dict:
     """Aggregate risk score statistics.
@@ -125,11 +149,27 @@ def risk_summary(
     effective_account = (
         account_id or settings.aws_account_id
     )
-    states = state_manager.query_by_account(
-        effective_account,
-        settings.aws_region,
-        limit=500,
-    )
+    if (
+        account_id
+        and account_id != settings.aws_account_id
+    ):
+        acct_obj = account_store.get_account(account_id)
+        regions = (
+            acct_obj.regions
+            if acct_obj and acct_obj.regions
+            else [settings.aws_region]
+        )
+    else:
+        regions = [settings.aws_region]
+    states = []
+    for r in regions:
+        states.extend(
+            state_manager.query_by_account(
+                effective_account,
+                r,
+                limit=500,
+            )
+        )
     states = [
         s for s in states if s.status == "alarm"
     ]
