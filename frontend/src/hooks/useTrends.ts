@@ -90,7 +90,8 @@ export function useTrends(period: Period, accountId?: string) {
       });
     }
 
-    // Populate violations/resolutions from drift alerts
+    // Populate violations/resolutions — raw per-resource counts.
+    // "New Violations" shows total resource-level violations triggered.
     for (const alert of alertData.alerts) {
       const ts = new Date(alert.timestamp);
       if (ts < cutoff) continue;
@@ -117,15 +118,15 @@ export function useTrends(period: Period, accountId?: string) {
       (pt) => pt.violations > 0 || pt.resolutions > 0,
     );
 
-    // Count unique active violations by (check_id, resource_arn).
-    // IAM violations are evaluated per region during scan, creating
-    // duplicate DynamoDB items. Deduplicating on check+resource
-    // gives the true unique violation count regardless of regions.
+    // Count unique active policy violations by check_id.
+    // Multiple resources can fail the same check (e.g. 4 CloudTrail
+    // trails all missing insights) — count the check once, not once
+    // per resource, so the number matches the violations page.
     const todayActive = allAlertsData?.alerts
       ? new Set(
           allAlertsData.alerts
             .filter((a) => a.current_status === "alarm")
-            .map((a) => `${a.check_id}|${a.resource}`),
+            .map((a) => a.check_id),
         ).size
       : 0;
     points[points.length - 1].active = todayActive;
