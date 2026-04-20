@@ -3,6 +3,7 @@ export { useRiskSummary } from "./useRiskSummary";
 export { useViolations } from "./useViolations";
 export { useDriftAlerts } from "./useDriftAlerts";
 export { useTrends, type Period, type TrendPoint } from "./useTrends";
+export { useTrendsHistory } from "./useTrendsHistory";
 export { useWebSocket } from "./useWebSocket";
 export { useAlerts } from "./useAlerts";
 export { useIamGraph } from "./useIamGraph";

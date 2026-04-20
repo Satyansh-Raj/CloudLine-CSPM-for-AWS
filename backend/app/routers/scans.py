@@ -37,6 +37,7 @@ from app.dependencies import (
     get_resource_store,
     get_session_factory,
     get_settings,
+    get_snapshot_manager,
     get_state_manager,
     get_ws_manager,
 )
@@ -59,6 +60,7 @@ from app.auth.dependencies import (
 )
 from app.auth.models import User
 from app.pipeline.risk_scorer import RiskScorer
+from app.pipeline.snapshot_manager import SnapshotManager
 from app.pipeline.state_manager import StateManager
 from app.compliance.mappings import get_registry as _get_compliance_registry
 from app.pipeline.ws_manager import format_drift_event
@@ -528,9 +530,20 @@ def _process_region(
                 e,
             )
 
-    alarms = sum(
-        1 for v in violations if v.status == "alarm"
-    )
+    alarms = 0
+    sev_counts = {
+        "critical": 0, "high": 0,
+        "medium": 0, "low": 0,
+    }
+    for v in violations:
+        if v.status == "alarm":
+            alarms += 1
+            sev = getattr(
+                v, "severity", ""
+            ).lower()
+            if sev in sev_counts:
+                sev_counts[sev] += 1
+
     return {
         "region": region,
         "total_evaluated": len(violations),
@@ -540,6 +553,7 @@ def _process_region(
         "stale_resolved": stale_resolved,
         "inventory_persisted": inventory_persisted,
         "drift_alerts": drift_alerts,
+        "severity_counts": sev_counts,
     }
 
 
@@ -657,15 +671,25 @@ def _scan_one_account(
                 }
 
     # ── Evaluate & persist per region ─────────────────
-    totals = {
+    totals: dict = {
         "total_evaluated": 0,
         "violations": 0,
         "compliant": 0,
         "persisted": 0,
         "stale_resolved": 0,
         "inventory_persisted": 0,
+        "severity_counts": {
+            "critical": 0, "high": 0,
+            "medium": 0, "low": 0,
+        },
     }
     drift_alerts: list[DriftAlert] = []
+
+    _numeric_keys = [
+        "total_evaluated", "violations", "compliant",
+        "persisted", "stale_resolved",
+        "inventory_persisted",
+    ]
 
     for region, input_data in region_inputs.items():
         try:
@@ -681,8 +705,16 @@ def _scan_one_account(
                 account_id=account_id,
                 macie_store=macie_store,
             )
-            for key in totals:
+            for key in _numeric_keys:
                 totals[key] += summary.get(key, 0)
+            for sev in (
+                "critical", "high", "medium", "low"
+            ):
+                totals["severity_counts"][sev] += (
+                    summary
+                    .get("severity_counts", {})
+                    .get(sev, 0)
+                )
             drift_alerts.extend(
                 summary.get("drift_alerts", [])
             )
@@ -704,6 +736,7 @@ def _run_scan(
     resource_store: ResourceStore | None = None,
     macie_store=None,
     account_id: str | None = None,
+    snapshot_manager: SnapshotManager | None = None,
 ):
     """Run scan in background thread.
 
@@ -771,6 +804,22 @@ def _run_scan(
                 totals[key] += acct_totals.get(key, 0)
             all_drift_alerts.extend(acct_alerts)
 
+            if snapshot_manager and account_id:
+                sc = acct_totals.get(
+                    "severity_counts", {}
+                )
+                snapshot_manager.save_snapshot(
+                    account_id=account_id,
+                    date=now[:10],
+                    active=acct_totals.get(
+                        "violations", 0
+                    ),
+                    critical=sc.get("critical", 0),
+                    high=sc.get("high", 0),
+                    medium=sc.get("medium", 0),
+                    low=sc.get("low", 0),
+                )
+
         else:
             # ── Multi-account mode ────────────────────
             session_factory = get_session_factory()
@@ -812,6 +861,26 @@ def _run_scan(
                             acct_totals.get(key, 0)
                         )
                     all_drift_alerts.extend(acct_alerts)
+
+                    if snapshot_manager:
+                        sc = acct_totals.get(
+                            "severity_counts", {}
+                        )
+                        snapshot_manager.save_snapshot(
+                            account_id=(
+                                account.account_id
+                            ),
+                            date=now[:10],
+                            active=acct_totals.get(
+                                "violations", 0
+                            ),
+                            critical=sc.get(
+                                "critical", 0
+                            ),
+                            high=sc.get("high", 0),
+                            medium=sc.get("medium", 0),
+                            low=sc.get("low", 0),
+                        )
 
                     account_store.update_last_scanned(
                         account.account_id, now
@@ -902,6 +971,9 @@ async def trigger_scan(
         get_resource_store
     ),
     macie_store=Depends(get_macie_store),
+    snapshot_manager: SnapshotManager = Depends(
+        get_snapshot_manager
+    ),
     _user: User = Depends(require_admin_or_operator),
     account_id: str | None = Query(
         None,
@@ -929,6 +1001,7 @@ async def trigger_scan(
         resource_store,
         macie_store,
         account_id,
+        snapshot_manager,
     )
     return {
         "scan_id": scan_id,

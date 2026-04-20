@@ -32,6 +32,7 @@ export {
 } from "./inventory";
 export { getRegions, type RegionsResponse } from "./regions";
 export { getMacieFindings } from "./macie";
+export { getTrendsHistory } from "./trends";
 export {
   login,
   logout,

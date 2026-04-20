@@ -35,6 +35,7 @@ from app.routers import (
     policies,
     risk,
     scans,
+    trends,
     violations,
     websocket,
 )
@@ -59,6 +60,7 @@ async def lifespan(app: FastAPI):
         get_evaluator,
         get_resource_store,
         get_settings as _get_settings,
+        get_snapshot_manager,
         get_state_manager,
         get_user_store,
     )
@@ -98,6 +100,9 @@ async def lifespan(app: FastAPI):
                     evaluator=get_evaluator(),
                     state_manager=get_state_manager(),
                     resource_store=get_resource_store(),
+                    snapshot_manager=(
+                        get_snapshot_manager()
+                    ),
                 )
                 logger.info(
                     "Auto-scan complete [%s]", scan_id
@@ -226,6 +231,9 @@ app.include_router(
 )
 app.include_router(
     jira.router, prefix="/api/v1"
+)
+app.include_router(
+    trends.router, prefix="/api/v1"
 )
 app.include_router(websocket.router)
 

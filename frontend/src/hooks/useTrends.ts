@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useDriftAlerts } from "./useDriftAlerts";
-import { useCompliance } from "./useCompliance";
+import { useTrendsHistory } from "./useTrendsHistory";
 
 export type Period = "7d" | "30d" | "90d";
 
@@ -43,16 +43,28 @@ const PERIOD_DAYS: Record<Period, number> = {
 
 export function useTrends(period: Period, accountId?: string) {
   const days = PERIOD_DAYS[period];
+  const since = daysAgo(days).toISOString();
+  const sinceDateOnly = since.slice(0, 10);
+
   const {
     data: alertData,
     isLoading: alertsLoading,
     error: alertsError,
-  } = useDriftAlerts({ limit: 1000, account_id: accountId || undefined });
-  const {
-    data: complianceData,
-    isLoading: compLoading,
-    error: compError,
-  } = useCompliance();
+  } = useDriftAlerts({
+    limit: 1000,
+    account_id: accountId || undefined,
+    since,
+  });
+  // All-time alarm states for this account — used to
+  // anchor today's active count. Uses the same GSI
+  // scan+filter path as alertData so account isolation
+  // is guaranteed, bypassing the compliance endpoint's
+  // per-region query which can miss cross-region IAM.
+  const { data: allAlertsData } = useDriftAlerts({
+    limit: 1000,
+    account_id: accountId || undefined,
+  });
+  const { snapshots } = useTrendsHistory(accountId, sinceDateOnly);
 
   const trends = useMemo(() => {
     if (!alertData?.alerts) return [];
@@ -101,18 +113,21 @@ export function useTrends(period: Period, accountId?: string) {
     const points = Array.from(buckets.values());
 
     // Find the first day in the period that has any event activity.
-    // Days before this are "silent" — no drift events fired — so
-    // we should not propagate the pre-existing baseline backward
-    // into them (that would show a confusing non-zero default).
     const firstActiveIdx = points.findIndex(
       (pt) => pt.violations > 0 || pt.resolutions > 0,
     );
 
-    // Anchor today's active count to the compliance API (ground truth).
-    // Scans write directly to DynamoDB without creating drift events, so
-    // computing forward from drift events alone diverges from the real count.
-    // Reconstruct backwards so today always matches the dashboard.
-    const todayActive = complianceData?.failed ?? 0;
+    // Count unique active violations by (check_id, resource_arn).
+    // IAM violations are evaluated per region during scan, creating
+    // duplicate DynamoDB items. Deduplicating on check+resource
+    // gives the true unique violation count regardless of regions.
+    const todayActive = allAlertsData?.alerts
+      ? new Set(
+          allAlertsData.alerts
+            .filter((a) => a.current_status === "alarm")
+            .map((a) => `${a.check_id}|${a.resource}`),
+        ).size
+      : 0;
     points[points.length - 1].active = todayActive;
     for (let i = points.length - 2; i >= 0; i--) {
       const next = points[i + 1];
@@ -122,9 +137,22 @@ export function useTrends(period: Period, accountId?: string) {
       );
     }
 
-    // Zero out days before any activity so the chart starts at 0
-    // rather than showing the pre-existing violation baseline
-    // (violations in DynamoDB from before the selected period).
+    // Override reconstructed values with snapshot ground truth
+    // for each day that was actually scanned. Snapshots record
+    // the real active-violation count at scan time, bypassing
+    // the last_evaluated timestamp overwrite problem.
+    const snapshotMap = new Map(snapshots.map((s) => [s.date, s]));
+    const bucketKeys = Array.from(buckets.keys());
+    bucketKeys.forEach((key, idx) => {
+      const snap = snapshotMap.get(key);
+      if (snap) {
+        points[idx].active = snap.active;
+      }
+    });
+    // Always keep today pinned to live compliance data.
+    points[points.length - 1].active = todayActive;
+
+    // Zero out days before any activity.
     if (firstActiveIdx > 0) {
       for (let i = 0; i < firstActiveIdx; i++) {
         points[i].active = 0;
@@ -132,11 +160,11 @@ export function useTrends(period: Period, accountId?: string) {
     }
 
     return points;
-  }, [alertData, complianceData, days]);
+  }, [alertData, allAlertsData, snapshots, days]);
 
   return {
     trends,
-    isLoading: alertsLoading || compLoading,
-    error: alertsError || compError,
+    isLoading: alertsLoading,
+    error: alertsError,
   };
 }

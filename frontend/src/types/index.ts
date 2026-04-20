@@ -79,3 +79,5 @@ export type {
 } from "./inventory";
 
 export type { MacieFinding, MacieFindingsParams } from "./macie";
+
+export type { SnapshotPoint, TrendsHistoryResponse } from "./trends";

@@ -23,6 +23,7 @@ export interface DriftAlertParams {
   check_id?: string;
   limit?: number;
   account_id?: string;
+  since?: string;
 }
 
 export interface DriftAlertsResponse {

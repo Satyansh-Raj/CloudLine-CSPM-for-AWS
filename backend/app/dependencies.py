@@ -20,6 +20,7 @@ from app.pipeline.resource_store import ResourceStore
 from app.pipeline.session_factory import (
     AWSSessionFactory,
 )
+from app.pipeline.snapshot_manager import SnapshotManager
 from app.pipeline.state_manager import StateManager
 from app.pipeline.ws_manager import ConnectionManager
 
@@ -134,6 +135,17 @@ def get_session_factory() -> AWSSessionFactory:
     """Singleton AWSSessionFactory for AssumeRole."""
     session = get_boto3_session()
     return AWSSessionFactory(base_session=session)
+
+
+@lru_cache
+def get_snapshot_manager() -> SnapshotManager:
+    """Singleton SnapshotManager for daily trends."""
+    session = get_boto3_session()
+    return SnapshotManager(
+        session=session,
+        table_name=settings.dynamodb_trends_table,
+        endpoint_url=settings.dynamodb_endpoint,
+    )
 
 
 @lru_cache
