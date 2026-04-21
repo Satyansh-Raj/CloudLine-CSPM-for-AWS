@@ -98,9 +98,16 @@ apiClient.interceptors.response.use(
     }
 
     // Normalize error shape (existing behavior).
+    const detail = error.response?.data?.detail;
+    const message =
+      typeof detail === "string"
+        ? detail
+        : detail !== null && typeof detail === "object" && "message" in detail
+          ? String((detail as { message: unknown }).message)
+          : (error.message ?? "Unknown error");
     const apiError: ApiError = {
       status: error.response?.status ?? 0,
-      message: error.response?.data?.detail ?? error.message ?? "Unknown error",
+      message,
       detail: error.response?.data,
     };
     return Promise.reject(apiError);

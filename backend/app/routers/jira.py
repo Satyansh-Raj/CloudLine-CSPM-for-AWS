@@ -110,14 +110,10 @@ def create_violation_ticket(
     if state.ticket_id:
         raise HTTPException(
             status_code=409,
-            detail={
-                "message": (
-                    "Ticket already exists "
-                    "for this violation."
-                ),
-                "ticket_id": state.ticket_id,
-                "ticket_url": state.ticket_url,
-            },
+            detail=(
+                "Ticket already exists for this violation. "
+                f"Existing ticket: {state.ticket_id}"
+            ),
         )
 
     description = (
