@@ -73,6 +73,14 @@ _oauth2 = OAuth2PasswordBearer(
 # Number of consecutive failures before lockout.
 _LOCKOUT_THRESHOLD = 10
 
+<<<<<<< HEAD
+=======
+# Seconds after admin approval during which the user
+# can call /auth/reset-password. Change to 600 for
+# 10-minute production window.
+_RESET_APPROVAL_EXPIRY_SECONDS = 600
+
+>>>>>>> 1134ea2 (Forget Password Error Fix)
 
 class _RefreshRequest(BaseModel):
     refresh_token: str
@@ -90,6 +98,10 @@ class _UserResponse(BaseModel):
     role: str
     is_active: bool
     last_login: str | None = None
+<<<<<<< HEAD
+=======
+    reset_allowed: bool = False
+>>>>>>> 1134ea2 (Forget Password Error Fix)
 
 
 def _decode_access(
@@ -331,6 +343,10 @@ async def get_me(
         role=user.role.value,
         is_active=user.is_active,
         last_login=user.last_login,
+<<<<<<< HEAD
+=======
+        reset_allowed=user.reset_allowed,
+>>>>>>> 1134ea2 (Forget Password Error Fix)
     )
 
 
@@ -420,3 +436,75 @@ async def request_reset(
         )
         store.set_reset_requested(user.sk, now_ts)
     return {"detail": "Reset request submitted"}
+<<<<<<< HEAD
+=======
+
+
+# ── Reset Password (unauthenticated) ──────────────
+
+
+class _ResetPasswordRequest(BaseModel):
+    email: str
+    new_password: str
+
+
+@router.post(
+    "/reset-password",
+    status_code=status.HTTP_200_OK,
+)
+async def reset_password(
+    req: _ResetPasswordRequest,
+    store: UserStore = Depends(get_user_store),
+) -> dict:
+    """Set a new password after admin approval.
+
+    No Bearer token required. Validates that the
+    admin has approved the reset (reset_allowed=True)
+    before allowing the password change.
+
+    Always returns a generic message to prevent
+    user enumeration. On success, clears all reset
+    flags so the user cannot reuse this endpoint.
+    """
+    user = store.get_user_by_email(req.email)
+
+    if not user or not user.is_active or not user.reset_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset not authorized or already used.",
+        )
+
+    # Enforce expiry window.
+    if user.reset_approved_at:
+        approved_at = datetime.fromisoformat(
+            user.reset_approved_at
+        )
+        elapsed = (
+            datetime.now(tz=timezone.utc) - approved_at
+        ).total_seconds()
+        if elapsed > _RESET_APPROVAL_EXPIRY_SECONDS:
+            # Auto-revoke the stale approval.
+            store.clear_reset_after_change(user.sk)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Reset approval expired after "
+                    f"{_RESET_APPROVAL_EXPIRY_SECONDS}s. "
+                    "Please request a new reset."
+                ),
+            )
+
+    try:
+        validate_password_complexity(req.new_password)
+        new_hash = hash_password(req.new_password)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    store.update_password_hash(user.sk, new_hash)
+    store.clear_reset_after_change(user.sk)
+    return {"detail": "Password reset successfully."}
+
+>>>>>>> 1134ea2 (Forget Password Error Fix)

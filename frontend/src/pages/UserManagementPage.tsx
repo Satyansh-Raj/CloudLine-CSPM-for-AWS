@@ -457,8 +457,20 @@ export default function UserManagementPage() {
   }, [fetchUsers]);
 
   async function handleApproveReset(userId: string) {
+<<<<<<< HEAD
     await approveReset(userId);
     await fetchUsers();
+=======
+    setDeleteError(null);
+    try {
+      await approveReset(userId);
+      await fetchUsers();
+    } catch (err) {
+      setDeleteError(
+        (err as { message?: string }).message ?? "Failed to approve reset.",
+      );
+    }
+>>>>>>> 1134ea2 (Forget Password Error Fix)
   }
 
   async function handleDeleteUser(userId: string) {
@@ -524,6 +536,20 @@ export default function UserManagementPage() {
       {/* Two-pane grid — starts at same row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
         <div className="space-y-3">
+<<<<<<< HEAD
+=======
+
+          {/* Error banner — shown for both tabs */}
+          {deleteError && (
+            <div
+              role="alert"
+              className="px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+            >
+              {deleteError}
+            </div>
+          )}
+
+>>>>>>> 1134ea2 (Forget Password Error Fix)
           {/* Users Tab */}
           {tab === "users" && (
             <div>
@@ -537,6 +563,7 @@ export default function UserManagementPage() {
                 </button>
               </div>
 
+<<<<<<< HEAD
               {deleteError && (
                 <div
                   role="alert"
@@ -546,6 +573,8 @@ export default function UserManagementPage() {
                 </div>
               )}
 
+=======
+>>>>>>> 1134ea2 (Forget Password Error Fix)
               {loading ? (
                 <div className="py-12 text-center text-[13px] text-slate-gray">
                   Loading…

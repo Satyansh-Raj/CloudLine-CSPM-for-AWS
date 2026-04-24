@@ -353,7 +353,12 @@ def approve_reset(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
+<<<<<<< HEAD
     if not store.approve_reset(user_id, admin.sk):
+=======
+    now_ts = datetime.now(tz=timezone.utc).isoformat()
+    if not store.approve_reset(user_id, admin.sk, now_ts):
+>>>>>>> 1134ea2 (Forget Password Error Fix)
         raise HTTPException(
             status_code=(
                 status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+<<<<<<< HEAD
 import { requestPasswordReset } from "@/api/auth";
+=======
+import { requestPasswordReset, resetPassword } from "@/api/auth";
+>>>>>>> 1134ea2 (Forget Password Error Fix)
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 export default function LoginPage() {
@@ -21,6 +25,17 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [resetSubmitting, setResetSubmitting] = useState(false);
 
+<<<<<<< HEAD
+=======
+  // Set-new-password form (shown after admin approves)
+  const [showSetPassword, setShowSetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [setPasswordError, setSetPasswordError] = useState<string | null>(null);
+  const [setPasswordDone, setSetPasswordDone] = useState(false);
+  const [setPasswordSubmitting, setSetPasswordSubmitting] = useState(false);
+
+>>>>>>> 1134ea2 (Forget Password Error Fix)
   if (user) {
     return <Navigate to={from} replace />;
   }
@@ -30,6 +45,7 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
+<<<<<<< HEAD
       await login({ email, password });
       navigate(from, { replace: true });
     } catch (err: unknown) {
@@ -40,6 +56,15 @@ export default function LoginPage() {
         navigate("/account/change-password", { replace: true });
         return;
       }
+=======
+      const me = await login({ email, password });
+      if (me.reset_allowed) {
+        navigate("/account/change-password", { replace: true });
+        return;
+      }
+      navigate(from, { replace: true });
+    } catch {
+>>>>>>> 1134ea2 (Forget Password Error Fix)
       setError("Invalid email or password.");
     } finally {
       setSubmitting(false);
@@ -57,6 +82,35 @@ export default function LoginPage() {
     }
   }
 
+<<<<<<< HEAD
+=======
+  async function handleSetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setSetPasswordError(null);
+    if (newPassword !== confirmPassword) {
+      setSetPasswordError("Passwords do not match.");
+      return;
+    }
+    setSetPasswordSubmitting(true);
+    try {
+      await resetPassword(resetEmail, newPassword);
+      setSetPasswordDone(true);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })
+        ?.response?.data?.detail;
+      setSetPasswordError(msg ?? "Failed to reset password. Check that the reset was approved.");
+    } finally {
+      setSetPasswordSubmitting(false);
+    }
+  }
+
+  const inputCls =
+    "w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 " +
+    "bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream " +
+    "outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black " +
+    "dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20";
+
+>>>>>>> 1134ea2 (Forget Password Error Fix)
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas-cream dark:bg-ink-black px-4">
       <div className="w-full max-w-sm">
@@ -112,7 +166,11 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+<<<<<<< HEAD
                     className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
+=======
+                    className={inputCls}
+>>>>>>> 1134ea2 (Forget Password Error Fix)
                   />
                 </div>
                 <div>
@@ -128,7 +186,11 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+<<<<<<< HEAD
                     className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
+=======
+                    className={inputCls}
+>>>>>>> 1134ea2 (Forget Password Error Fix)
                   />
                 </div>
                 <button
@@ -151,6 +213,7 @@ export default function LoginPage() {
               </div>
             </>
           ) : (
+<<<<<<< HEAD
             <div>
               <p className="text-[13px] text-slate-gray mb-3">
                 Enter your email to request a password reset. An admin will
@@ -161,6 +224,16 @@ export default function LoginPage() {
                   Reset request sent. Contact your admin to approve it.
                 </p>
               ) : (
+=======
+            <div className="space-y-4">
+              <p className="text-[13px] text-slate-gray">
+                Enter your email to request a password reset. An admin will
+                approve it.
+              </p>
+
+              {/* Stage 1 — Request reset */}
+              {!resetSent ? (
+>>>>>>> 1134ea2 (Forget Password Error Fix)
                 <form onSubmit={handleResetSubmit} className="space-y-3">
                   <input
                     type="email"
@@ -168,7 +241,11 @@ export default function LoginPage() {
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     required
+<<<<<<< HEAD
                     className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
+=======
+                    className={inputCls}
+>>>>>>> 1134ea2 (Forget Password Error Fix)
                   />
                   <div className="flex gap-2">
                     <button
@@ -183,11 +260,131 @@ export default function LoginPage() {
                       disabled={resetSubmitting}
                       className="flex-1 py-2 text-[13px] font-medium rounded-btn bg-ink-black text-canvas-cream hover:opacity-90 disabled:opacity-40"
                     >
+<<<<<<< HEAD
                       {resetSubmitting ? "Sending…" : "Send Reset"}
                     </button>
                   </div>
                 </form>
               )}
+=======
+                      {resetSubmitting ? "Sending…" : "Send Reset Request"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* Stage 2 — Request sent, waiting for admin / set new password */
+                <div className="space-y-4">
+                  <div className="px-3 py-2 rounded-btn bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-[12px] text-green-700 dark:text-green-400">
+                    Reset request sent. Contact your admin to approve it.
+                  </div>
+
+                  {/* Set new password — shown after admin approves */}
+                  {!showSetPassword ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowSetPassword(true)}
+                      className="w-full py-2 text-[13px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
+                    >
+                      Admin approved it — Set new password
+                    </button>
+                  ) : setPasswordDone ? (
+                    <div className="space-y-3">
+                      <div className="px-3 py-2 rounded-btn bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-[12px] text-green-700 dark:text-green-400">
+                        Password updated successfully.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowReset(false);
+                          setResetSent(false);
+                          setShowSetPassword(false);
+                          setSetPasswordDone(false);
+                          setNewPassword("");
+                          setConfirmPassword("");
+                          setResetEmail("");
+                        }}
+                        className="w-full py-2 text-[13px] font-medium rounded-btn bg-ink-black text-canvas-cream hover:opacity-90"
+                      >
+                        Back to Sign In
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSetPassword} className="space-y-3">
+                      <p className="text-[12px] font-medium text-slate-gray">
+                        Set your new password
+                      </p>
+                      {setPasswordError && (
+                        <div
+                          role="alert"
+                          className="px-3 py-2 rounded-btn bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[12px] text-red-600 dark:text-red-400"
+                        >
+                          {setPasswordError}
+                        </div>
+                      )}
+                      <input
+                        type="email"
+                        placeholder="Your email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                        className={inputCls}
+                      />
+                      <div>
+                        <input
+                          type="password"
+                          placeholder="New password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                          className={inputCls}
+                        />
+                        <p className="mt-1 text-[11px] text-slate-gray">
+                          Min 12 chars · at least 1 digit · at least 1 symbol
+                        </p>
+                      </div>
+                      <input
+                        type="password"
+                        placeholder="Confirm new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        className={inputCls}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowSetPassword(false)}
+                          className="flex-1 py-2 text-[13px] rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={setPasswordSubmitting}
+                          className="flex-1 py-2 text-[13px] font-medium rounded-btn bg-ink-black text-canvas-cream hover:opacity-90 disabled:opacity-40"
+                        >
+                          {setPasswordSubmitting ? "Saving…" : "Set Password"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReset(false);
+                    setResetSent(false);
+                    setShowSetPassword(false);
+                  }}
+                  className="text-[12px] text-slate-gray hover:underline"
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+>>>>>>> 1134ea2 (Forget Password Error Fix)
             </div>
           )}
         </div>

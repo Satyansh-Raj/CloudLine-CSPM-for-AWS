@@ -240,16 +240,31 @@ class UserStore:
             return False
 
     def approve_reset(
+<<<<<<< HEAD
         self, user_id: str, approved_by: str
     ) -> bool:
         """Admin approves a password reset request.
 
         Sets reset_allowed=True and records which
         admin approved the request.
+=======
+        self, user_id: str, approved_by: str, approved_at: str
+    ) -> bool:
+        """Admin approves a password reset request.
+
+        Sets reset_allowed=True, records which admin
+        approved the request and when, then removes
+        reset_requested_at so the user no longer
+        appears in the pending reset requests list.
+>>>>>>> 1134ea2 (Forget Password Error Fix)
 
         Args:
             user_id: Target user's UUID.
             approved_by: Approving admin's user_id.
+<<<<<<< HEAD
+=======
+            approved_at: ISO timestamp of approval.
+>>>>>>> 1134ea2 (Forget Password Error Fix)
 
         Returns:
             True on success, False on error.
@@ -259,11 +274,21 @@ class UserStore:
                 Key={"pk": _PK, "sk": user_id},
                 UpdateExpression=(
                     "SET reset_allowed = :t, "
+<<<<<<< HEAD
                     "reset_approved_by = :by"
+=======
+                    "reset_approved_by = :by, "
+                    "reset_approved_at = :at "
+                    "REMOVE reset_requested_at"
+>>>>>>> 1134ea2 (Forget Password Error Fix)
                 ),
                 ExpressionAttributeValues={
                     ":t": True,
                     ":by": approved_by,
+<<<<<<< HEAD
+=======
+                    ":at": approved_at,
+>>>>>>> 1134ea2 (Forget Password Error Fix)
                 },
             )
             return True
