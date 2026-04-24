@@ -58,10 +58,7 @@ class User(BaseModel):
     last_login: str | None = None
     reset_requested_at: str | None = None
     reset_approved_by: str | None = None
-<<<<<<< HEAD
-=======
     reset_approved_at: str | None = None
->>>>>>> 1134ea2 (Forget Password Error Fix)
     reset_allowed: bool = False
     failed_login_count: int = 0
 

@@ -172,14 +172,22 @@ export default function ViolationDetailPage() {
   const resource = fromViolationResource(encodedResource);
 
   const stateViolation = state?.violation as Violation | undefined;
-  const { data } = useViolations({ status: "alarm" });
+  const { selectedAccount } = useAccount();
+  const { selectedRegion } = useRegion();
+
+  // Use account from route state first so non-root account violations
+  // are fetched correctly after JIRA ticket mutations invalidate the cache.
+  const violationAccountId =
+    stateViolation?.account_id ?? selectedAccount ?? undefined;
+
+  const { data } = useViolations({
+    status: "alarm",
+    account_id: violationAccountId || undefined,
+  });
   const freshViolation = data?.find(
     (v) => v.check_id === checkId && v.resource === resource,
   );
   const violation: Violation | undefined = freshViolation ?? stateViolation;
-
-  const { selectedAccount } = useAccount();
-  const { selectedRegion } = useRegion();
 
   const accountId = violation?.account_id ?? selectedAccount ?? "";
   const region = violation?.region ?? selectedRegion ?? "";

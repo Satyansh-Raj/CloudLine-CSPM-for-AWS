@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-<<<<<<< HEAD
-import { requestPasswordReset } from "@/api/auth";
-=======
 import { requestPasswordReset, resetPassword } from "@/api/auth";
->>>>>>> 1134ea2 (Forget Password Error Fix)
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 export default function LoginPage() {
@@ -25,8 +21,6 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [resetSubmitting, setResetSubmitting] = useState(false);
 
-<<<<<<< HEAD
-=======
   // Set-new-password form (shown after admin approves)
   const [showSetPassword, setShowSetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -35,7 +29,6 @@ export default function LoginPage() {
   const [setPasswordDone, setSetPasswordDone] = useState(false);
   const [setPasswordSubmitting, setSetPasswordSubmitting] = useState(false);
 
->>>>>>> 1134ea2 (Forget Password Error Fix)
   if (user) {
     return <Navigate to={from} replace />;
   }
@@ -45,18 +38,6 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-<<<<<<< HEAD
-      await login({ email, password });
-      navigate(from, { replace: true });
-    } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { reset_required?: boolean } };
-      };
-      if (axiosErr?.response?.data?.reset_required) {
-        navigate("/account/change-password", { replace: true });
-        return;
-      }
-=======
       const me = await login({ email, password });
       if (me.reset_allowed) {
         navigate("/account/change-password", { replace: true });
@@ -64,7 +45,6 @@ export default function LoginPage() {
       }
       navigate(from, { replace: true });
     } catch {
->>>>>>> 1134ea2 (Forget Password Error Fix)
       setError("Invalid email or password.");
     } finally {
       setSubmitting(false);
@@ -82,8 +62,6 @@ export default function LoginPage() {
     }
   }
 
-<<<<<<< HEAD
-=======
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
     setSetPasswordError(null);
@@ -110,7 +88,6 @@ export default function LoginPage() {
     "outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black " +
     "dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20";
 
->>>>>>> 1134ea2 (Forget Password Error Fix)
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas-cream dark:bg-ink-black px-4">
       <div className="w-full max-w-sm">
@@ -166,11 +143,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-<<<<<<< HEAD
-                    className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
-=======
                     className={inputCls}
->>>>>>> 1134ea2 (Forget Password Error Fix)
                   />
                 </div>
                 <div>
@@ -186,11 +159,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-<<<<<<< HEAD
-                    className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
-=======
                     className={inputCls}
->>>>>>> 1134ea2 (Forget Password Error Fix)
                   />
                 </div>
                 <button
@@ -213,18 +182,6 @@ export default function LoginPage() {
               </div>
             </>
           ) : (
-<<<<<<< HEAD
-            <div>
-              <p className="text-[13px] text-slate-gray mb-3">
-                Enter your email to request a password reset. An admin will
-                approve it.
-              </p>
-              {resetSent ? (
-                <p className="text-[13px] text-green-600 dark:text-green-400">
-                  Reset request sent. Contact your admin to approve it.
-                </p>
-              ) : (
-=======
             <div className="space-y-4">
               <p className="text-[13px] text-slate-gray">
                 Enter your email to request a password reset. An admin will
@@ -233,7 +190,6 @@ export default function LoginPage() {
 
               {/* Stage 1 — Request reset */}
               {!resetSent ? (
->>>>>>> 1134ea2 (Forget Password Error Fix)
                 <form onSubmit={handleResetSubmit} className="space-y-3">
                   <input
                     type="email"
@@ -241,11 +197,7 @@ export default function LoginPage() {
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     required
-<<<<<<< HEAD
-                    className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
-=======
                     className={inputCls}
->>>>>>> 1134ea2 (Forget Password Error Fix)
                   />
                   <div className="flex gap-2">
                     <button
@@ -260,13 +212,6 @@ export default function LoginPage() {
                       disabled={resetSubmitting}
                       className="flex-1 py-2 text-[13px] font-medium rounded-btn bg-ink-black text-canvas-cream hover:opacity-90 disabled:opacity-40"
                     >
-<<<<<<< HEAD
-                      {resetSubmitting ? "Sending…" : "Send Reset"}
-                    </button>
-                  </div>
-                </form>
-              )}
-=======
                       {resetSubmitting ? "Sending…" : "Send Reset Request"}
                     </button>
                   </div>
@@ -384,7 +329,6 @@ export default function LoginPage() {
                   ← Back to Sign In
                 </button>
               </div>
->>>>>>> 1134ea2 (Forget Password Error Fix)
             </div>
           )}
         </div>

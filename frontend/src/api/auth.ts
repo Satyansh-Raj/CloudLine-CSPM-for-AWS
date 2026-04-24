@@ -53,8 +53,6 @@ export async function requestPasswordReset(
     email,
   });
 }
-<<<<<<< HEAD
-=======
 
 export async function resetPassword(
   email: string,
@@ -65,4 +63,3 @@ export async function resetPassword(
     new_password,
   });
 }
->>>>>>> 1134ea2 (Forget Password Error Fix)

@@ -73,14 +73,11 @@ _oauth2 = OAuth2PasswordBearer(
 # Number of consecutive failures before lockout.
 _LOCKOUT_THRESHOLD = 10
 
-<<<<<<< HEAD
-=======
 # Seconds after admin approval during which the user
 # can call /auth/reset-password. Change to 600 for
 # 10-minute production window.
 _RESET_APPROVAL_EXPIRY_SECONDS = 600
 
->>>>>>> 1134ea2 (Forget Password Error Fix)
 
 class _RefreshRequest(BaseModel):
     refresh_token: str
@@ -98,10 +95,7 @@ class _UserResponse(BaseModel):
     role: str
     is_active: bool
     last_login: str | None = None
-<<<<<<< HEAD
-=======
     reset_allowed: bool = False
->>>>>>> 1134ea2 (Forget Password Error Fix)
 
 
 def _decode_access(
@@ -343,10 +337,7 @@ async def get_me(
         role=user.role.value,
         is_active=user.is_active,
         last_login=user.last_login,
-<<<<<<< HEAD
-=======
         reset_allowed=user.reset_allowed,
->>>>>>> 1134ea2 (Forget Password Error Fix)
     )
 
 
@@ -436,8 +427,6 @@ async def request_reset(
         )
         store.set_reset_requested(user.sk, now_ts)
     return {"detail": "Reset request submitted"}
-<<<<<<< HEAD
-=======
 
 
 # ── Reset Password (unauthenticated) ──────────────
@@ -507,4 +496,3 @@ async def reset_password(
     store.clear_reset_after_change(user.sk)
     return {"detail": "Password reset successfully."}
 
->>>>>>> 1134ea2 (Forget Password Error Fix)

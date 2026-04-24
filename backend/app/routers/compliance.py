@@ -24,14 +24,9 @@ router = APIRouter(
     dependencies=[Depends(require_any_authenticated)],
 )
 
-# Total security checks defined in OPA policies.
-# Used for check-level compliance scoring since OPA
-# only produces violations (no "ok" results).
-TOTAL_DEFINED_CHECKS = 290
-
-# Per-domain check counts (must sum to
-# TOTAL_DEFINED_CHECKS). Derived from the Rego
-# policy modules in /policies/.
+# Per-domain check counts derived from Rego policy
+# modules in /policies/. Add a new entry here when
+# adding a new policy domain — total auto-updates.
 CHECKS_PER_DOMAIN: dict[str, int] = {
     "identity": 37,           # iam(20) + cognito(17)
     "compute": 40,            # ec2(20) + serverless(20)
@@ -43,7 +38,11 @@ CHECKS_PER_DOMAIN: dict[str, int] = {
     #   + cloudwatch(20) + config(12)
     "detection": 20,          # awssec(20)
     "cross_resource": 1,      # CROSS(1)
+    "governance": 5,          # tagging(5)
 }
+
+# Derived — do not set manually.
+TOTAL_DEFINED_CHECKS = sum(CHECKS_PER_DOMAIN.values())
 
 
 def _get_registry() -> ComplianceMappingRegistry:

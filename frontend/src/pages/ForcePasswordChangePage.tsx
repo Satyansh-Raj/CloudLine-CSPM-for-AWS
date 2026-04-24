@@ -6,14 +6,9 @@ import type { ApiError } from "@/api/client";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 
 export default function ForcePasswordChangePage() {
-<<<<<<< HEAD
-  const { refreshMe } = useAuth();
-  const navigate = useNavigate();
-=======
   const { refreshMe, user } = useAuth();
   const navigate = useNavigate();
   const isAdminApprovedReset = user?.reset_allowed === true;
->>>>>>> 1134ea2 (Forget Password Error Fix)
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -51,11 +46,6 @@ export default function ForcePasswordChangePage() {
             Change Password
           </h1>
           <p className="text-[12px] text-slate-gray mb-5">
-<<<<<<< HEAD
-            Enter your current password and choose a new one.
-          </p>
-
-=======
             {isAdminApprovedReset
               ? "Your password reset has been approved. Choose a new password below."
               : "Enter your current password and choose a new one."}
@@ -67,7 +57,6 @@ export default function ForcePasswordChangePage() {
             </div>
           )}
 
->>>>>>> 1134ea2 (Forget Password Error Fix)
           {error && (
             <div
               role="alert"
@@ -78,23 +67,6 @@ export default function ForcePasswordChangePage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
-<<<<<<< HEAD
-            <div>
-              <label
-                htmlFor="current-password"
-                className="block text-[12px] font-medium text-slate-gray mb-1"
-              >
-                Current Password
-              </label>
-              <input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3 py-2 text-[13px] rounded-pill border border-dust-taupe dark:border-white/10 bg-canvas-cream dark:bg-[#0e0e0d] text-ink-black dark:text-canvas-cream outline-none focus:ring-2 focus:ring-ink-black/20 focus:border-ink-black dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20"
-              />
-            </div>
-=======
             {!isAdminApprovedReset && (
               <div>
                 <label
@@ -113,7 +85,6 @@ export default function ForcePasswordChangePage() {
                 />
               </div>
             )}
->>>>>>> 1134ea2 (Forget Password Error Fix)
             <div>
               <label
                 htmlFor="new-password"

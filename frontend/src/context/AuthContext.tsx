@@ -7,10 +7,7 @@ import {
 import type { ReactNode } from "react";
 import { login as loginApi, getMe } from "@/api/auth";
 import type {
-<<<<<<< HEAD
-=======
   AuthContextValue,
->>>>>>> 1134ea2 (Forget Password Error Fix)
   LoginCredentials,
   User,
 } from "@/types/auth";
@@ -57,11 +54,7 @@ export function AuthProvider({
   }, []);
 
   const login = useCallback(
-<<<<<<< HEAD
-    async (credentials: LoginCredentials) => {
-=======
     async (credentials: LoginCredentials): Promise<User> => {
->>>>>>> 1134ea2 (Forget Password Error Fix)
       const tokens = await loginApi(credentials);
       localStorage.setItem(
         AUTH_KEY,
@@ -72,10 +65,7 @@ export function AuthProvider({
       );
       const me = await getMe();
       setUser(me);
-<<<<<<< HEAD
-=======
       return me;
->>>>>>> 1134ea2 (Forget Password Error Fix)
     },
     [],
   );
@@ -90,11 +80,7 @@ export function AuthProvider({
     setUser(me);
   }, []);
 
-<<<<<<< HEAD
-  const value = useMemo(
-=======
   const value = useMemo<AuthContextValue>(
->>>>>>> 1134ea2 (Forget Password Error Fix)
     () => ({
       user,
       isLoading,

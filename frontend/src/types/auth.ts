@@ -7,10 +7,7 @@ export interface User {
   role: UserRole;
   is_active: boolean;
   last_login: string | null;
-<<<<<<< HEAD
-=======
   reset_allowed?: boolean;
->>>>>>> 1134ea2 (Forget Password Error Fix)
 }
 
 export interface TokenPair {
@@ -27,11 +24,7 @@ export interface LoginCredentials {
 export interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
-<<<<<<< HEAD
-  login: (credentials: LoginCredentials) => Promise<void>;
-=======
   login: (credentials: LoginCredentials) => Promise<User>;
->>>>>>> 1134ea2 (Forget Password Error Fix)
   logout: () => void;
   refreshMe: () => Promise<void>;
 }
