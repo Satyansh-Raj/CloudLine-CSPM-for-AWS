@@ -1,6 +1,6 @@
 """Tests for drift alerts REST API endpoint."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -22,8 +22,15 @@ def _make_state(
     resource_arn="arn:aws:ec2:us-east-1:123:sg/sg-1",
     reason="Port 22 open to 0.0.0.0/0",
     last_evaluated="2026-02-28T12:00:00Z",
+    first_detected=None,
 ):
-    """Build a ViolationState for testing."""
+    """Build a ViolationState for testing.
+
+    first_detected defaults to last_evaluated so the
+    since-filter tests (which filter on first_detected
+    for new_violations) work correctly without needing
+    explicit first_detected values in every call site.
+    """
     return ViolationState(
         pk=f"{ACCOUNT}#{REGION}",
         sk=f"{check_id}#{resource_arn}",
@@ -35,7 +42,7 @@ def _make_state(
         domain=domain,
         resource_arn=resource_arn,
         reason=reason,
-        first_detected="2026-02-28T10:00:00Z",
+        first_detected=first_detected or last_evaluated,
         last_evaluated=last_evaluated,
     )
 
@@ -111,20 +118,26 @@ class TestDriftAlertsEndpoint:
     def test_returns_200(self):
         """Endpoint returns 200."""
         client = TestClient(app)
-        resp = client.get("/api/v1/drift/alerts")
+        resp = client.get(
+            f"/api/v1/drift/alerts?account_id={ACCOUNT}"
+        )
         assert resp.status_code == 200
 
     def test_returns_all_alerts(self):
         """All alarm + ok states returned."""
         client = TestClient(app)
-        resp = client.get("/api/v1/drift/alerts")
+        resp = client.get(
+            f"/api/v1/drift/alerts?account_id={ACCOUNT}"
+        )
         data = resp.json()
         assert len(data["alerts"]) == 3
 
     def test_response_format(self):
         """Each alert has expected fields."""
         client = TestClient(app)
-        resp = client.get("/api/v1/drift/alerts")
+        resp = client.get(
+            f"/api/v1/drift/alerts?account_id={ACCOUNT}"
+        )
         alert = resp.json()["alerts"][0]
 
         assert "type" in alert
@@ -160,8 +173,8 @@ class TestDriftFilterByType:
         """?type=new_violation returns only alarms."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?type=new_violation"
+            f"/api/v1/drift/alerts"
+            f"?type=new_violation&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 2
@@ -172,7 +185,8 @@ class TestDriftFilterByType:
         """?type=resolution returns only resolved."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts?type=resolution"
+            f"/api/v1/drift/alerts"
+            f"?type=resolution&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -200,11 +214,14 @@ class TestDriftFilterBySince:
         """Only alerts after timestamp returned."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?since=2026-02-28T11:45:00Z"
+            f"/api/v1/drift/alerts"
+            f"?since=2026-02-28T11:45:00Z"
+            f"&account_id={ACCOUNT}"
         )
         data = resp.json()
-        # Only ec2_no_open_ssh at 12:00:00Z passes
+        # ec2_no_open_ssh: first_detected=12:00:00Z > since ✓
+        # s3_block_public_acls: first_detected=11:30:00Z < since ✗
+        # ec2_imdsv2 (ok): last_evaluated=11:00:00Z < since ✗
         assert len(data["alerts"]) == 1
         assert (
             data["alerts"][0]["check_id"]
@@ -215,8 +232,9 @@ class TestDriftFilterBySince:
         """Ancient since returns everything."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?since=2020-01-01T00:00:00Z"
+            f"/api/v1/drift/alerts"
+            f"?since=2020-01-01T00:00:00Z"
+            f"&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 3
@@ -243,7 +261,8 @@ class TestDriftFilterBySeverity:
         """?severity=critical returns only critical."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts?severity=critical"
+            f"/api/v1/drift/alerts"
+            f"?severity=critical&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -255,7 +274,8 @@ class TestDriftFilterBySeverity:
         """?severity=high returns only high."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts?severity=high"
+            f"/api/v1/drift/alerts"
+            f"?severity=high&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -287,8 +307,8 @@ class TestDriftFilterByCheckId:
         """?check_id= queries by check."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?check_id=ec2_no_open_ssh"
+            f"/api/v1/drift/alerts"
+            f"?check_id=ec2_no_open_ssh&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -383,8 +403,8 @@ class TestStateToAlert:
         """alarm with no previous = new_violation."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?type=new_violation"
+            f"/api/v1/drift/alerts"
+            f"?type=new_violation&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -415,8 +435,9 @@ class TestDriftCombinedFilters:
         """?type=new_violation&severity=critical."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?type=new_violation&severity=critical"
+            f"/api/v1/drift/alerts"
+            f"?type=new_violation&severity=critical"
+            f"&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -432,9 +453,9 @@ class TestDriftCombinedFilters:
         """?since=...&type=new_violation."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts"
-            "?since=2026-02-28T11:45:00Z"
-            "&type=new_violation"
+            f"/api/v1/drift/alerts"
+            f"?since=2026-02-28T11:45:00Z"
+            f"&type=new_violation&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
@@ -522,11 +543,15 @@ class TestDriftFilterByAccount:
             assert a["check_id"].startswith("check_a")
 
     def test_no_account_filter_returns_all(self):
-        """No ?account_id returns all accounts' alerts."""
-        client = TestClient(app)
-        resp = client.get("/api/v1/drift/alerts")
-        assert resp.status_code == 200
-        assert len(resp.json()["alerts"]) == 3
+        """No ?account_id returns all when root unset."""
+        from app import config
+        with patch.object(
+            config.settings, "aws_account_id", ""
+        ):
+            client = TestClient(app)
+            resp = client.get("/api/v1/drift/alerts")
+            assert resp.status_code == 200
+            assert len(resp.json()["alerts"]) == 3
 
     def test_unknown_account_returns_empty(self):
         """?account_id with no matching data returns empty."""
@@ -630,7 +655,8 @@ class TestStateToAlertOkNoPrevious:
         """ok with no previous = no_change."""
         client = TestClient(app)
         resp = client.get(
-            "/api/v1/drift/alerts?type=no_change"
+            f"/api/v1/drift/alerts"
+            f"?type=no_change&account_id={ACCOUNT}"
         )
         data = resp.json()
         assert len(data["alerts"]) == 1
