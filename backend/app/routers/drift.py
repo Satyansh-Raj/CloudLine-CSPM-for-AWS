@@ -138,13 +138,26 @@ def _state_to_alert(state) -> dict:
     else:
         drift_type = DriftType.NO_CHANGE.value
 
+    # Use first_detected for new violations so the
+    # trends chart buckets the event on the day it was
+    # *originally* found, not the last re-scan day.
+    # last_evaluated is updated every scan and would
+    # shift yesterday's violation into today's bucket.
+    if (
+        drift_type == DriftType.NEW_VIOLATION.value
+        and state.first_detected
+    ):
+        timestamp = state.first_detected
+    else:
+        timestamp = state.last_evaluated
+
     return {
         "type": drift_type,
         "check_id": state.check_id,
         "resource": state.resource_arn,
         "severity": state.severity,
         "risk_score": state.risk_score,
-        "timestamp": state.last_evaluated,
+        "timestamp": timestamp,
         "trigger_event": "",
         "reason": state.reason,
         "domain": state.domain,
