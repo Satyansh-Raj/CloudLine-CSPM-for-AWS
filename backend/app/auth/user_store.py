@@ -9,7 +9,7 @@ by email for login.
 import logging
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 
 from app.auth.models import User, UserRole
 
@@ -369,6 +369,47 @@ class UserStore:
             logger.error(
                 "reset_failed_login_count error: "
                 "%s", e
+            )
+            return False
+
+    def update_user_accounts(
+        self,
+        user_id: str,
+        allowed_account_ids: list[str],
+        all_accounts_access: bool,
+    ) -> bool:
+        """Set account access scope for a user.
+
+        Args:
+            user_id: Target user's UUID.
+            allowed_account_ids: AWS account IDs
+                the user may access.
+            all_accounts_access: When True, user
+                bypasses the allowlist.
+
+        Returns:
+            True on success, False if user not found
+            or on error.
+        """
+        try:
+            self.table.update_item(
+                Key={"pk": _PK, "sk": user_id},
+                UpdateExpression=(
+                    "SET allowed_account_ids = :ids,"
+                    " all_accounts_access = :all"
+                ),
+                ExpressionAttributeValues={
+                    ":ids": allowed_account_ids,
+                    ":all": all_accounts_access,
+                },
+                ConditionExpression=(
+                    Attr("pk").exists()
+                ),
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                "update_user_accounts error: %s", e
             )
             return False
 

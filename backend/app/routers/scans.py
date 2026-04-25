@@ -54,6 +54,7 @@ from app.pipeline.models import (
     ViolationState,
 )
 from app.pipeline.resource_store import ResourceStore
+from app.auth.account_access import assert_account_allowed
 from app.auth.dependencies import (
     require_admin_or_operator,
     require_any_authenticated,
@@ -974,7 +975,7 @@ async def trigger_scan(
     snapshot_manager: SnapshotManager = Depends(
         get_snapshot_manager
     ),
-    _user: User = Depends(require_admin_or_operator),
+    current_user: User = Depends(require_admin_or_operator),
     account_id: str | None = Query(
         None,
         description=(
@@ -988,6 +989,8 @@ async def trigger_scan(
     Returns 202 with a scan_id. The scan runs
     in a background task.
     """
+    if account_id is not None:
+        assert_account_allowed(current_user, account_id)
     global _event_loop
     _event_loop = asyncio.get_event_loop()
     scan_id = str(uuid4())

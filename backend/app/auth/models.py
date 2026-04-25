@@ -44,6 +44,12 @@ class User(BaseModel):
             approved the reset, or None.
         reset_allowed: True if Admin approved the
             reset and user can set new password.
+        allowed_account_ids: AWS account IDs this
+            user may access. Ignored when
+            all_accounts_access is True.
+        all_accounts_access: When True, user sees all
+            connected accounts (default for existing
+            users — preserves current behavior).
     """
 
     pk: str = "USERS"
@@ -61,6 +67,8 @@ class User(BaseModel):
     reset_approved_at: str | None = None
     reset_allowed: bool = False
     failed_login_count: int = 0
+    allowed_account_ids: list[str] = []
+    all_accounts_access: bool = True
 
 
 class LoginRequest(BaseModel):

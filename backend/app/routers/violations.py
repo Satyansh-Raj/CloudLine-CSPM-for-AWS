@@ -4,7 +4,12 @@ import logging
 
 from fastapi import APIRouter, Depends, Query
 
-from app.auth.dependencies import require_any_authenticated
+from app.auth.account_access import assert_account_allowed
+from app.auth.dependencies import (
+    get_current_user,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.dependencies import (
     get_account_store,
     get_settings,
@@ -60,6 +65,7 @@ def list_violations(
         get_account_store
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ) -> list[dict]:
     """List violations from the last scan.
 
@@ -71,6 +77,7 @@ def list_violations(
     effective_account = (
         account_id or settings.aws_account_id
     )
+    assert_account_allowed(current_user, effective_account)
     if region:
         states = state_manager.query_by_account(
             effective_account,

@@ -11,7 +11,12 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.auth.dependencies import require_admin_or_operator
+from app.auth.account_access import assert_account_allowed
+from app.auth.dependencies import (
+    get_current_user,
+    require_admin_or_operator,
+)
+from app.auth.models import User
 from app.dependencies import (
     get_jira_client,
     get_settings,
@@ -56,6 +61,7 @@ def create_violation_ticket(
         get_jira_client
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ) -> JiraTicketResponse:
     """Create a Jira ticket for a violation.
 
@@ -77,10 +83,12 @@ def create_violation_ticket(
         JiraTicketResponse with ticket details.
 
     Raises:
+        HTTPException 403: Account access denied.
         HTTPException 503: Jira not configured.
         HTTPException 404: Violation not found.
         HTTPException 409: Ticket already exists.
     """
+    assert_account_allowed(current_user, account_id)
     if jira is None:
         raise HTTPException(
             status_code=503,

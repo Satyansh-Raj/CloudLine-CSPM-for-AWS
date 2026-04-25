@@ -17,7 +17,12 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.auth.account_access import (
+    assert_account_allowed,
+    filter_accounts,
+)
 from app.auth.dependencies import (
+    get_current_user,
     require_admin,
     require_any_authenticated,
 )
@@ -477,10 +482,12 @@ def create_account(
 @router.get("/accounts")
 def list_accounts(
     store: AccountStore = Depends(get_account_store),
-    _user: User = Depends(require_any_authenticated),
+    current_user: User = Depends(get_current_user),
 ) -> list[dict]:
-    """Return all active target accounts."""
-    accounts = store.list_active()
+    """Return active target accounts visible to user."""
+    accounts = filter_accounts(
+        current_user, store.list_active()
+    )
     return [_account_to_dict(a) for a in accounts]
 
 
@@ -488,13 +495,15 @@ def list_accounts(
 def get_account(
     account_id: str,
     store: AccountStore = Depends(get_account_store),
-    _user: User = Depends(require_any_authenticated),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """Return a single target account by ID.
 
     Raises:
+        403 if the user may not access this account.
         404 if the account does not exist.
     """
+    assert_account_allowed(current_user, account_id)
     account = store.get_account(account_id)
     if account is None:
         raise HTTPException(

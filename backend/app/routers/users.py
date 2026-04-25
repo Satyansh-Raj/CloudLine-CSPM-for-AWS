@@ -2,12 +2,13 @@
 
 All endpoints require Admin role (require_admin).
 Endpoints:
-  POST   /users                      — create user
-  GET    /users                      — list all users
-  GET    /users/reset-requests       — pending resets
-  GET    /users/{user_id}            — get one user
-  PUT    /users/{user_id}            — update user
-  DELETE /users/{user_id}            — soft-delete
+  POST   /users                        — create user
+  GET    /users                        — list all users
+  GET    /users/reset-requests         — pending resets
+  GET    /users/{user_id}              — get one user
+  PUT    /users/{user_id}              — update user
+  DELETE /users/{user_id}              — soft-delete
+  PATCH  /users/{user_id}/accounts     — set allowlist
   POST   /users/{user_id}/approve-reset — approve reset
 """
 
@@ -27,9 +28,11 @@ from app.auth.password import (
 )
 from app.auth.user_store import UserStore
 from app.dependencies import (
+    get_account_store,
     get_audit_log_store,
     get_user_store,
 )
+from app.pipeline.account_store import AccountStore
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +78,8 @@ def _user_to_dict(user: User) -> dict:
         ),
         "reset_approved_by": user.reset_approved_by,
         "reset_allowed": user.reset_allowed,
+        "allowed_account_ids": user.allowed_account_ids,
+        "all_accounts_access": user.all_accounts_access,
     }
 
 
@@ -331,6 +336,74 @@ def set_user_password(
         "user_id": user_id,
         "status": "password_updated",
     }
+
+
+class UserAccountsRequest(BaseModel):
+    """Body for updating a user's account allowlist."""
+
+    allowed_account_ids: list[str]
+    all_accounts_access: bool
+
+
+@router.patch("/{user_id}/accounts")
+def update_user_accounts(
+    user_id: str,
+    req: UserAccountsRequest,
+    _admin: User = Depends(require_admin),
+    store: UserStore = Depends(get_user_store),
+    account_store: AccountStore = Depends(
+        get_account_store
+    ),
+) -> dict:
+    """Set account allowlist for a non-admin user.
+
+    Raises:
+        404 if user not found.
+        400 if user is an admin (admins cannot be scoped).
+        400 if any account_id is unknown.
+        500 on persistence failure.
+    """
+    user = store.get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    if user.role == UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot scope account access for admins",
+        )
+    if not req.all_accounts_access:
+        known = {
+            a.account_id
+            for a in account_store.list_active()
+        }
+        invalid = [
+            a
+            for a in req.allowed_account_ids
+            if a not in known
+        ]
+        if invalid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Unknown account IDs: {invalid}"
+                ),
+            )
+    ok = store.update_user_accounts(
+        user_id,
+        req.allowed_account_ids,
+        req.all_accounts_access,
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+            detail="Failed to update account allowlist",
+        )
+    return _user_to_dict(store.get_user_by_id(user_id))
 
 
 @router.post("/{user_id}/approve-reset")

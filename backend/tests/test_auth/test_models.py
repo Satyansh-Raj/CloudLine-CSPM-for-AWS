@@ -87,6 +87,46 @@ class TestUser:
         assert user.reset_allowed is True
         assert user.reset_approved_by == "admin-1"
 
+    def test_allowed_account_ids_default_empty(self):
+        assert self._make_user().allowed_account_ids == []
+
+    def test_all_accounts_access_default_true(self):
+        assert self._make_user().all_accounts_access is True
+
+    def test_explicit_allowed_account_ids(self):
+        user = User(
+            sk="u3",
+            email="c@d.com",
+            full_name="C",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+            allowed_account_ids=[
+                "111111111111", "222222222222"
+            ],
+            all_accounts_access=False,
+        )
+        assert user.allowed_account_ids == [
+            "111111111111", "222222222222"
+        ]
+        assert user.all_accounts_access is False
+
+    def test_all_accounts_access_can_be_false(self):
+        user = User(
+            sk="u4",
+            email="d@e.com",
+            full_name="D",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+            all_accounts_access=False,
+        )
+        assert user.all_accounts_access is False
+
+    def test_allowed_account_ids_independent_instances(self):
+        u1 = self._make_user()
+        u2 = self._make_user()
+        u1.allowed_account_ids.append("111111111111")
+        assert u2.allowed_account_ids == []
+
 
 class TestLoginRequest:
     def test_valid(self):

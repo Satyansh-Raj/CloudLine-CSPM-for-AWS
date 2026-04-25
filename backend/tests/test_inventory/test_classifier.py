@@ -962,7 +962,7 @@ class TestClassifyIAMUser:
             iam=IAMData(
                 users=[
                     IAMUser(
-                        name="admin",
+                        username="admin",
                         arn=(
                             f"arn:aws:iam::{ACCOUNT}"
                             ":user/admin"
@@ -988,7 +988,7 @@ class TestClassifyIAMUser:
         data = _make_input(
             iam=IAMData(
                 users=[
-                    IAMUser(name="dev", arn=arn),
+                    IAMUser(username="dev", arn=arn),
                 ],
             ),
         )

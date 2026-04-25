@@ -2,7 +2,12 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.auth.dependencies import require_any_authenticated
+from app.auth.account_access import assert_account_allowed
+from app.auth.dependencies import (
+    get_current_user,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.compliance.mappings import (
     ComplianceMappingRegistry,
     get_registry,
@@ -83,6 +88,7 @@ def get_framework_score(
     registry: ComplianceMappingRegistry = Depends(
         _get_registry
     ),
+    current_user: User = Depends(get_current_user),
 ) -> FrameworkScore:
     """Return per-control compliance score for a framework.
 
@@ -114,6 +120,7 @@ def get_framework_score(
     eff_account = (
         account_id or settings.aws_account_id
     )
+    assert_account_allowed(current_user, eff_account)
 
     if region:
         states = state_manager.query_by_account(
@@ -164,6 +171,7 @@ def get_compliance_score(
     registry: ComplianceMappingRegistry = Depends(
         _get_registry
     ),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """Compute compliance score from stored state.
 
@@ -177,6 +185,7 @@ def get_compliance_score(
     eff_account = (
         account_id or settings.aws_account_id
     )
+    assert_account_allowed(current_user, eff_account)
 
     if region:
         states = state_manager.query_by_account(

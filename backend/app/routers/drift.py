@@ -2,7 +2,12 @@
 
 from fastapi import APIRouter, Depends, Query
 
-from app.auth.dependencies import require_any_authenticated
+from app.auth.account_access import assert_account_allowed
+from app.auth.dependencies import (
+    get_current_user,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.config import settings
 from app.dependencies import get_state_manager
 from app.pipeline.models import DriftType
@@ -51,6 +56,7 @@ def list_drift_alerts(
     state_manager: StateManager = Depends(
         get_state_manager
     ),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """List drift alerts from violation state.
 
@@ -87,6 +93,9 @@ def list_drift_alerts(
         account_id or settings.aws_account_id
     )
     if effective_account:
+        assert_account_allowed(
+            current_user, effective_account
+        )
         states = [
             s for s in states
             if s.pk.split("#")[0] == effective_account

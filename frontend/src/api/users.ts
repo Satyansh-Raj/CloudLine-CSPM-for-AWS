@@ -54,6 +54,19 @@ export async function setUserPassword(
   });
 }
 
+export interface AssignUserAccountsRequest {
+  allowed_account_ids: string[];
+  all_accounts_access: boolean;
+}
+
+export async function assignUserAccounts(
+  userId: string,
+  req: AssignUserAccountsRequest,
+): Promise<User> {
+  const resp = await apiClient.patch<User>(`/v1/users/${userId}/accounts`, req);
+  return resp.data;
+}
+
 export interface LoginEvent {
   ip: string;
   user_agent: string;

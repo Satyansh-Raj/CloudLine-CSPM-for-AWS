@@ -8,7 +8,12 @@ import boto3
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
-from app.auth.dependencies import require_any_authenticated
+from app.auth.account_access import assert_account_allowed
+from app.auth.dependencies import (
+    get_current_user,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.dependencies import (
     get_account_store,
     get_boto3_session,
@@ -156,6 +161,7 @@ def list_inventory(
         get_account_store
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ) -> list[dict]:
     """List resources with optional filters.
 
@@ -167,6 +173,7 @@ def list_inventory(
     effective_account = (
         account_id or settings.aws_account_id
     )
+    assert_account_allowed(current_user, effective_account)
     is_cross_account = (
         account_id
         and account_id != settings.aws_account_id

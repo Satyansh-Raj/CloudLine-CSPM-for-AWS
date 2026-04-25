@@ -8,6 +8,8 @@ export interface User {
   is_active: boolean;
   last_login: string | null;
   reset_allowed?: boolean;
+  allowed_account_ids?: string[];
+  all_accounts_access?: boolean;
 }
 
 export interface TokenPair {

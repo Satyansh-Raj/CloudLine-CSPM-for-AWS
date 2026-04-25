@@ -403,7 +403,9 @@ class TestChangePassword:
     ):
         """Admin-approved reset: skip current pw check."""
         client, user_id, store, _ = auth_setup
-        store.approve_reset(user_id, "admin-user")
+        store.approve_reset(
+            user_id, "admin-user", "2026-04-25T00:00:00Z"
+        )
         token = _access_token(client)
         resp = client.post(
             "/api/v1/auth/change-password",

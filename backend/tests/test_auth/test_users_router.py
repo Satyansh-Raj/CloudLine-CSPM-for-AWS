@@ -8,12 +8,15 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
 from moto import mock_aws
 
+from unittest.mock import MagicMock
+
 from app.auth.dependencies import require_admin
 from app.auth.models import User, UserRole
 from app.auth.password import hash_password
 from app.auth.user_store import UserStore
 from app.config import Settings
-from app.dependencies import get_user_store
+from app.dependencies import get_account_store, get_user_store
+from app.models.account import TargetAccount
 from app.routers.users import router
 
 TABLE_NAME = "cloudline-users"
@@ -401,3 +404,183 @@ class TestNonAdminBlocked:
             "/api/v1/users/some-id/approve-reset"
         )
         assert resp.status_code == 403
+
+
+# ── PATCH /users/{id}/accounts (Batch 3) ─────────────
+
+
+def _build_app_with_accounts(
+    store: UserStore,
+    account_store,
+    admin: bool = True,
+) -> "FastAPI":
+    """Build test app with both user and account stores."""
+    app = FastAPI()
+    app.include_router(router, prefix="/api/v1")
+    app.dependency_overrides[get_user_store] = (
+        lambda: store
+    )
+    app.dependency_overrides[get_account_store] = (
+        lambda: account_store
+    )
+    if admin:
+        app.dependency_overrides[require_admin] = (
+            lambda: _ADMIN_USER
+        )
+    else:
+        async def _forbidden():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden",
+            )
+        app.dependency_overrides[require_admin] = (
+            _forbidden
+        )
+    return app
+
+
+_VIEWER_USER = User(
+    sk="viewer-001",
+    email="viewer@example.com",
+    full_name="Viewer",
+    password_hash=hash_password(_PASSWORD),
+    role=UserRole.VIEWER,
+    is_active=True,
+    created_at="2026-04-10T00:00:00Z",
+)
+
+_ADMIN_USER2 = User(
+    sk="admin-002",
+    email="admin2@example.com",
+    full_name="Admin Two",
+    password_hash=hash_password(_PASSWORD),
+    role=UserRole.ADMIN,
+    is_active=True,
+    created_at="2026-04-10T00:00:00Z",
+)
+
+
+@pytest.fixture
+def accounts_setup(aws_credentials):
+    """Yields (admin_client, store, account_store)."""
+    with mock_aws():
+        session = boto3.Session(region_name="us-east-1")
+        ddb = session.client(
+            "dynamodb", region_name="us-east-1"
+        )
+        _create_users_table(ddb)
+        store = UserStore(
+            session=session, table_name=TABLE_NAME
+        )
+        store.put_user(_ADMIN_USER)
+        store.put_user(_VIEWER_USER)
+        store.put_user(_ADMIN_USER2)
+
+        mock_as = MagicMock()
+        mock_as.list_active.return_value = [
+            TargetAccount(
+                sk="111111111111",
+                account_id="111111111111",
+                account_name="Dev",
+                role_arn=(
+                    "arn:aws:iam::111111111111:role/S"
+                ),
+            ),
+            TargetAccount(
+                sk="222222222222",
+                account_id="222222222222",
+                account_name="Prod",
+                role_arn=(
+                    "arn:aws:iam::222222222222:role/S"
+                ),
+            ),
+        ]
+
+        app = _build_app_with_accounts(
+            store, mock_as, admin=True
+        )
+        with TestClient(app) as client:
+            yield client, store, mock_as
+
+
+class TestPatchUserAccounts:
+    def test_set_allowlist_returns_200(
+        self, accounts_setup
+    ):
+        client, store, _ = accounts_setup
+        resp = client.patch(
+            f"/api/v1/users/{_VIEWER_USER.sk}/accounts",
+            json={
+                "allowed_account_ids": ["111111111111"],
+                "all_accounts_access": False,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["allowed_account_ids"] == [
+            "111111111111"
+        ]
+        assert data["all_accounts_access"] is False
+
+    def test_set_all_access_clears_restriction(
+        self, accounts_setup
+    ):
+        client, store, _ = accounts_setup
+        resp = client.patch(
+            f"/api/v1/users/{_VIEWER_USER.sk}/accounts",
+            json={
+                "allowed_account_ids": [],
+                "all_accounts_access": True,
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["all_accounts_access"] is True
+
+    def test_nonexistent_user_returns_404(
+        self, accounts_setup
+    ):
+        client, _, _ = accounts_setup
+        resp = client.patch(
+            "/api/v1/users/does-not-exist/accounts",
+            json={
+                "allowed_account_ids": [],
+                "all_accounts_access": True,
+            },
+        )
+        assert resp.status_code == 404
+
+    def test_cannot_scope_admin_returns_400(
+        self, accounts_setup
+    ):
+        client, _, _ = accounts_setup
+        resp = client.patch(
+            f"/api/v1/users/{_ADMIN_USER2.sk}/accounts",
+            json={
+                "allowed_account_ids": ["111111111111"],
+                "all_accounts_access": False,
+            },
+        )
+        assert resp.status_code == 400
+
+    def test_unknown_account_id_returns_400(
+        self, accounts_setup
+    ):
+        client, _, _ = accounts_setup
+        resp = client.patch(
+            f"/api/v1/users/{_VIEWER_USER.sk}/accounts",
+            json={
+                "allowed_account_ids": ["999999999999"],
+                "all_accounts_access": False,
+            },
+        )
+        assert resp.status_code == 400
+
+    def test_response_includes_allowlist_fields(
+        self, accounts_setup
+    ):
+        client, _, _ = accounts_setup
+        resp = client.get("/api/v1/users")
+        assert resp.status_code == 200
+        for user in resp.json():
+            assert "allowed_account_ids" in user
+            assert "all_accounts_access" in user

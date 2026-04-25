@@ -7,9 +7,16 @@ import {
   getLoginHistory,
   setUserPassword,
   deleteUser,
+  assignUserAccounts,
 } from "@/api/users";
 import type { ApiError } from "@/api/client";
-import type { CreateUserRequest, LoginEvent } from "@/api/users";
+import type {
+  CreateUserRequest,
+  LoginEvent,
+  AssignUserAccountsRequest,
+} from "@/api/users";
+import { getAccounts } from "@/api/accounts";
+import type { TargetAccount } from "@/types/account";
 import type { User, UserRole } from "@/types/auth";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
 import CustomSelect from "@/components/shared/CustomSelect";
@@ -431,22 +438,201 @@ function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
   );
 }
 
+function accountAccessLabel(user: User): string {
+  if (user.role === "admin") return "—";
+  if (user.all_accounts_access ?? true) return "All accounts";
+  const count = user.allowed_account_ids?.length ?? 0;
+  if (count === 0) return "No accounts";
+  return `${count} account${count > 1 ? "s" : ""}`;
+}
+
+interface AssignAccountsModalProps {
+  user: User;
+  accounts: TargetAccount[];
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+function AssignAccountsModal({
+  user,
+  accounts,
+  onClose,
+  onSaved,
+}: AssignAccountsModalProps) {
+  const [allAccess, setAllAccess] = useState(user.all_accounts_access ?? true);
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    user.allowed_account_ids ?? [],
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function toggleAccount(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    try {
+      const req: AssignUserAccountsRequest = {
+        allowed_account_ids: allAccess ? [] : selectedIds,
+        all_accounts_access: allAccess,
+      };
+      await assignUserAccounts(user.sk, req);
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError((err as ApiError).message ?? "Failed to assign accounts.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Assign accounts for ${user.full_name}`}
+        className={[
+          "w-[480px] max-h-[80vh] flex flex-col",
+          "rounded-hero bg-lifted-cream dark:bg-[#1c1c1b]",
+          "border border-ghost-cream dark:border-white/10 shadow-elev-2",
+        ].join(" ")}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-ghost-cream dark:border-white/5">
+          <div>
+            <h2 className="text-sm font-semibold text-ink-black dark:text-white">
+              Assign Accounts
+            </h2>
+            <p className="text-[12px] text-slate-gray dark:text-gray-400 mt-0.5">
+              {user.full_name} · {user.email}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-gray hover:text-ink-black dark:hover:text-gray-200 text-lg leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <form
+          onSubmit={(e) => void handleSubmit(e)}
+          className="overflow-y-auto flex-1 p-5 space-y-4"
+        >
+          {error && (
+            <div
+              role="alert"
+              className="px-3 py-2 rounded-hero bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-[13px] text-red-600 dark:text-red-400"
+            >
+              {error}
+            </div>
+          )}
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={allAccess}
+              onChange={(e) => setAllAccess(e.target.checked)}
+              className="w-4 h-4 accent-ink-black"
+              aria-label="All accounts"
+            />
+            <span className="text-[13px] font-medium text-ink-black dark:text-white">
+              All accounts
+            </span>
+          </label>
+
+          {accounts.length > 0 && (
+            <div className="space-y-2 border-t border-ghost-cream dark:border-white/5 pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-500">
+                Specific accounts
+              </p>
+              {accounts.map((acc) => (
+                <label
+                  key={acc.account_id}
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(acc.account_id)}
+                    disabled={allAccess}
+                    onChange={() => toggleAccount(acc.account_id)}
+                    className="w-4 h-4 accent-ink-black disabled:opacity-40"
+                    aria-label={`${acc.account_name} (${acc.account_id})`}
+                  />
+                  <span
+                    className={`text-[13px] ${allAccess ? "text-slate-gray dark:text-gray-600" : "text-ink-black dark:text-gray-200"}`}
+                  >
+                    {acc.account_name}
+                    <span className="ml-1 text-slate-gray dark:text-gray-500 font-mono text-[11px]">
+                      ({acc.account_id})
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2 justify-end pt-2 border-t border-ghost-cream dark:border-white/5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 text-[13px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-3 py-1.5 text-[13px] rounded-btn bg-ink-black text-canvas-cream font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function UserManagementPage() {
   const [tab, setTab] = useState<Tab>("users");
   const [users, setUsers] = useState<User[]>([]);
   const [resets, setResets] = useState<User[]>([]);
+  const [availableAccounts, setAvailableAccounts] = useState<TargetAccount[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [historyUser, setHistoryUser] = useState<User | null>(null);
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [assignAccountsUser, setAssignAccountsUser] = useState<User | null>(
+    null,
+  );
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const [us, rs] = await Promise.all([listUsers(), listResetRequests()]);
+      const [us, rs, accs] = await Promise.all([
+        listUsers(),
+        listResetRequests(),
+        getAccounts(),
+      ]);
       setUsers(us);
       setResets(rs);
+      setAvailableAccounts(accs);
     } finally {
       setLoading(false);
     }
@@ -531,7 +717,6 @@ export default function UserManagementPage() {
       {/* Two-pane grid — starts at same row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
         <div className="space-y-3">
-
           {/* Error banner — shown for both tabs */}
           {deleteError && (
             <div
@@ -576,6 +761,9 @@ export default function UserManagementPage() {
                         <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
                           Status
                         </th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-gray dark:text-gray-400">
+                          Accounts
+                        </th>
                         <th className="px-4 py-2.5" />
                       </tr>
                     </thead>
@@ -610,8 +798,20 @@ export default function UserManagementPage() {
                               {u.is_active ? "Active" : "Inactive"}
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-[12px] text-slate-gray dark:text-gray-400">
+                            {accountAccessLabel(u)}
+                          </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-1.5 justify-end">
+                              {u.role !== "admin" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setAssignAccountsUser(u)}
+                                  className="px-2.5 py-1 text-[11px] rounded-btn border border-ghost-cream dark:border-white/10 text-slate-gray dark:text-gray-400 hover:bg-ghost-cream dark:hover:bg-white/5"
+                                >
+                                  Assign
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setPasswordUser(u)}
@@ -642,7 +842,7 @@ export default function UserManagementPage() {
                       {users.length === 0 && (
                         <tr>
                           <td
-                            colSpan={5}
+                            colSpan={6}
                             className="px-4 py-8 text-center text-slate-gray"
                           >
                             No users found.
@@ -667,6 +867,15 @@ export default function UserManagementPage() {
             <SetPasswordModal
               user={passwordUser}
               onClose={() => setPasswordUser(null)}
+            />
+          )}
+
+          {assignAccountsUser && (
+            <AssignAccountsModal
+              user={assignAccountsUser}
+              accounts={availableAccounts}
+              onClose={() => setAssignAccountsUser(null)}
+              onSaved={() => void fetchUsers()}
             />
           )}
 

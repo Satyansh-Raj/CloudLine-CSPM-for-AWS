@@ -45,6 +45,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setRefreshKey((k) => k + 1);
   }, []);
 
+  useEffect(() => {
+    if (!isLoading && selectedAccount && accounts.length > 0) {
+      const ids = new Set(accounts.map((a) => a.account_id));
+      if (!ids.has(selectedAccount)) {
+        setSelectedAccount("");
+      }
+    }
+  }, [accounts, isLoading, selectedAccount, setSelectedAccount]);
+
   const value = useMemo(
     () => ({
       selectedAccount,

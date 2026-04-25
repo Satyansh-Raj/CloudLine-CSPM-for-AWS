@@ -259,7 +259,9 @@ class TestResetFlow:
     def test_approve_reset(self, user_store):
         user_store.put_user(make_user("u8"))
         assert (
-            user_store.approve_reset("u8", "admin-1")
+            user_store.approve_reset(
+                "u8", "admin-1", "2026-04-09T10:00:00Z"
+            )
             is True
         )
         u = user_store.get_user_by_id("u8")
@@ -273,7 +275,9 @@ class TestResetFlow:
         user_store.set_reset_requested(
             "u9", "2026-04-09T10:00:00Z"
         )
-        user_store.approve_reset("u9", "admin-1")
+        user_store.approve_reset(
+            "u9", "admin-1", "2026-04-09T10:00:00Z"
+        )
         assert (
             user_store.clear_reset_after_change("u9")
             is True
@@ -282,6 +286,101 @@ class TestResetFlow:
         assert u.reset_allowed is False
         assert u.reset_approved_by is None
         assert u.reset_requested_at is None
+
+
+class TestUpdateUserAccounts:
+    def test_set_allowed_account_ids(self, user_store):
+        user_store.put_user(make_user("ua1"))
+        result = user_store.update_user_accounts(
+            "ua1", ["111111111111", "222222222222"], False
+        )
+        assert result is True
+        u = user_store.get_user_by_id("ua1")
+        assert u.allowed_account_ids == [
+            "111111111111", "222222222222"
+        ]
+        assert u.all_accounts_access is False
+
+    def test_clear_to_all_accounts_access(
+        self, user_store
+    ):
+        user_store.put_user(make_user("ua2"))
+        user_store.update_user_accounts(
+            "ua2", ["111111111111"], False
+        )
+        user_store.update_user_accounts(
+            "ua2", [], True
+        )
+        u = user_store.get_user_by_id("ua2")
+        assert u.allowed_account_ids == []
+        assert u.all_accounts_access is True
+
+    def test_empty_list_preserved(self, user_store):
+        user_store.put_user(make_user("ua3"))
+        result = user_store.update_user_accounts(
+            "ua3", [], False
+        )
+        assert result is True
+        u = user_store.get_user_by_id("ua3")
+        assert u.allowed_account_ids == []
+        assert u.all_accounts_access is False
+
+    def test_idempotent_double_write(self, user_store):
+        user_store.put_user(make_user("ua4"))
+        user_store.update_user_accounts(
+            "ua4", ["111111111111"], False
+        )
+        result = user_store.update_user_accounts(
+            "ua4", ["111111111111"], False
+        )
+        assert result is True
+        u = user_store.get_user_by_id("ua4")
+        assert u.allowed_account_ids == ["111111111111"]
+
+    def test_nonexistent_user_returns_false(
+        self, user_store
+    ):
+        result = user_store.update_user_accounts(
+            "ghost-user", ["111111111111"], False
+        )
+        assert result is False
+
+    def test_returns_false_on_boto_error(
+        self, user_store, monkeypatch
+    ):
+        user_store.put_user(make_user("ua5"))
+        monkeypatch.setattr(
+            user_store.table,
+            "update_item",
+            lambda **_: (_ for _ in ()).throw(
+                Exception("boto error")
+            ),
+        )
+        result = user_store.update_user_accounts(
+            "ua5", ["111"], True
+        )
+        assert result is False
+
+    def test_legacy_user_read_gets_defaults(
+        self, user_store
+    ):
+        user_store.table.put_item(
+            Item={
+                "pk": "USERS",
+                "sk": "legacy-1",
+                "email": "legacy@example.com",
+                "full_name": "Legacy User",
+                "password_hash": "$2b$12$abc",
+                "role": "viewer",
+                "is_active": True,
+                "created_at": "2025-01-01T00:00:00Z",
+                "failed_login_count": 0,
+            }
+        )
+        u = user_store.get_user_by_id("legacy-1")
+        assert u is not None
+        assert u.allowed_account_ids == []
+        assert u.all_accounts_access is True
 
 
 class TestUpdateLastLogin:

@@ -254,11 +254,11 @@ class TestComplianceEndpoint:
         assert "passed" in data
         assert "failed" in data
         assert "score_percent" in data
-        # Check-level scoring: 290 total checks,
+        # Check-level scoring: 295 total checks,
         # 2 distinct check_ids with violations
-        assert data["total_checks"] == 290
+        assert data["total_checks"] == 295
         assert data["failed"] == 2
-        assert data["passed"] == 288
+        assert data["passed"] == 293
 
     def test_compliance_by_domain(self):
         client = TestClient(app)
