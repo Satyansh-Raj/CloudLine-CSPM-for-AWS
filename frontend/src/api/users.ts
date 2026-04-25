@@ -36,6 +36,14 @@ export async function deleteUser(userId: string): Promise<void> {
   await apiClient.delete(`/v1/users/${userId}`);
 }
 
+export async function reactivateUser(userId: string): Promise<void> {
+  await apiClient.post(`/v1/users/${userId}/reactivate`);
+}
+
+export async function purgeUser(userId: string): Promise<void> {
+  await apiClient.delete(`/v1/users/${userId}/purge`);
+}
+
 export async function listResetRequests(): Promise<User[]> {
   const resp = await apiClient.get<User[]>("/v1/users/reset-requests");
   return resp.data;

@@ -5,7 +5,12 @@ import time
 
 from fastapi import APIRouter, Depends, Query
 
-from app.auth.dependencies import require_any_authenticated
+from app.auth.account_access import assert_account_allowed
+from app.auth.dependencies import (
+    get_current_user,
+    require_any_authenticated,
+)
+from app.auth.models import User
 from app.collectors.iam import IAMCollector
 from app.dependencies import (
     get_account_store,
@@ -57,6 +62,7 @@ def get_iam_graph(
         get_state_manager
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """IAM graph: users, policies, permissions,
     violations.
@@ -69,6 +75,7 @@ def get_iam_graph(
     effective_account = (
         account_id or settings.aws_account_id
     )
+    assert_account_allowed(current_user, effective_account)
     now = time.time()
     cached = _cache.get(effective_account, {})
     if (

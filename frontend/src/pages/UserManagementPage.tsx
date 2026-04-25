@@ -8,6 +8,8 @@ import {
   setUserPassword,
   deleteUser,
   assignUserAccounts,
+  reactivateUser,
+  purgeUser,
 } from "@/api/users";
 import type { ApiError } from "@/api/client";
 import type {
@@ -667,6 +669,32 @@ export default function UserManagementPage() {
     }
   }
 
+  async function handleReactivateUser(userId: string) {
+    setDeleteError(null);
+    try {
+      await reactivateUser(userId);
+      await fetchUsers();
+    } catch (err) {
+      setDeleteError(
+        (err as { message?: string }).message ?? "Failed to reactivate user.",
+      );
+    }
+  }
+
+  async function handlePurgeUser(userId: string) {
+    if (!confirm("Permanently delete this user? This cannot be undone."))
+      return;
+    setDeleteError(null);
+    try {
+      await purgeUser(userId);
+      await fetchUsers();
+    } catch (err) {
+      setDeleteError(
+        (err as { message?: string }).message ?? "Failed to delete user.",
+      );
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Header — full width above both panes */}
@@ -834,6 +862,26 @@ export default function UserManagementPage() {
                                 >
                                   Deactivate
                                 </button>
+                              )}
+                              {!u.is_active && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void handleReactivateUser(u.sk)
+                                    }
+                                    className="px-2.5 py-1 text-[11px] rounded-btn border border-green-200 dark:border-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10"
+                                  >
+                                    Reactivate
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => void handlePurgeUser(u.sk)}
+                                    className="px-2.5 py-1 text-[11px] rounded-btn border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>

@@ -345,6 +345,80 @@ class UserAccountsRequest(BaseModel):
     all_accounts_access: bool
 
 
+@router.post("/{user_id}/reactivate")
+def reactivate_user(
+    user_id: str,
+    _admin: User = Depends(require_admin),
+    store: UserStore = Depends(get_user_store),
+) -> dict:
+    """Reactivate a previously deactivated user.
+
+    Raises:
+        404 if user not found.
+        500 on persistence failure.
+    """
+    user = store.get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    if not store.update_user(user_id, is_active=True):
+        raise HTTPException(
+            status_code=(
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+            detail=f"Failed to reactivate {user_id}",
+        )
+    return {"user_id": user_id, "status": "active"}
+
+
+@router.delete("/{user_id}/purge")
+def purge_user(
+    user_id: str,
+    _admin: User = Depends(require_admin),
+    store: UserStore = Depends(get_user_store),
+) -> dict:
+    """Hard-delete a user — removes record entirely.
+
+    Raises:
+        404 if user not found.
+        400 if this is the last active Admin.
+        500 on persistence failure.
+    """
+    user = store.get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+
+    if user.role == UserRole.ADMIN and user.is_active:
+        active_admins = [
+            u
+            for u in store.list_users()
+            if u.role == UserRole.ADMIN and u.is_active
+        ]
+        if len(active_admins) <= 1:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_400_BAD_REQUEST
+                ),
+                detail=(
+                    "Cannot delete the last active Admin"
+                ),
+            )
+
+    if not store.delete_user(user_id):
+        raise HTTPException(
+            status_code=(
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+            detail=f"Failed to delete {user_id}",
+        )
+    return {"user_id": user_id, "status": "deleted"}
+
+
 @router.patch("/{user_id}/accounts")
 def update_user_accounts(
     user_id: str,

@@ -584,3 +584,89 @@ class TestPatchUserAccounts:
         for user in resp.json():
             assert "allowed_account_ids" in user
             assert "all_accounts_access" in user
+
+
+_INACTIVE_USER = User(
+    sk="inactive-001",
+    email="inactive@example.com",
+    full_name="Inactive User",
+    password_hash=hash_password(_PASSWORD),
+    role=UserRole.OPERATOR,
+    is_active=False,
+    created_at="2026-04-10T00:00:00Z",
+)
+
+
+class TestReactivateUser:
+    def test_reactivates_inactive_user(self, setup):
+        client, store = setup
+        store.put_user(_INACTIVE_USER)
+        resp = client.post(
+            f"/api/v1/users/"
+            f"{_INACTIVE_USER.sk}/reactivate"
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "active"
+        updated = store.get_user_by_id(
+            _INACTIVE_USER.sk
+        )
+        assert updated.is_active is True
+
+    def test_reactivate_already_active_succeeds(
+        self, setup
+    ):
+        """Reactivating an already-active user is a
+        no-op that still returns 200."""
+        client, _ = setup
+        resp = client.post(
+            f"/api/v1/users/"
+            f"{_ADMIN_USER.sk}/reactivate"
+        )
+        assert resp.status_code == 200
+
+    def test_reactivate_nonexistent_404(self, setup):
+        client, _ = setup
+        resp = client.post(
+            "/api/v1/users/ghost-999/reactivate"
+        )
+        assert resp.status_code == 404
+
+
+class TestPurgeUser:
+    def test_purges_user_completely(self, setup):
+        """Hard-delete removes user from DB."""
+        client, store = setup
+        uid = str(uuid.uuid4())
+        store.put_user(
+            User(
+                sk=uid,
+                email=f"{uid}@example.com",
+                full_name="Temp",
+                password_hash=hash_password(_PASSWORD),
+                role=UserRole.VIEWER,
+                is_active=False,
+                created_at="2026-04-10T00:00:00Z",
+            )
+        )
+        resp = client.delete(
+            f"/api/v1/users/{uid}/purge"
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "deleted"
+        assert store.get_user_by_id(uid) is None
+
+    def test_cannot_purge_last_active_admin(
+        self, setup
+    ):
+        client, _ = setup
+        resp = client.delete(
+            f"/api/v1/users/{_ADMIN_USER.sk}/purge"
+        )
+        assert resp.status_code == 400
+
+    def test_purge_nonexistent_404(self, setup):
+        client, _ = setup
+        resp = client.delete(
+            "/api/v1/users/ghost-999/purge"
+        )
+        assert resp.status_code == 404

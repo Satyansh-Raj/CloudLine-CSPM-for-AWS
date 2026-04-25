@@ -442,6 +442,26 @@ class UserStore:
             )
             return False
 
+    def delete_user(self, user_id: str) -> bool:
+        """Hard-delete a user record from DynamoDB.
+
+        Returns:
+            True on success, False if user not found
+            or on error.
+        """
+        if self.get_user_by_id(user_id) is None:
+            return False
+        try:
+            self.table.delete_item(
+                Key={"pk": _PK, "sk": user_id}
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                "delete_user error: %s", e
+            )
+            return False
+
 
 def _user_to_item(user: User) -> dict:
     """Convert User to DynamoDB item (strip Nones)."""

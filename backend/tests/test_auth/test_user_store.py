@@ -393,3 +393,31 @@ class TestUpdateLastLogin:
         )
         u = user_store.get_user_by_id("u10")
         assert u.last_login == ts
+
+
+class TestHardDeleteUser:
+    def test_hard_deletes_item(self, user_store):
+        user_store.put_user(make_user("del-1"))
+        assert (
+            user_store.get_user_by_id("del-1")
+            is not None
+        )
+        result = user_store.delete_user("del-1")
+        assert result is True
+        assert (
+            user_store.get_user_by_id("del-1") is None
+        )
+
+    def test_nonexistent_returns_false(
+        self, user_store
+    ):
+        result = user_store.delete_user("ghost-999")
+        assert result is False
+
+    def test_deleted_user_absent_from_list(
+        self, user_store
+    ):
+        user_store.put_user(make_user("del-2"))
+        user_store.delete_user("del-2")
+        ids = {u.sk for u in user_store.list_users()}
+        assert "del-2" not in ids

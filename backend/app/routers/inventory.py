@@ -267,6 +267,7 @@ def inventory_summary(
     ),
     session=Depends(get_boto3_session),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """Aggregated inventory statistics.
 
@@ -277,6 +278,7 @@ def inventory_summary(
     effective_account = (
         account_id or settings.aws_account_id
     )
+    assert_account_allowed(current_user, effective_account)
     is_cross_account = (
         account_id
         and account_id != settings.aws_account_id
@@ -344,8 +346,13 @@ def get_inventory_detail(
         get_resource_store
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ):
     """Get a single resource by type and ID."""
+    assert_account_allowed(
+        current_user,
+        account_id or settings.aws_account_id,
+    )
     resource = store.get_resource(
         account_id or settings.aws_account_id,
         settings.aws_region,
@@ -376,6 +383,7 @@ def get_data_classification(
         get_resource_store
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ):
     """Get data classification for a single resource.
 
@@ -385,6 +393,10 @@ def get_data_classification(
 
     Returns 404 if the resource is not found.
     """
+    assert_account_allowed(
+        current_user,
+        account_id or settings.aws_account_id,
+    )
     resource = store.get_resource(
         account_id or settings.aws_account_id,
         settings.aws_region,
@@ -415,6 +427,7 @@ def get_data_summary(
         get_resource_store
     ),
     settings=Depends(get_settings),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """Aggregated data-classification statistics.
 
@@ -426,6 +439,10 @@ def get_data_summary(
         by_framework: count of resources per compliance
             framework (derived from ComplianceMapper).
     """
+    assert_account_allowed(
+        current_user,
+        account_id or settings.aws_account_id,
+    )
     from app.inventory.compliance_mapper import (
         ComplianceMapper,
     )

@@ -472,6 +472,11 @@ class TestMultiRegionScan:
             }
 
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "app.collectors.orchestrator"
             ".CollectionOrchestrator.collect_iam",
             fake_collect_iam_side_effect,
@@ -530,6 +535,11 @@ class TestMultiRegionScan:
             }
 
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "app.collectors.orchestrator"
             ".CollectionOrchestrator.collect_iam",
             fake_collect_iam,
@@ -608,6 +618,11 @@ class TestMultiRegionScan:
             }
 
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "concurrent.futures.ThreadPoolExecutor",
             CapturingExecutor,
         ), patch(
@@ -670,6 +685,11 @@ class TestMultiRegionScan:
             }
 
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "app.collectors.orchestrator"
             ".CollectionOrchestrator.collect_iam",
             fake_collect_iam,
@@ -790,6 +810,11 @@ class TestMultiRegionScan:
 
         scan_id = "scan-agg-001"
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "app.collectors.orchestrator"
             ".CollectionOrchestrator.collect_iam",
             fake_collect_iam,
@@ -874,6 +899,11 @@ class TestMultiRegionScan:
             }
 
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "concurrent.futures.ThreadPoolExecutor",
             CapturingExecutor,
         ), patch(
@@ -942,6 +972,11 @@ class TestMultiRegionScan:
 
         scan_id = "scan-err-001"
         with patch(
+            "app.routers.scans.get_account_store",
+            return_value=MagicMock(
+                list_active=MagicMock(return_value=[])
+            ),
+        ), patch(
             "app.collectors.orchestrator"
             ".CollectionOrchestrator.collect_iam",
             fake_collect_iam,
