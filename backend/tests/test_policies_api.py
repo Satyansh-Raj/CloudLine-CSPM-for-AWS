@@ -246,9 +246,11 @@ class TestCreateRawPolicy:
         assert data["status"] == "created"
         assert "custom_test_01" in data["check_ids"]
         assert data["filename"] == "custom_test.rego"
-        # Verify file was written
+        assert data["is_custom"] is True
+        # File must be in custom subtree
         written = (
             override_policy_dir
+            / "custom"
             / "identity"
             / "custom_test.rego"
         )
@@ -352,12 +354,15 @@ class TestCreateRawPolicy:
     def test_create_raw_file_exists(
         self, override_policy_dir
     ):
-        # Pre-create file
-        existing = (
+        # Pre-create file in the custom subtree
+        # (where new policies are now written)
+        custom_id = (
             override_policy_dir
+            / "custom"
             / "identity"
-            / "existing.rego"
         )
+        custom_id.mkdir(parents=True, exist_ok=True)
+        existing = custom_id / "existing.rego"
         existing.write_text("placeholder")
         with patch(
             "app.routers.policies.subprocess.run"
@@ -459,12 +464,12 @@ class TestDeletePolicy:
     def test_delete_existing(
         self, override_policy_dir
     ):
-        # Create a disposable policy first
-        disposable = (
-            override_policy_dir
-            / "identity"
-            / "disposable.rego"
+        # Create a disposable policy in custom/ subtree
+        custom_id = (
+            override_policy_dir / "custom" / "identity"
         )
+        custom_id.mkdir(parents=True, exist_ok=True)
+        disposable = custom_id / "disposable.rego"
         disposable.write_text(textwrap.dedent("""\
             package aws.identity.disposable
 
@@ -492,3 +497,413 @@ class TestDeletePolicy:
             "/api/v1/policies/nope_99"
         )
         assert resp.status_code == 404
+
+
+# ---- Batch 1: Storage Classifier Foundation ----
+
+
+class TestStorageClassifier:
+    def test_is_custom_path_returns_true_for_custom_subtree(
+        self,
+    ):
+        from app.routers.policies import _is_custom_path
+
+        assert _is_custom_path(
+            "custom/identity/foo.rego"
+        ) is True
+
+    def test_is_custom_path_returns_false_for_builtin_subtree(
+        self,
+    ):
+        from app.routers.policies import _is_custom_path
+
+        assert _is_custom_path("identity/iam.rego") is False
+
+    def test_is_custom_path_handles_relative_and_absolute_paths(
+        self,
+    ):
+        from pathlib import Path
+
+        from app.routers.policies import _is_custom_path
+
+        assert (
+            _is_custom_path(
+                Path("custom/identity/foo.rego")
+            )
+            is True
+        )
+        assert (
+            _is_custom_path(
+                Path("/policies/custom/identity/foo.rego")
+            )
+            is True
+        )
+        assert (
+            _is_custom_path(
+                Path("/policies/identity/iam.rego")
+            )
+            is False
+        )
+
+    def test_target_dir_routes_custom_writes_to_custom_subdir(
+        self, tmp_path
+    ):
+        from app.routers.policies import _target_dir
+
+        result = _target_dir(
+            tmp_path, "identity", is_custom=True
+        )
+        assert result == tmp_path / "custom" / "identity"
+
+    def test_target_dir_routes_builtin_to_domain_root(
+        self, tmp_path
+    ):
+        from app.routers.policies import _target_dir
+
+        result = _target_dir(
+            tmp_path, "identity", is_custom=False
+        )
+        assert result == tmp_path / "identity"
+
+    def test_policy_info_includes_is_custom_field_default_false(
+        self,
+    ):
+        from app.routers.policies import PolicyInfo
+
+        info = PolicyInfo(
+            filename="test.rego",
+            package_name="aws.test",
+            check_id="test_01",
+            domain="identity",
+            service="iam",
+            severity="high",
+            path="identity/test.rego",
+        )
+        assert info.is_custom is False
+
+    def test_extract_metadata_sets_is_custom_true_for_custom_path(
+        self, tmp_path
+    ):
+        from app.routers.policies import _extract_metadata
+
+        custom_dir = tmp_path / "custom" / "identity"
+        custom_dir.mkdir(parents=True)
+        rego = custom_dir / "my_check.rego"
+        rego.write_text(
+            textwrap.dedent("""\
+            package aws.custom.identity.my_check
+
+            violations contains result if {
+                result := {
+                    "check_id": "custom_check_01",
+                    "status": "alarm",
+                    "severity": "high",
+                    "reason": "Custom check",
+                    "resource": "",
+                    "domain": "identity",
+                    "service": "iam",
+                }
+            }
+        """)
+        )
+        info = _extract_metadata(rego, tmp_path)
+        assert info is not None
+        assert info.is_custom is True
+
+    def test_list_policies_returns_is_custom_in_response(
+        self, override_policy_dir
+    ):
+        resp = client.get("/api/v1/policies")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["policies"]) > 0
+        p = data["policies"][0]
+        assert "is_custom" in p
+        assert p["is_custom"] is False
+
+
+# ---- Batch 2: Write-path routing + delete guard ----
+
+_MOCK_OPA_OK = type(
+    "Result",
+    (),
+    {"returncode": 0, "stderr": "", "stdout": ""},
+)()
+
+_CREATE_POLICY_BODY = {
+    "check_id": "test_b2_custom",
+    "domain": "identity",
+    "severity": "high",
+    "description": "Batch two write path test",
+    "input_field": "iam",
+    "resource_pattern": "input.iam.users[_]",
+    "remediation_id": "REM_b2_01",
+}
+
+_CUSTOM_REGO = textwrap.dedent("""\
+    package aws.custom.identity.custom_del
+
+    violations contains result if {
+        result := {
+            "check_id": "custom_del_01",
+            "status": "alarm",
+            "severity": "low",
+            "reason": "Custom delete test",
+            "resource": "",
+            "domain": "identity",
+            "service": "iam",
+        }
+    }
+""")
+
+
+class TestWritePathAndDeleteGuard:
+    def test_create_policy_writes_to_custom_subdir(
+        self, override_policy_dir
+    ):
+        resp = client.post(
+            "/api/v1/policies",
+            json=_CREATE_POLICY_BODY,
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["path"].startswith("custom/")
+        assert (override_policy_dir / data["path"]).exists()
+
+    def test_create_raw_policy_writes_to_custom_subdir(
+        self, override_policy_dir
+    ):
+        with patch(
+            "app.routers.policies.subprocess.run",
+            return_value=_MOCK_OPA_OK,
+        ):
+            resp = client.post(
+                "/api/v1/policies/raw",
+                json={
+                    "rego_code": VALID_REGO,
+                    "domain": "identity",
+                    "filename": "raw_b2_test.rego",
+                },
+            )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["path"].startswith("custom/")
+        assert (override_policy_dir / data["path"]).exists()
+
+    def test_create_policy_returns_is_custom_true(
+        self, override_policy_dir
+    ):
+        body = dict(_CREATE_POLICY_BODY)
+        body["check_id"] = "test_b2_flag"
+        resp = client.post(
+            "/api/v1/policies",
+            json=body,
+        )
+        assert resp.status_code == 201
+        assert resp.json()["is_custom"] is True
+
+    def test_create_policy_rejects_duplicate_across_trees(
+        self, override_policy_dir
+    ):
+        # iam_root_mfa lives in identity/ (built-in)
+        resp = client.post(
+            "/api/v1/policies",
+            json={
+                "check_id": "iam_root_mfa",
+                "domain": "identity",
+                "severity": "critical",
+                "description": "Duplicate of builtin policy",
+                "input_field": "iam",
+                "resource_pattern": "input.iam.users[_]",
+                "remediation_id": "REM_dup_01",
+            },
+        )
+        assert resp.status_code == 409
+        assert "iam_root_mfa" in resp.json()["detail"]
+
+    def test_delete_builtin_policy_returns_403(
+        self, override_policy_dir
+    ):
+        resp = client.delete(
+            "/api/v1/policies/iam_root_mfa"
+        )
+        assert resp.status_code == 403
+
+    def test_delete_custom_policy_succeeds(
+        self, override_policy_dir
+    ):
+        custom_dir = (
+            override_policy_dir / "custom" / "identity"
+        )
+        custom_dir.mkdir(parents=True, exist_ok=True)
+        custom_file = custom_dir / "custom_del.rego"
+        custom_file.write_text(_CUSTOM_REGO)
+        resp = client.delete(
+            "/api/v1/policies/custom_del_01"
+        )
+        assert resp.status_code == 200
+        assert not custom_file.exists()
+
+    def test_delete_403_message_does_not_leak_filesystem_path(
+        self, override_policy_dir
+    ):
+        resp = client.delete(
+            "/api/v1/policies/iam_root_mfa"
+        )
+        assert resp.status_code == 403
+        detail = resp.json()["detail"]
+        assert str(override_policy_dir) not in detail
+        # Must not expose raw filesystem separators
+        assert "/" not in detail
+
+    def test_opa_loads_policies_from_both_trees(
+        self, override_policy_dir
+    ):
+        custom_dir = (
+            override_policy_dir / "custom" / "identity"
+        )
+        custom_dir.mkdir(parents=True, exist_ok=True)
+        (custom_dir / "custom_policy.rego").write_text(
+            textwrap.dedent("""\
+            package aws.custom.identity.custom_policy
+
+            violations contains result if {
+                result := {
+                    "check_id": "custom_policy_01",
+                    "status": "alarm",
+                    "severity": "medium",
+                    "reason": "Custom policy",
+                    "resource": "",
+                    "domain": "identity",
+                    "service": "iam",
+                }
+            }
+        """)
+        )
+        resp = client.get("/api/v1/policies")
+        assert resp.status_code == 200
+        ids = [
+            p["check_id"]
+            for p in resp.json()["policies"]
+        ]
+        assert "iam_root_mfa" in ids
+        assert "custom_policy_01" in ids
+
+
+# ---- Batch 3: Listing API filter surface ----
+
+_CUSTOM_POLICY_REGO = textwrap.dedent("""\
+    package aws.custom.identity.b3_custom
+
+    violations contains result if {
+        result := {
+            "check_id": "b3_custom_01",
+            "status": "alarm",
+            "severity": "medium",
+            "reason": "Batch 3 custom policy",
+            "resource": "",
+            "domain": "identity",
+            "service": "iam",
+        }
+    }
+""")
+
+
+@pytest.fixture
+def dual_tree_dir(policies_dir):
+    """Add a custom policy alongside the builtin one."""
+    custom_id = policies_dir / "custom" / "identity"
+    custom_id.mkdir(parents=True, exist_ok=True)
+    (custom_id / "b3_custom.rego").write_text(
+        _CUSTOM_POLICY_REGO
+    )
+    return policies_dir
+
+
+@pytest.fixture
+def override_dual_tree(dual_tree_dir):
+    """Settings override pointing at dual-tree dir."""
+    from app.config import Settings
+    from app.dependencies import get_settings
+
+    def _override():
+        return Settings(
+            opa_policy_dir=str(dual_tree_dir),
+            aws_region="us-east-1",
+            aws_account_id="123456789012",
+            api_key="test",
+            app_env="testing",
+        )
+
+    app.dependency_overrides[get_settings] = _override
+    yield dual_tree_dir
+    app.dependency_overrides.pop(get_settings, None)
+
+
+class TestListFilter:
+    def test_list_policies_no_filter_returns_both_trees(
+        self, override_dual_tree
+    ):
+        resp = client.get("/api/v1/policies")
+        assert resp.status_code == 200
+        ids = [
+            p["check_id"]
+            for p in resp.json()["policies"]
+        ]
+        assert "iam_root_mfa" in ids
+        assert "b3_custom_01" in ids
+
+    def test_list_policies_custom_true_returns_only_custom(
+        self, override_dual_tree
+    ):
+        resp = client.get(
+            "/api/v1/policies?custom=true"
+        )
+        assert resp.status_code == 200
+        policies = resp.json()["policies"]
+        assert all(p["is_custom"] for p in policies)
+        ids = [p["check_id"] for p in policies]
+        assert "b3_custom_01" in ids
+        assert "iam_root_mfa" not in ids
+
+    def test_list_policies_custom_false_returns_only_builtin(
+        self, override_dual_tree
+    ):
+        resp = client.get(
+            "/api/v1/policies?custom=false"
+        )
+        assert resp.status_code == 200
+        policies = resp.json()["policies"]
+        assert all(not p["is_custom"] for p in policies)
+        ids = [p["check_id"] for p in policies]
+        assert "iam_root_mfa" in ids
+        assert "b3_custom_01" not in ids
+
+    def test_list_policies_invalid_custom_value_returns_422(
+        self, override_dual_tree
+    ):
+        resp = client.get(
+            "/api/v1/policies?custom=notabool"
+        )
+        assert resp.status_code == 422
+
+    def test_get_policy_source_includes_is_custom_field(
+        self, override_dual_tree
+    ):
+        resp = client.get(
+            "/api/v1/policies/iam_root_mfa/source"
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "is_custom" in data
+        assert data["is_custom"] is False
+
+    def test_get_policy_source_is_custom_true_for_custom_policy(
+        self, override_dual_tree
+    ):
+        resp = client.get(
+            "/api/v1/policies/b3_custom_01/source"
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["is_custom"] is True

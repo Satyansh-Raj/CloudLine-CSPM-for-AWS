@@ -234,6 +234,9 @@ export default function PoliciesPage() {
   /* ── Left-panel state ───────────────────────── */
   const [search, setSearch] = useState("");
   const [domainFilter, setDomainFilter] = useState("");
+  const [customFilter, setCustomFilter] = useState<
+    "all" | "builtin" | "custom"
+  >("all");
   const [collapsedDomains, setCollapsedDomains] = useState<Set<string>>(
     new Set(),
   );
@@ -241,13 +244,19 @@ export default function PoliciesPage() {
   const [sourceCache, setSourceCache] = useState<Record<string, string>>({});
   const [sourceLoading, setSourceLoading] = useState(false);
 
+  const customParam =
+    customFilter === "all" ? undefined : customFilter === "custom";
+
   const {
     data: policies,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["policies"],
-    queryFn: getPolicies,
+    queryKey: ["policies", customFilter],
+    queryFn: () =>
+      getPolicies(
+        customParam !== undefined ? { custom: customParam } : undefined,
+      ),
   });
 
   const createMutation = useMutation({
@@ -474,7 +483,7 @@ export default function PoliciesPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[55%_43%] gap-6 justify-between">
         {/* ── Left: Policy list ──────────────── */}
         <div className={panelCls}>
           {/* Header + count */}
@@ -500,8 +509,8 @@ export default function PoliciesPage() {
           </div>
 
           {/* Search + domain filter */}
-          <div className="flex gap-2 mb-4">
-            <div className="relative flex-1">
+          <div className="flex gap-2 mb-4 items-center">
+            <div className="relative flex-1 min-w-0">
               <svg
                 className={
                   "absolute left-2.5 top-1/2" +
@@ -552,6 +561,27 @@ export default function PoliciesPage() {
                 })),
               ]}
             />
+            <div className="flex items-center gap-1">
+              {(["all", "builtin", "custom"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setCustomFilter(v)}
+                  aria-pressed={customFilter === v}
+                  className={
+                    "px-2.5 py-1.5 text-xs rounded-pill border transition-colors whitespace-nowrap" +
+                    (customFilter === v
+                      ? " bg-ink-black text-canvas-cream dark:bg-canvas-cream dark:text-ink-black border-transparent"
+                      : " border-ghost-cream dark:border-white/10 text-slate-gray hover:text-ink-black dark:hover:text-canvas-cream")
+                  }
+                >
+                  {v === "all"
+                    ? "All"
+                    : v === "builtin"
+                      ? "Built-in"
+                      : "Custom"}
+                </button>
+              ))}
+            </div>
             {(search || domainFilter) && (
               <button
                 onClick={() => {
@@ -702,6 +732,23 @@ export default function PoliciesPage() {
                                       {p.rule_count === 1 ? "rule" : "rules"}
                                     </span>
                                   )}
+                                  {p.is_custom && (
+                                    <span
+                                      data-testid="custom-badge"
+                                      className={
+                                        "text-[10px]" +
+                                        " text-emerald-700" +
+                                        " dark:text-emerald-400" +
+                                        " bg-emerald-50" +
+                                        " dark:bg-emerald-500/10" +
+                                        " px-1.5 py-0.5" +
+                                        " rounded-pill" +
+                                        " font-medium"
+                                      }
+                                    >
+                                      Custom
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
@@ -736,37 +783,39 @@ export default function PoliciesPage() {
                                   </svg>
                                 </button>
 
-                                {/* Delete */}
-                                <button
-                                  onClick={() => handleDelete(p.check_id)}
-                                  disabled={deleteMutation.isPending}
-                                  className={
-                                    "p-1.5" +
-                                    " rounded-btn" +
-                                    " text-slate-gray" +
-                                    " hover:text-red-600" +
-                                    " dark:hover:text-red-400" +
-                                    " hover:bg-red-50" +
-                                    " dark:hover:bg-red-500/10" +
-                                    " transition-colors" +
-                                    " disabled:opacity-50"
-                                  }
-                                  title={`Delete ${p.check_id}`}
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                                {/* Delete — custom policies only */}
+                                {p.is_custom && (
+                                  <button
+                                    onClick={() => handleDelete(p.check_id)}
+                                    disabled={deleteMutation.isPending}
+                                    className={
+                                      "p-1.5" +
+                                      " rounded-btn" +
+                                      " text-slate-gray" +
+                                      " hover:text-red-600" +
+                                      " dark:hover:text-red-400" +
+                                      " hover:bg-red-50" +
+                                      " dark:hover:bg-red-500/10" +
+                                      " transition-colors" +
+                                      " disabled:opacity-50"
+                                    }
+                                    title={`Delete ${p.check_id}`}
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="1.8"
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                </button>
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="1.8"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
                             </div>
 
@@ -872,7 +921,7 @@ export default function PoliciesPage() {
         </div>
 
         {/* ── Right: Add Policy (tabbed) ────── */}
-        <div className={panelCls}>
+        <div className={`${panelCls} self-start`}>
           <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-4">
             Add New Policy
           </h3>
@@ -1108,22 +1157,23 @@ export default function PoliciesPage() {
               )}
 
               {/* Submit */}
-              <button
-                type="submit"
-                disabled={createMutation.isPending}
-                className={
-                  "w-full mt-2 px-4 py-2.5" +
-                  " rounded-btn text-sm" +
-                  " font-medium" +
-                  " bg-ink-black text-canvas-cream" +
-                  " dark:bg-canvas-cream dark:text-ink-black" +
-                  " hover:opacity-90" +
-                  " disabled:opacity-50" +
-                  " transition-opacity"
-                }
-              >
-                {createMutation.isPending ? "Creating..." : "Create Policy"}
-              </button>
+              <div className="flex justify-end mt-2">
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className={
+                    "px-6 py-2 rounded-btn text-sm" +
+                    " font-medium" +
+                    " bg-ink-black text-canvas-cream" +
+                    " dark:bg-canvas-cream dark:text-ink-black" +
+                    " hover:opacity-90" +
+                    " disabled:opacity-50" +
+                    " transition-opacity"
+                  }
+                >
+                  {createMutation.isPending ? "Creating..." : "Create Policy"}
+                </button>
+              </div>
             </form>
           )}
 
@@ -1209,22 +1259,23 @@ export default function PoliciesPage() {
               </div>
 
               {/* Submit */}
-              <button
-                type="submit"
-                disabled={rawMutation.isPending}
-                className={
-                  "w-full mt-2 px-4 py-2.5" +
-                  " rounded-btn text-sm" +
-                  " font-medium" +
-                  " bg-ink-black text-canvas-cream" +
-                  " dark:bg-canvas-cream dark:text-ink-black" +
-                  " hover:opacity-90" +
-                  " disabled:opacity-50" +
-                  " transition-opacity"
-                }
-              >
-                {rawMutation.isPending ? "Creating..." : "Create Policy"}
-              </button>
+              <div className="flex justify-end mt-2">
+                <button
+                  type="submit"
+                  disabled={rawMutation.isPending}
+                  className={
+                    "px-6 py-2 rounded-btn text-sm" +
+                    " font-medium" +
+                    " bg-ink-black text-canvas-cream" +
+                    " dark:bg-canvas-cream dark:text-ink-black" +
+                    " hover:opacity-90" +
+                    " disabled:opacity-50" +
+                    " transition-opacity"
+                  }
+                >
+                  {rawMutation.isPending ? "Creating..." : "Create Policy"}
+                </button>
+              </div>
             </form>
           )}
         </div>

@@ -14,6 +14,7 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Query,
 )
 from pydantic import BaseModel, Field
 
@@ -86,6 +87,9 @@ class ComplianceMappings(BaseModel):
     pci_dss: list[str] = Field(default_factory=list)
 
 
+CUSTOM_SUBDIR = "custom"
+
+
 class PolicyInfo(BaseModel):
     """Policy metadata extracted from .rego file."""
 
@@ -98,6 +102,7 @@ class PolicyInfo(BaseModel):
     path: str
     rule_count: int = 0
     description: str = ""
+    is_custom: bool = False
 
 
 class CreatePolicyRequest(BaseModel):
@@ -169,6 +174,34 @@ def _resolve_policy_dir(
         )
         policy_dir = (backend_root / policy_dir).resolve()
     return policy_dir
+
+
+def _custom_root(policy_dir: Path) -> Path:
+    """Return the custom policies subtree root."""
+    return policy_dir / CUSTOM_SUBDIR
+
+
+def _is_custom_path(path: "str | Path") -> bool:
+    """Return True if path passes through the custom
+    subtree (contains CUSTOM_SUBDIR as a component)."""
+    return CUSTOM_SUBDIR in Path(path).parts
+
+
+def _target_dir(
+    policy_dir: Path,
+    domain: str,
+    *,
+    is_custom: bool,
+) -> Path:
+    """Return the filesystem dir for writing a policy.
+
+    Custom policies go under custom/{dir_name};
+    built-ins go directly under {dir_name}.
+    """
+    dir_name = DOMAIN_DIRS.get(domain, domain)
+    if is_custom:
+        return _custom_root(policy_dir) / dir_name
+    return policy_dir / dir_name
 
 
 def _extract_metadata(
@@ -256,6 +289,7 @@ def _extract_metadata(
         path=rel_path,
         rule_count=rule_count,
         description=description,
+        is_custom=_is_custom_path(rel_path),
     )
 
 
@@ -425,12 +459,15 @@ def _find_file_for_check_id(
 
 @router.get("/policies")
 def list_policies(
+    custom: bool | None = Query(default=None),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     """List all Rego policies.
 
     Scans the policies directory for .rego files
     (excluding tests) and extracts metadata.
+    Pass ``custom=true`` for user-defined policies
+    only; ``custom=false`` for built-ins only.
     """
     policy_dir = _resolve_policy_dir(settings)
     if not policy_dir.is_dir():
@@ -454,8 +491,11 @@ def list_policies(
             continue
 
         info = _extract_metadata(rego_path, policy_dir)
-        if info:
-            policies.append(info.model_dump())
+        if info is None:
+            continue
+        if custom is not None and info.is_custom != custom:
+            continue
+        policies.append(info.model_dump())
 
     return {
         "policies": policies,
@@ -484,7 +524,9 @@ def create_policy(
             status_code=400,
             detail=f"Unknown domain: {body.domain}",
         )
-    domain_path = policy_dir / domain_dir_name
+    domain_path = _target_dir(
+        policy_dir, body.domain.value, is_custom=True
+    )
     if not domain_path.is_dir():
         domain_path.mkdir(parents=True, exist_ok=True)
 
@@ -532,6 +574,7 @@ def create_policy(
         "check_id": body.check_id,
         "filename": filename,
         "path": rel_path,
+        "is_custom": True,
     }
 
 
@@ -573,6 +616,14 @@ def delete_policy(
             rel_path = str(
                 rego_path.relative_to(policy_dir)
             )
+            if not _is_custom_path(rel_path):
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        f"Policy {check_id} is "
+                        "built-in and cannot be deleted"
+                    ),
+                )
             rego_path.unlink()
             return {
                 "status": "deleted",
@@ -616,10 +667,12 @@ def get_policy_source(
             detail=f"Policy {check_id} not found",
         )
 
+    rel_path = str(rego_path.relative_to(policy_dir))
     return {
         "check_id": check_id,
         "filename": rego_path.name,
         "rego_code": rego_path.read_text(),
+        "is_custom": _is_custom_path(rel_path),
     }
 
 
@@ -674,7 +727,9 @@ def create_raw_policy(
             )
 
     # Ensure domain directory exists
-    domain_path = policy_dir / domain_dir_name
+    domain_path = _target_dir(
+        policy_dir, body.domain.value, is_custom=True
+    )
     if not domain_path.is_dir():
         domain_path.mkdir(
             parents=True, exist_ok=True
@@ -699,4 +754,5 @@ def create_raw_policy(
         "check_ids": list(set(check_ids)),
         "filename": body.filename,
         "path": rel_path,
+        "is_custom": True,
     }

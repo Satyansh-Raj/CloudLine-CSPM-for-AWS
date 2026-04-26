@@ -10,6 +10,7 @@ export interface PolicyInfo {
   path: string;
   rule_count: number;
   description: string;
+  is_custom: boolean;
 }
 
 export interface CreatePolicyRequest {
@@ -34,18 +35,19 @@ export interface PolicySource {
   rego_code: string;
 }
 
-export async function getPolicies(): Promise<
-  PolicyInfo[]
-> {
+export async function getPolicies(params?: {
+  custom?: boolean;
+}): Promise<PolicyInfo[]> {
   const { data } = await apiClient.get<{
     policies: PolicyInfo[];
-  }>("/v1/policies");
+  }>("/v1/policies", {
+    params:
+      params?.custom !== undefined ? { custom: params.custom } : undefined,
+  });
   return data.policies;
 }
 
-export async function getPolicySource(
-  checkId: string,
-): Promise<PolicySource> {
+export async function getPolicySource(checkId: string): Promise<PolicySource> {
   const { data } = await apiClient.get<PolicySource>(
     `/v1/policies/${checkId}/source`,
   );
@@ -55,10 +57,7 @@ export async function getPolicySource(
 export async function createPolicy(
   req: CreatePolicyRequest,
 ): Promise<{ status: string; check_id: string }> {
-  const { data } = await apiClient.post(
-    "/v1/policies",
-    req,
-  );
+  const { data } = await apiClient.post("/v1/policies", req);
   return data;
 }
 
@@ -68,24 +67,17 @@ export interface CreateRawPolicyRequest {
   filename: string;
 }
 
-export async function createRawPolicy(
-  req: CreateRawPolicyRequest,
-): Promise<{
+export async function createRawPolicy(req: CreateRawPolicyRequest): Promise<{
   status: string;
   check_ids: string[];
 }> {
-  const { data } = await apiClient.post(
-    "/v1/policies/raw",
-    req,
-  );
+  const { data } = await apiClient.post("/v1/policies/raw", req);
   return data;
 }
 
 export async function deletePolicy(
   checkId: string,
 ): Promise<{ status: string }> {
-  const { data } = await apiClient.delete(
-    `/v1/policies/${checkId}`,
-  );
+  const { data } = await apiClient.delete(`/v1/policies/${checkId}`);
   return data;
 }

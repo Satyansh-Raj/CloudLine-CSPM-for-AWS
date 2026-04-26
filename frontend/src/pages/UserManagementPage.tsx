@@ -854,15 +854,32 @@ export default function UserManagementPage() {
                               >
                                 History
                               </button>
-                              {u.is_active && (
-                                <button
-                                  type="button"
-                                  onClick={() => void handleDeleteUser(u.sk)}
-                                  className="px-2.5 py-1 text-[11px] rounded-btn border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-                                >
-                                  Deactivate
-                                </button>
-                              )}
+                              {u.is_active &&
+                                (() => {
+                                  const activeAdmins = users.filter(
+                                    (x) => x.role === "admin" && x.is_active,
+                                  );
+                                  const isLastAdmin =
+                                    u.role === "admin" &&
+                                    activeAdmins.length <= 1;
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        void handleDeleteUser(u.sk)
+                                      }
+                                      disabled={isLastAdmin}
+                                      title={
+                                        isLastAdmin
+                                          ? "Cannot deactivate the last admin"
+                                          : undefined
+                                      }
+                                      className="px-2.5 py-1 text-[11px] rounded-btn border border-red-200 dark:border-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      Deactivate
+                                    </button>
+                                  );
+                                })()}
                               {!u.is_active && (
                                 <>
                                   <button
