@@ -84,97 +84,9 @@ class AccountUpdateRequest(BaseModel):
     regions: list[str] | None = None
 
 
-_SCANNER_POLICY = {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "CloudLineScannerReadOnly",
-            "Effect": "Allow",
-            "Action": [
-                "iam:Get*", "iam:List*",
-                "ec2:Describe*",
-                "s3:GetBucketAcl",
-                "s3:GetBucketLocation",
-                "s3:GetBucketLogging",
-                "s3:GetBucketPolicy",
-                "s3:GetBucketVersioning",
-                "s3:GetEncryptionConfiguration",
-                "s3:GetPublicAccessBlock",
-                "s3:ListAllMyBuckets",
-                "s3:ListBucket",
-                "rds:Describe*",
-                "lambda:GetFunction",
-                "lambda:GetFunctionConfiguration",
-                "lambda:GetPolicy",
-                "lambda:ListFunctions",
-                "lambda:ListTags",
-                "guardduty:GetDetector",
-                "guardduty:ListDetectors",
-                "guardduty:ListFindings",
-                "cloudtrail:DescribeTrails",
-                "cloudtrail:GetEventSelectors",
-                "cloudtrail:GetTrailStatus",
-                "cloudtrail:ListTrails",
-                "kms:DescribeKey",
-                "kms:GetKeyPolicy",
-                "kms:GetKeyRotationStatus",
-                "kms:ListAliases",
-                "kms:ListKeys",
-                "kms:ListResourceTags",
-                "logs:DescribeLogGroups",
-                "logs:DescribeMetricFilters",
-                "logs:ListTagsLogGroup",
-                "cloudwatch:DescribeAlarms",
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:ListMetrics",
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:ListSecrets",
-                "config:DescribeConfigurationRecorders",
-                "config:DescribeConfigurationRecorderStatus",
-                "config:DescribeDeliveryChannels",
-                "config:GetComplianceDetailsByConfigRule",
-                "organizations:DescribeOrganization",
-                "organizations:ListAccounts",
-                "organizations:ListPolicies",
-                "macie2:GetMacieSession",
-                "macie2:ListFindings",
-                "elasticloadbalancing:Describe*",
-                "cloudfront:GetDistribution",
-                "cloudfront:ListDistributions",
-                "dynamodb:DescribeTable",
-                "dynamodb:ListTables",
-                "apigateway:GET",
-                "ecs:Describe*", "ecs:List*",
-                "ecr:DescribeRepositories",
-                "ecr:GetRepositoryPolicy",
-                "ecr:ListImages",
-                "eks:DescribeCluster",
-                "eks:ListClusters",
-                "eks:ListNodegroups",
-                "autoscaling:DescribeAutoScalingGroups",
-                "backup:ListBackupPlans",
-                "backup:ListBackupSelections",
-                "backup:ListProtectedResources",
-                "config:DescribeConfigRules",
-                "config:DescribeConfigurationAggregators",
-                "config:DescribeConfigurationRecorders",
-                "config:DescribeConfigurationRecorderStatus",
-                "config:DescribeConformancePacks",
-                "config:DescribeDeliveryChannels",
-                "config:GetComplianceDetailsByConfigRule",
-                "route53:ListHostedZones",
-                "route53:ListResourceRecordSets",
-                "secretsmanager:GetResourcePolicy",
-                "network-firewall:ListFirewalls",
-                "network-firewall:DescribeFirewall",
-                "wafv2:ListWebACLs",
-                "wafv2:GetWebACL",
-                "sts:GetCallerIdentity",
-            ],
-            "Resource": "*",
-        }
-    ],
-}
+_SECURITY_AUDIT_POLICY_ARN = (
+    "arn:aws:iam::aws:policy/SecurityAudit"
+)
 
 
 def _build_bash_script(
@@ -204,9 +116,6 @@ def _build_bash_script(
             }
         ],
     }
-    policy_json = _json.dumps(
-        _SCANNER_POLICY, indent=2
-    )
     trust_json = _json.dumps(trust, indent=2)
     return textwrap.dedent(f"""\
         #!/bin/bash
@@ -217,7 +126,7 @@ def _build_bash_script(
 
         ROLE_NAME="CloudLineScanner"
         TRUST_POLICY='{trust_json}'
-        SCANNER_POLICY='{policy_json}'
+        POLICY_ARN="{_SECURITY_AUDIT_POLICY_ARN}"
 
         if aws iam get-role --role-name "$ROLE_NAME" \\
              > /dev/null 2>&1; then
@@ -232,11 +141,10 @@ def _build_bash_script(
             --assume-role-policy-document "$TRUST_POLICY"
         fi
 
-        echo "Attaching inline policy ..."
-        aws iam put-role-policy \\
+        echo "Attaching SecurityAudit managed policy ..."
+        aws iam attach-role-policy \\
           --role-name "$ROLE_NAME" \\
-          --policy-name CloudLineScannerPolicy \\
-          --policy-document "$SCANNER_POLICY"
+          --policy-arn "$POLICY_ARN"
 
         ACCOUNT=$(aws sts get-caller-identity \\
           --query Account --output text)
@@ -274,92 +182,8 @@ def _build_cf_template(
                     Condition:
                       StringEquals:
                         sts:ExternalId: "{external_id}"
-              Policies:
-                - PolicyName: CloudLineScannerPolicy
-                  PolicyDocument:
-                    Version: "2012-10-17"
-                    Statement:
-                      - Sid: CloudLineScannerReadOnly
-                        Effect: Allow
-                        Resource: "*"
-                        Action:
-                          - iam:Get*
-                          - iam:List*
-                          - ec2:Describe*
-                          - s3:GetBucketAcl
-                          - s3:GetBucketLocation
-                          - s3:GetBucketLogging
-                          - s3:GetBucketPolicy
-                          - s3:GetBucketVersioning
-                          - s3:GetEncryptionConfiguration
-                          - s3:GetPublicAccessBlock
-                          - s3:ListAllMyBuckets
-                          - s3:ListBucket
-                          - rds:Describe*
-                          - lambda:GetFunction
-                          - lambda:GetFunctionConfiguration
-                          - lambda:GetPolicy
-                          - lambda:ListFunctions
-                          - lambda:ListTags
-                          - guardduty:GetDetector
-                          - guardduty:ListDetectors
-                          - guardduty:ListFindings
-                          - cloudtrail:DescribeTrails
-                          - cloudtrail:GetEventSelectors
-                          - cloudtrail:GetTrailStatus
-                          - cloudtrail:ListTrails
-                          - kms:DescribeKey
-                          - kms:GetKeyPolicy
-                          - kms:GetKeyRotationStatus
-                          - kms:ListAliases
-                          - kms:ListKeys
-                          - kms:ListResourceTags
-                          - logs:DescribeLogGroups
-                          - logs:DescribeMetricFilters
-                          - logs:ListTagsLogGroup
-                          - cloudwatch:DescribeAlarms
-                          - cloudwatch:GetMetricStatistics
-                          - cloudwatch:ListMetrics
-                          - secretsmanager:DescribeSecret
-                          - secretsmanager:ListSecrets
-                          - config:DescribeConfigurationRecorders
-                          - config:DescribeConfigurationRecorderStatus
-                          - config:DescribeDeliveryChannels
-                          - config:GetComplianceDetailsByConfigRule
-                          - organizations:DescribeOrganization
-                          - organizations:ListAccounts
-                          - organizations:ListPolicies
-                          - macie2:GetMacieSession
-                          - macie2:ListFindings
-                          - elasticloadbalancing:Describe*
-                          - cloudfront:GetDistribution
-                          - cloudfront:ListDistributions
-                          - dynamodb:DescribeTable
-                          - dynamodb:ListTables
-                          - apigateway:GET
-                          - ecs:Describe*
-                          - ecs:List*
-                          - ecr:DescribeRepositories
-                          - ecr:GetRepositoryPolicy
-                          - ecr:ListImages
-                          - eks:DescribeCluster
-                          - eks:ListClusters
-                          - eks:ListNodegroups
-                          - autoscaling:DescribeAutoScalingGroups
-                          - backup:ListBackupPlans
-                          - backup:ListBackupSelections
-                          - backup:ListProtectedResources
-                          - config:DescribeConfigRules
-                          - config:DescribeConfigurationAggregators
-                          - config:DescribeConformancePacks
-                          - route53:ListHostedZones
-                          - route53:ListResourceRecordSets
-                          - secretsmanager:GetResourcePolicy
-                          - network-firewall:ListFirewalls
-                          - network-firewall:DescribeFirewall
-                          - wafv2:ListWebACLs
-                          - wafv2:GetWebACL
-                          - sts:GetCallerIdentity
+              ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/SecurityAudit
 
         Outputs:
           RoleArn:
