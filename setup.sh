@@ -164,7 +164,7 @@ if command -v docker &>/dev/null; then
     info "Adding $USER to docker group..."
     sudo usermod -aG docker "$USER"
     info "Re-launching setup with docker group active..."
-    exec sg docker "$0" "$@"
+    exec sg docker -c "$(printf '%q ' "$0" "$@")"
   fi
 elif command -v podman &>/dev/null; then
   success "Podman found: $(podman --version)"
@@ -205,15 +205,8 @@ else
 
     sudo usermod -aG docker "$USER" 2>/dev/null || true
     success "Docker installed"
-    echo ""
-    echo -e "${YELLOW}${BOLD}ACTION REQUIRED:${NC}" \
-      "Docker was just installed."
-    echo -e "  You must ${BOLD}log out and log back in${NC}" \
-      "so your user can run Docker commands."
-    echo -e "  After logging back in, re-run:" \
-      "${BOLD}./setup.sh${NC}"
-    echo ""
-    exit 0
+    info "Re-launching setup with docker group active..."
+    exec sg docker -c "$(printf '%q ' "$0" "$@")"
   elif [[ "$OS" == "Darwin" ]]; then
     warn "Install Docker Desktop: https://docker.com/products/docker-desktop"
     exit 1
@@ -405,6 +398,41 @@ success "Cross-account AssumeRole policy applied"
 # ═══════════════════════════════════════════════════
 banner "Phase 3 — Configuring Environment"
 
+# ── Admin account credentials ──
+echo -e "${CYAN}Set up the admin account for the CloudLine dashboard.${NC}"
+echo ""
+
+while true; do
+  read -rp "$(echo -e "${BOLD}Admin email [admin@cloudline.dev]:${NC} ")" ADMIN_EMAIL
+  ADMIN_EMAIL="${ADMIN_EMAIL:-admin@cloudline.dev}"
+  if [[ "$ADMIN_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+    break
+  fi
+  warn "Invalid email format"
+done
+
+while true; do
+  read -rsp "$(echo -e "${BOLD}Admin password (min 8 chars, 1 uppercase, 1 number, 1 special):${NC} ")" ADMIN_PASSWORD
+  echo ""
+  if [[ ${#ADMIN_PASSWORD} -ge 8 ]] \
+     && [[ "$ADMIN_PASSWORD" =~ [A-Z] ]] \
+     && [[ "$ADMIN_PASSWORD" =~ [0-9] ]] \
+     && [[ "$ADMIN_PASSWORD" =~ [^a-zA-Z0-9] ]]; then
+    read -rsp "$(echo -e "${BOLD}Confirm password:${NC} ")" ADMIN_PASSWORD_CONFIRM
+    echo ""
+    if [[ "$ADMIN_PASSWORD" == "$ADMIN_PASSWORD_CONFIRM" ]]; then
+      break
+    fi
+    warn "Passwords do not match"
+  else
+    warn "Password too weak — need 8+ chars, uppercase, number, special character"
+  fi
+done
+success "Admin account configured: $ADMIN_EMAIL"
+
+# Auto-generate a secure JWT secret
+JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+
 if [[ "${SKIP_ENV_CREDS:-false}" == "true" ]]; then
   info ".env already has valid credentials — skipping rewrite"
 else
@@ -436,8 +464,11 @@ DYNAMODB_CONFIG_TABLE=auto-remediation-config
 # SNS Configuration (filled after terraform apply)
 SNS_ALERT_TOPIC_ARN=
 
-# Authentication
-API_KEY=
+# RBAC / JWT Auth
+AUTH_ENABLED=true
+JWT_SECRET=$JWT_SECRET
+ADMIN_BOOTSTRAP_EMAIL=$ADMIN_EMAIL
+ADMIN_BOOTSTRAP_PASSWORD=$ADMIN_PASSWORD
 
 # Application Settings
 APP_ENV=development
@@ -454,6 +485,19 @@ JIRA_API_TOKEN=
 JIRA_PROJECT_KEY=
 EOF
   success ".env generated with scanner credentials"
+fi
+
+# Ensure auth vars exist (may be missing from older .env)
+if ! grep -q "^ADMIN_BOOTSTRAP_EMAIL=" "$ENV_FILE" 2>/dev/null; then
+  cat >> "$ENV_FILE" <<EOF
+
+# RBAC / JWT Auth
+AUTH_ENABLED=true
+JWT_SECRET=$JWT_SECRET
+ADMIN_BOOTSTRAP_EMAIL=$ADMIN_EMAIL
+ADMIN_BOOTSTRAP_PASSWORD=$ADMIN_PASSWORD
+EOF
+  info "Added auth configuration to .env"
 fi
 
 # Ensure Jira vars exist (may be missing from older .env)

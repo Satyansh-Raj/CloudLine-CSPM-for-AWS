@@ -1,10 +1,5 @@
 #!/bin/bash
 #
-# CloudLine — Quick Start / Stop
-#
-# Starts Docker containers + frontend without re-running setup.
-# Use this after the initial setup.sh has been completed.
-#
 # Usage:
 #   ./start.sh            — Start everything
 #   ./start.sh --stop     — Stop all containers
@@ -29,6 +24,14 @@ info()    { echo -e "${CYAN}→${NC} $1"; }
 success() { echo -e "${GREEN}✔${NC} $1"; }
 warn()    { echo -e "${YELLOW}⚠${NC} $1"; }
 fail()    { echo -e "${RED}✘${NC} $1"; }
+
+# ── Docker group check ──
+if ! docker info &>/dev/null 2>&1; then
+  if ! getent group docker | grep -q "\b${USER}\b"; then
+    sudo usermod -aG docker "$USER"
+  fi
+  exec sg docker -c "$(printf '%q ' "$0" "$@")"
+fi
 
 # ── Stop ──
 do_stop() {
