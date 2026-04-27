@@ -4632,6 +4632,46 @@
       "owasp": [
         "A02:2025"
       ]
+    },
+    "ec2_tag_name_required": {
+      "cis_aws": [],
+      "nist_800_53": ["CM-8"],
+      "pci_dss": [],
+      "hipaa": [],
+      "soc2": ["CC6.1"],
+      "owasp": []
+    },
+    "ec2_tag_environment_required": {
+      "cis_aws": [],
+      "nist_800_53": ["CM-8"],
+      "pci_dss": [],
+      "hipaa": [],
+      "soc2": ["CC6.1"],
+      "owasp": []
+    },
+    "ec2_tag_owner_required": {
+      "cis_aws": [],
+      "nist_800_53": ["CM-8"],
+      "pci_dss": [],
+      "hipaa": [],
+      "soc2": ["CC6.1"],
+      "owasp": []
+    },
+    "ec2_tag_project_required": {
+      "cis_aws": [],
+      "nist_800_53": ["CM-8"],
+      "pci_dss": [],
+      "hipaa": [],
+      "soc2": ["CC6.1"],
+      "owasp": []
+    },
+    "ec2_tag_costcenter_required": {
+      "cis_aws": [],
+      "nist_800_53": ["CM-8"],
+      "pci_dss": [],
+      "hipaa": [],
+      "soc2": ["CC6.1"],
+      "owasp": []
     }
   }
 }
