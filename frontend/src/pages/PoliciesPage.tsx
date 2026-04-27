@@ -423,7 +423,10 @@ export default function PoliciesPage() {
   function handleRawSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFeedback(null);
-    rawMutation.mutate(rawForm);
+    const filename = rawForm.filename.endsWith(".rego")
+      ? rawForm.filename
+      : `${rawForm.filename}.rego`;
+    rawMutation.mutate({ ...rawForm, filename });
   }
 
   function insertTemplate() {
@@ -1203,7 +1206,7 @@ export default function PoliciesPage() {
                     name="filename"
                     value={rawForm.filename}
                     onChange={handleRawChange}
-                    placeholder="custom_check.rego"
+                    placeholder="custom_check (or custom_check.rego)"
                     required
                     className={inputCls}
                   />

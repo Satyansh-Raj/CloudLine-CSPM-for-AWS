@@ -369,7 +369,7 @@ def _validate_raw_rego(
     errors: list[str] = []
 
     if not re.search(
-        r"^package\s+[\w.]+",
+        r"^\s*package\s+[\w.]+",
         rego_code,
         re.MULTILINE,
     ):
