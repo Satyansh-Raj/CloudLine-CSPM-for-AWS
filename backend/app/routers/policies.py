@@ -18,7 +18,10 @@ from fastapi import (
 )
 from pydantic import BaseModel, Field
 
-from app.auth.dependencies import require_any_authenticated
+from app.auth.dependencies import (
+    require_admin_or_operator,
+    require_any_authenticated,
+)
 from app.config import Settings
 from app.dependencies import get_settings
 
@@ -506,6 +509,7 @@ def list_policies(
 @router.post("/policies", status_code=201)
 def create_policy(
     body: CreatePolicyRequest,
+    _: None = Depends(require_admin_or_operator),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     """Create a new Rego policy file.
@@ -679,6 +683,7 @@ def get_policy_source(
 @router.post("/policies/raw", status_code=201)
 def create_raw_policy(
     body: CreateRawPolicyRequest,
+    _: None = Depends(require_admin_or_operator),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     """Create a policy from raw Rego code.

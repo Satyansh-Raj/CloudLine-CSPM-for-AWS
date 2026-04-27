@@ -1,5 +1,7 @@
 """Compliance score endpoints — reads from DynamoDB."""
 
+import re
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth.account_access import assert_account_allowed
@@ -48,6 +50,24 @@ CHECKS_PER_DOMAIN: dict[str, int] = {
 
 # Derived — do not set manually.
 TOTAL_DEFINED_CHECKS = sum(CHECKS_PER_DOMAIN.values())
+
+
+def _count_checks_from_files(policy_dir: Path) -> int:
+    """Count unique check_ids across all .rego files."""
+    check_ids: set[str] = set()
+    for rego_path in policy_dir.rglob("*.rego"):
+        if "_test.rego" in rego_path.name:
+            continue
+        try:
+            content = rego_path.read_text()
+        except OSError:
+            continue
+        for cid in re.findall(
+            r'"check_id":\s*"([A-Za-z][A-Za-z0-9_]*)"',
+            content,
+        ):
+            check_ids.add(cid)
+    return len(check_ids) if check_ids else TOTAL_DEFINED_CHECKS
 
 
 def _get_registry() -> ComplianceMappingRegistry:
@@ -219,11 +239,15 @@ def get_compliance_score(
     # Distinct check_ids with active violations
     failing_checks = {s.check_id for s in alarms}
     failed_count = len(failing_checks)
-    passed_count = TOTAL_DEFINED_CHECKS - failed_count
 
-    score_pct = round(
-        passed_count / TOTAL_DEFINED_CHECKS * 100
-    )
+    policy_dir = Path(settings.opa_policy_dir)
+    if not policy_dir.is_absolute():
+        backend_root = Path(__file__).resolve().parent.parent.parent
+        policy_dir = (backend_root / policy_dir).resolve()
+    total_checks = _count_checks_from_files(policy_dir)
+
+    passed_count = total_checks - failed_count
+    score_pct = round(passed_count / total_checks * 100)
 
     by_severity: dict[str, int] = {}
     for s in alarms:
@@ -343,7 +367,7 @@ def get_compliance_score(
 
     return {
         "score_percent": score_pct,
-        "total_checks": TOTAL_DEFINED_CHECKS,
+        "total_checks": total_checks,
         "passed": passed_count,
         "failed": failed_count,
         "total_violations": len(alarms),
