@@ -76,6 +76,10 @@ do_start() {
     success "Frontend built"
   fi
 
+  # Ensure custom policies dir is writable by container user (uid=999)
+  mkdir -p "$ROOT_DIR/policies/custom"
+  chmod o+w "$ROOT_DIR/policies/custom"
+
   # Start containers
   info "Starting Docker containers..."
   docker compose -f "$COMPOSE_FILE" up -d 2>&1 | tail -5

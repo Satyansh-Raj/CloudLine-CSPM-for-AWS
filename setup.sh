@@ -1,11 +1,6 @@
 #!/bin/bash
 #
 # CloudLine — One-Command Setup
-#
-# Installs dependencies, creates AWS IAM scanner user,
-# configures Terraform + SNS, builds Docker containers,
-# and launches the application.
-#
 # Prerequisites: AWS CLI configured with admin privileges.
 #
 # Usage:
@@ -164,6 +159,13 @@ fi
 # ── Docker / Podman ──
 if command -v docker &>/dev/null; then
   success "Docker found: $(docker --version)"
+  # Ensure current user can run Docker without sudo
+  if ! docker info &>/dev/null 2>&1; then
+    info "Adding $USER to docker group..."
+    sudo usermod -aG docker "$USER"
+    info "Re-launching setup with docker group active..."
+    exec sg docker "$0" "$@"
+  fi
 elif command -v podman &>/dev/null; then
   success "Podman found: $(podman --version)"
 else
@@ -620,6 +622,24 @@ fi
 rm -f /tmp/tf_init.log
 success "Terraform initialized"
 
+# Import the IAM user created by setup.sh so Terraform doesn't
+# try to recreate it and hit EntityAlreadyExists.
+info "Importing existing IAM user into Terraform state..."
+terraform import \
+  module.iam.aws_iam_user.cloudline_scanner \
+  Cloudline_Scanner \
+  > /tmp/tf_import.log 2>&1 || true   # no-op if already imported
+terraform import \
+  "module.iam.aws_iam_user_policy_attachment.security_audit" \
+  "Cloudline_Scanner/arn:aws:iam::aws:policy/SecurityAudit" \
+  >> /tmp/tf_import.log 2>&1 || true
+terraform import \
+  "module.iam.aws_iam_user_policy.cross_account_assume_role" \
+  "Cloudline_Scanner:CloudLineCrossAccountAssumeRole" \
+  >> /tmp/tf_import.log 2>&1 || true
+rm -f /tmp/tf_import.log
+success "IAM user imported into Terraform state"
+
 info "Running terraform plan..."
 if ! terraform plan -input=false -out=tfplan \
      > /tmp/tf_plan.log 2>&1; then
@@ -683,6 +703,10 @@ info "Building frontend for production..."
 npm run build 2>&1 | tail -5
 success "Frontend built"
 cd "$ROOT_DIR"
+
+# Ensure custom policies dir is writable by container user (uid=999)
+mkdir -p "$ROOT_DIR/policies/custom"
+chmod o+w "$ROOT_DIR/policies/custom"
 
 # Start Docker containers
 info "Starting Docker containers..."
