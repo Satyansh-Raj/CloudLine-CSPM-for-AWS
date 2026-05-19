@@ -284,17 +284,6 @@ CloudLine-CSPM-for-AWS/
 
 ---
 
-## API
-
-Interactive docs available at:
-
-- Swagger UI: http://localhost:9710/api/docs
-- ReDoc: http://localhost:9710/api/redoc
-
-Health check: `GET /health`
-
----
-
 ## Ports
 
 | Service | Port |

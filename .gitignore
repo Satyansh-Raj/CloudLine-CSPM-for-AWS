@@ -66,7 +66,7 @@ frontend/build/
 *.tfplan
 terraform/terraform.tfvars
 
-# ── Source artwork (originals, 131 MB) ───────────
+# ── Icons ───────────
 Icons/
 
 # ── Build artifacts ──────────────────────────────
@@ -80,10 +80,7 @@ build/
 # ── Docker ───────────────────────────────────────
 .docker/
 
-# ── Generated docs ───────────────────────────────
+# ── docs ───────────────────────────────
 *.pdf
 *.docx
 *.pptx
-docs/
-MULTI_ACCOUNT.md
-
