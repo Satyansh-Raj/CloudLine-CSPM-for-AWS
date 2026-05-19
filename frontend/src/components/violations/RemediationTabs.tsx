@@ -99,7 +99,7 @@ export default function RemediationTabs({ checkId, resource }: Props) {
   ];
 
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero overflow-hidden shadow-elev-1">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero overflow-hidden shadow-elev-1">
       {/* Tab bar */}
       <div className="px-5 border-b border-ghost-cream dark:border-white/5">
         <div className="flex gap-0">

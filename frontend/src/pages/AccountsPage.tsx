@@ -124,7 +124,7 @@ const GUIDE_TIPS = [
 
 function SetupGuide({ activeStep }: { activeStep: Step }) {
   return (
-    <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 sticky top-4">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 sticky top-4">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-600 mb-1">
         Setup Guide
       </p>
@@ -289,7 +289,7 @@ export default function AccountsPage() {
         <div className="space-y-4 min-w-0">
 
           {/* Wizard card */}
-          <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
             <StepIndicator current={step} />
 
             {/* Step 1 — Generate */}
@@ -439,7 +439,7 @@ export default function AccountsPage() {
 
           {/* Loading skeleton */}
           {isLoading && (
-            <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
+            <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
@@ -451,7 +451,7 @@ export default function AccountsPage() {
 
           {/* Empty state */}
           {!isLoading && accounts.length === 0 && (
-            <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-8 text-center shadow-elev-1">
+            <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-8 text-center shadow-elev-1">
               <p className="text-sm text-slate-gray dark:text-gray-400">
                 No target accounts configured. Use the wizard above to add one.
               </p>
@@ -467,7 +467,7 @@ export default function AccountsPage() {
               {accounts.map((a) => (
                 <div
                   key={a.account_id}
-                  className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1"
+                  className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">

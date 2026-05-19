@@ -75,7 +75,7 @@ export default function CustomSelect({
         hidden={!open}
         className={[
           "absolute z-50 mt-1 w-full min-w-[140px]",
-          "bg-lifted-cream dark:bg-ink-black",
+          "bg-lifted-cream dark:bg-[#252422]",
           "border border-ghost-cream dark:border-white/10",
           "rounded-xl shadow-elev-2 py-1 max-h-64 overflow-y-auto",
           open ? "" : "hidden",

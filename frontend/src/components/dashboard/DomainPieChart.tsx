@@ -43,7 +43,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const { name, payload: itemPayload } = payload[0];
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-1 text-xs">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-dust-taupe dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-1 text-xs">
       <div className="flex items-center gap-1.5 font-semibold text-ink-black dark:text-canvas-cream">
         <span
           className="w-2 h-2 rounded-full"
@@ -85,7 +85,7 @@ export default function DomainPieChart({ byDomain }: Props) {
     : data;
 
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
       <EyebrowLabel className="mb-1">Domains</EyebrowLabel>
       <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-1">
         Violations by Domain

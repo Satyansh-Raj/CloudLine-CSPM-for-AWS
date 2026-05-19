@@ -5,6 +5,7 @@ import { useAccount } from "@/hooks/useAccount";
 import { usePermission } from "@/hooks/usePermission";
 import { triggerScan } from "@/api/scans";
 import type { TargetAccount } from "@/types/account";
+import CloudLineLogo from "@/components/shared/CloudLineLogo";
 
 function formatRelativeTime(iso: string | null): string {
   if (!iso) return "Never scanned";
@@ -276,30 +277,15 @@ export default function Sidebar() {
     <aside
       className="
       w-60 shrink-0 min-h-screen flex flex-col
-      bg-lifted-cream dark:bg-ink-black
+      bg-lifted-cream dark:bg-[#252422]
       border-r border-ghost-cream dark:border-white/5
     "
     >
       {/* Brand */}
-      <div className="px-5 py-5 border-b border-ghost-cream dark:border-white/5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-ink-black dark:bg-canvas-cream flex items-center justify-center shrink-0">
-            <svg
-              className="w-4 h-4 text-canvas-cream dark:text-ink-black"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold tracking-tight text-ink-black dark:text-canvas-cream leading-none">
-              CloudLine
-            </p>
-            <p className="text-[10px] text-slate-gray mt-0.5">AWS Security</p>
-          </div>
+      <div className="px-4 py-2 border-b border-ghost-cream dark:border-white/5">
+        <div className="flex items-center">
+          <CloudLineLogo className="w-full h-auto dark:hidden" />
+          <CloudLineLogo dark className="w-full h-auto hidden dark:block" />
         </div>
       </div>
 
@@ -337,7 +323,7 @@ export default function Sidebar() {
           <div
             role="listbox"
             aria-label="Select account"
-            className="absolute z-50 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 py-1 overflow-hidden"
+            className="absolute z-50 mt-1 w-52 rounded-hero border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-[#252422] shadow-elev-1 py-1 overflow-hidden"
           >
             <div
               role="option"

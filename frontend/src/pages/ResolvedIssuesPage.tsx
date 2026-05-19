@@ -202,7 +202,7 @@ export default function ResolvedIssuesPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
+      <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
         <div className="flex flex-wrap items-end gap-4">
           <ViolationFilters filters={filters} onChange={setFilters} />
           <div>
@@ -224,7 +224,7 @@ export default function ResolvedIssuesPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -246,7 +246,7 @@ export default function ResolvedIssuesPage() {
 
       {/* Empty state */}
       {!isLoading && !error && data && data.length === 0 && (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-12 text-center shadow-elev-1">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-12 text-center shadow-elev-1">
           <div className="w-12 h-12 rounded-hero bg-green-50 dark:bg-green-500/10 flex items-center justify-center mx-auto mb-3">
             <CheckIcon />
           </div>
@@ -295,7 +295,7 @@ export default function ResolvedIssuesPage() {
                   </tr>
                 ))}
               </thead>
-              <tbody className="bg-lifted-cream dark:bg-ink-black divide-y divide-ghost-cream dark:divide-white/5">
+              <tbody className="bg-lifted-cream dark:bg-[#252422] divide-y divide-ghost-cream dark:divide-white/5">
                 {table.getRowModel().rows.length === 0 ? (
                   <tr>
                     <td

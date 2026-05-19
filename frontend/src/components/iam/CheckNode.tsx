@@ -9,7 +9,7 @@ const STATUS_BG: Record<string, string> = {
   ok: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40",
   error:
     "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40",
-  skip: "bg-lifted-cream dark:bg-[#1c1c1b] border-ghost-cream dark:border-white/10",
+  skip: "bg-lifted-cream dark:bg-[#252422] border-ghost-cream dark:border-white/10",
 };
 
 export default memo(function CheckNodeComponent({
@@ -20,7 +20,7 @@ export default memo(function CheckNodeComponent({
 
   const bgCls =
     STATUS_BG[status] ??
-    "bg-lifted-cream dark:bg-[#1c1c1b] border-ghost-cream dark:border-white/10";
+    "bg-lifted-cream dark:bg-[#252422] border-ghost-cream dark:border-white/10";
 
   return (
     <div

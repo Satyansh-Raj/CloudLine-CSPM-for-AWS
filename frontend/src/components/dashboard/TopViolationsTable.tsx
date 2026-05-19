@@ -22,7 +22,7 @@ function shortArn(arn: string) {
 
 export default function TopViolationsTable({ items }: Props) {
     return (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <EyebrowLabel className="mb-1">Risk</EyebrowLabel>
@@ -48,7 +48,7 @@ export default function TopViolationsTable({ items }: Props) {
                     {items.map((item, i) => (
                         <div
                             key={`${item.resource_arn}-${item.check_id}`}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-btn bg-canvas-cream dark:bg-[#1c1c1b] hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-btn bg-canvas-cream dark:bg-[#252422] hover:bg-ghost-cream dark:hover:bg-white/5 transition-colors"
                         >
                             <span className="w-5 h-5 rounded-full bg-ghost-cream dark:bg-white/10 text-[10px] font-bold text-slate-gray dark:text-canvas-cream flex items-center justify-center shrink-0">
                                 {i + 1}

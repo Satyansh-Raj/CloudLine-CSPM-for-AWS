@@ -251,7 +251,7 @@ export default function ViolationDetailPage() {
       </button>
 
       {!violation ? (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-12 text-center shadow-elev-1">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-12 text-center shadow-elev-1">
           <div className="w-10 h-10 rounded-hero bg-ghost-cream dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
             <svg
               className="w-5 h-5 text-slate-gray"
@@ -277,7 +277,7 @@ export default function ViolationDetailPage() {
       ) : (
         <>
           {/* Header card */}
-          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1">
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <SeverityBadge severity={violation.severity} />
               <StatusBadge status={violation.status} />
@@ -306,7 +306,7 @@ export default function ViolationDetailPage() {
           {/* Details grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Issue details — 2/3 */}
-            <div className="lg:col-span-2 bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1 flex flex-col">
+            <div className="lg:col-span-2 bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero px-6 py-5 shadow-elev-1 flex flex-col">
               <div className="space-y-4">
                 <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray">
                   Issue Details
@@ -360,7 +360,7 @@ export default function ViolationDetailPage() {
               )}
 
               {hasCompliance && comp && (
-                <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero px-5 py-4 shadow-elev-1 space-y-3">
+                <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero px-5 py-4 shadow-elev-1 space-y-3">
                   <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray">
                     Compliance
                   </h3>

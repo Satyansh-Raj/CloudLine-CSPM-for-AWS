@@ -33,7 +33,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const { value, payload: item } = payload[0];
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-3 py-1.5 shadow-elev-1">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-dust-taupe dark:border-white/10 rounded-hero px-3 py-1.5 shadow-elev-1">
       <span className="text-sm font-bold text-ink-black dark:text-canvas-cream">
         {value} {item.name}
       </span>
@@ -50,7 +50,7 @@ export default function SeverityBar({ bySeverity = {} }: Props) {
   }));
 
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 h-full flex flex-col">
       <EyebrowLabel className="mb-1">Severity</EyebrowLabel>
       <h3 className="text-sm font-semibold text-ink-black dark:text-canvas-cream mb-1">
         Violations by Severity

@@ -6,18 +6,13 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: [
-          "Sofia Sans",
-          "SofiaSans",
-          "Arial",
-          "sans-serif",
-        ],
+        sans: ["Sofia Sans", "SofiaSans", "Arial", "sans-serif"],
       },
       colors: {
         // ── Mastercard design system ──────────────────────
         "canvas-cream": "#F3F0EE",
         "lifted-cream": "#FCFBFA",
-        "ink-black": "#141413",
+        "ink-black": "#1a1a1a",
         "signal-orange": "#CF4500",
         "light-signal": "#F37338",
         "clay-brown": "#9A3A0A",
@@ -70,10 +65,22 @@ export default {
       },
       fontSize: {
         // Editorial scale
-        "display-xl": ["64px", { lineHeight: "64px", letterSpacing: "-0.02em" }],
-        "display-lg": ["48px", { lineHeight: "52px", letterSpacing: "-0.02em" }],
-        "display-md": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em" }],
-        "display-sm": ["24px", { lineHeight: "28.8px", letterSpacing: "-0.02em" }],
+        "display-xl": [
+          "64px",
+          { lineHeight: "64px", letterSpacing: "-0.02em" },
+        ],
+        "display-lg": [
+          "48px",
+          { lineHeight: "52px", letterSpacing: "-0.02em" },
+        ],
+        "display-md": [
+          "36px",
+          { lineHeight: "44px", letterSpacing: "-0.02em" },
+        ],
+        "display-sm": [
+          "24px",
+          { lineHeight: "28.8px", letterSpacing: "-0.02em" },
+        ],
         eyebrow: ["14px", { lineHeight: "14px", letterSpacing: "0.04em" }],
       },
       keyframes: {

@@ -127,7 +127,7 @@ export default function ViolationsTable({ data, onRowClick }: Props) {
               </tr>
             ))}
           </thead>
-          <tbody className="bg-lifted-cream dark:bg-ink-black divide-y divide-ghost-cream dark:divide-white/5">
+          <tbody className="bg-lifted-cream dark:bg-[#252422] divide-y divide-ghost-cream dark:divide-white/5">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td

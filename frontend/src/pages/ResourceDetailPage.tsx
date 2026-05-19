@@ -75,7 +75,7 @@ export default function ResourceDetailPage() {
   if (!resource) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-10 shadow-elev-1 text-center">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-10 shadow-elev-1 text-center">
           <p className="text-lg font-semibold text-ink-black dark:text-canvas-cream">
             Resource not found
           </p>
@@ -169,7 +169,7 @@ export default function ResourceDetailPage() {
         {/* Left column: metadata + tags */}
         <div className="lg:col-span-2 space-y-5">
           {/* Metadata card */}
-          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
             <h2 className="text-xs uppercase tracking-widest text-slate-gray mb-3">
               Metadata
             </h2>
@@ -189,7 +189,7 @@ export default function ResourceDetailPage() {
 
           {/* Tags card */}
           {tagEntries.length > 0 && (
-            <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+            <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
               <h2 className="text-xs uppercase tracking-widest text-slate-gray mb-3">
                 Tags
               </h2>
@@ -212,7 +212,7 @@ export default function ResourceDetailPage() {
         {/* Right column: risk score + violation summary */}
         <div className="space-y-5">
           {/* Risk score card */}
-          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 text-center">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 text-center">
             <p className="text-xs uppercase tracking-widest text-slate-gray mb-3">
               Risk Score
             </p>
@@ -220,7 +220,7 @@ export default function ResourceDetailPage() {
           </div>
 
           {/* Violation summary card */}
-          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
             <h2 className="text-xs uppercase tracking-widest text-slate-gray mb-3">
               Violation Summary
             </h2>
@@ -263,7 +263,7 @@ export default function ResourceDetailPage() {
       )}
 
       {/* Violations list */}
-      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+      <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
         <h2 className="text-xs uppercase tracking-widest text-slate-gray mb-4">
           Active Violations
         </h2>

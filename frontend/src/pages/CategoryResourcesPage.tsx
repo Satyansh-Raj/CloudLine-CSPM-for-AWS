@@ -101,7 +101,7 @@ export default function CategoryResourcesPage() {
       </div>
 
       {/* Region filter */}
-      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
+      <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-xs font-medium text-slate-gray mb-1">
@@ -122,7 +122,7 @@ export default function CategoryResourcesPage() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1 animate-pulse space-y-3">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -144,7 +144,7 @@ export default function CategoryResourcesPage() {
 
       {/* Empty state */}
       {!isLoading && !error && data && data.length === 0 && (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-10 shadow-elev-1 text-center">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-10 shadow-elev-1 text-center">
           <p className="text-sm text-slate-gray">
             No {category} resources found
           </p>
@@ -153,7 +153,7 @@ export default function CategoryResourcesPage() {
 
       {/* Resource list */}
       {!isLoading && !error && data && data.length > 0 && (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 overflow-hidden">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 overflow-hidden">
           {/* Column headers */}
           <div className="flex items-center gap-3 px-6 py-2 border-b border-ghost-cream dark:border-white/5">
             <span className="flex-1 text-[10px] uppercase tracking-widest font-semibold text-slate-gray/70">

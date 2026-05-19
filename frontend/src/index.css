@@ -7,7 +7,7 @@
   /* Canvas surfaces */
   --color-canvas:       #F3F0EE;
   --color-lifted:       #FCFBFA;
-  --color-ink:          #141413;
+  --color-ink:          #1a1a1a;
   --color-signal:       #CF4500;
   --color-light-signal: #F37338;
   --color-ghost:        #E8E2DA;
@@ -37,6 +37,11 @@
   .dark body {
     background-color: var(--color-ink);
     color: var(--color-canvas);
+  }
+
+  /* Boost slate-gray contrast on dark surfaces (#696969 is too dim on dark bg) */
+  .dark .text-slate-gray {
+    color: #a0a0a0;
   }
 
   /* Editorial font weight 450 — requires variable font */

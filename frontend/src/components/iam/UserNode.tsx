@@ -33,7 +33,7 @@ export default memo(function UserNodeComponent({
     <div
       className={[
         "w-48 rounded-xl shadow-elev-1 border-2",
-        "bg-lifted-cream dark:bg-[#1c1c1b]",
+        "bg-lifted-cream dark:bg-[#252422]",
         "cursor-pointer select-none",
         "hover:shadow-elev-2 transition-shadow",
         ringCls,

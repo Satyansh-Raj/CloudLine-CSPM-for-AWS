@@ -23,7 +23,7 @@ interface ChartTooltipProps {
 function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-2 text-xs">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-2 text-xs">
       <p className="font-semibold text-ink-black dark:text-canvas-cream mb-1">
         {label}
       </p>

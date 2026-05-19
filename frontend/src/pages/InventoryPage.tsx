@@ -93,7 +93,7 @@ export default function InventoryPage() {
                   <Link
                     key={category}
                     to={`/inventory/${category}`}
-                    className="group flex flex-col items-center justify-center gap-3 bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 hover:shadow-elev-2 hover:border-ink-black/20 dark:hover:border-white/15 transition-all duration-200 overflow-hidden"
+                    className="group flex flex-col items-center justify-center gap-3 bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1 hover:shadow-elev-2 hover:border-ink-black/20 dark:hover:border-white/15 transition-all duration-200 overflow-hidden"
                   >
                     {/* Circular portrait icon */}
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-ghost-cream dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200">

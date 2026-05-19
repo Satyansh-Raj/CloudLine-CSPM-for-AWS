@@ -66,7 +66,7 @@ function Legend() {
     <div
       className={[
         "absolute top-3 left-3 z-10 pointer-events-none",
-        "bg-lifted-cream/95 dark:bg-[#1c1c1b]/95 backdrop-blur-sm",
+        "bg-lifted-cream/95 dark:bg-[#252422]/95 backdrop-blur-sm",
         "border border-ghost-cream dark:border-white/5",
         "rounded-hero px-4 py-3 shadow-elev-1",
         "text-[10px] text-slate-gray dark:text-gray-400",
@@ -145,7 +145,7 @@ function DetailPanel({
     <div
       className={[
         "absolute top-0 right-0 w-80 h-full z-10",
-        "bg-lifted-cream dark:bg-[#1c1c1b]",
+        "bg-lifted-cream dark:bg-[#252422]",
         "border-l border-ghost-cream dark:border-white/5",
         "shadow-elev-2 overflow-y-auto flex flex-col",
       ].join(" ")}
@@ -438,7 +438,7 @@ export default function IamGraphPage() {
       {/* Filter bar */}
       <div
         className={[
-          "bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream",
+          "bg-lifted-cream dark:bg-[#252422] border border-ghost-cream",
           "dark:border-white/5 rounded-hero p-4 shadow-elev-1",
           isFullscreen ? "mx-4" : "",
         ].join(" ")}

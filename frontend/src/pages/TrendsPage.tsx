@@ -36,7 +36,7 @@ export default function TrendsPage() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-6 h-80"
+              className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-6 h-80"
             >
               <div className="h-4 w-40 bg-ghost-cream dark:bg-white/10 rounded-pill mb-4" />
               <div className="h-64 bg-ghost-cream/60 dark:bg-white/5 rounded-xl" />
@@ -56,10 +56,10 @@ export default function TrendsPage() {
 
       {!isLoading && !error && (
         <div className="space-y-5">
-          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1">
             <TrendLineChart data={trends} />
           </div>
-          <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1">
+          <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-6 shadow-elev-1">
             <SeverityTrendChart data={trends} />
           </div>
         </div>

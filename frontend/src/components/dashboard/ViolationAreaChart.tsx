@@ -44,7 +44,7 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-1 text-xs">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-dust-taupe dark:border-white/10 rounded-hero px-4 py-3 shadow-elev-1 text-xs">
       <p className="font-semibold text-ink-black dark:text-canvas-cream mb-2">
         {label}
       </p>
@@ -70,7 +70,7 @@ export default function ViolationAreaChart({ byDomain = {} }: Props) {
   const data = buildChartData(byDomain);
 
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
       <div className="flex items-center justify-between mb-5">
         <div>
           <EyebrowLabel className="mb-1">Violations</EyebrowLabel>

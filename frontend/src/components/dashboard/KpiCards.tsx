@@ -56,7 +56,7 @@ export default function KpiCards({ compliance, risk }: Props) {
         {cards.map((card) => (
           <div
             key={card.label}
-            className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 flex flex-col justify-between min-h-[6.5rem] shadow-elev-1 hover:shadow-elev-2 transition-shadow"
+            className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 flex flex-col justify-between min-h-[6.5rem] shadow-elev-1 hover:shadow-elev-2 transition-shadow"
           >
             <div className="flex flex-col gap-1">
               <EyebrowLabel>{card.label}</EyebrowLabel>

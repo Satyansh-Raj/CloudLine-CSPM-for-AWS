@@ -77,7 +77,7 @@ export default function ViolationsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
+      <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1">
         <div className="flex flex-wrap items-end gap-4">
           <ViolationFilters filters={filters} onChange={setFilters} />
           <div>
@@ -99,7 +99,7 @@ export default function ViolationsPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-8 shadow-elev-1 animate-pulse space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}

@@ -31,7 +31,7 @@ export default memo(function RoleNodeComponent({
     <div
       className={[
         "w-40 rounded-xl shadow-elev-1 border-2 select-none",
-        "bg-lifted-cream dark:bg-[#1c1c1b]",
+        "bg-lifted-cream dark:bg-[#252422]",
         ringCls,
       ].join(" ")}
     >

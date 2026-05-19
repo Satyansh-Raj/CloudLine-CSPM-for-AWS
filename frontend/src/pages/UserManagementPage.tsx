@@ -85,7 +85,7 @@ function LoginHistoryModal({
         aria-label={`Login history for ${user.full_name}`}
         className={[
           "w-[560px] max-h-[80vh] flex flex-col",
-          "rounded-hero bg-lifted-cream dark:bg-[#1c1c1b]",
+          "rounded-hero bg-lifted-cream dark:bg-[#252422]",
           "border border-ghost-cream dark:border-white/10 shadow-elev-2",
         ].join(" ")}
       >
@@ -239,7 +239,7 @@ function AddUserModal({ onClose, onCreated }: AddUserModalProps) {
         aria-label="Add User"
         className={[
           "w-96 rounded-hero p-5",
-          "bg-lifted-cream dark:bg-[#1c1c1b]",
+          "bg-lifted-cream dark:bg-[#252422]",
           "border border-ghost-cream dark:border-white/10 shadow-elev-2",
         ].join(" ")}
       >
@@ -361,7 +361,7 @@ function SetPasswordModal({ user, onClose }: SetPasswordModalProps) {
         aria-label={`Set password for ${user.full_name}`}
         className={[
           "w-96 rounded-hero p-5",
-          "bg-lifted-cream dark:bg-[#1c1c1b]",
+          "bg-lifted-cream dark:bg-[#252422]",
           "border border-ghost-cream dark:border-white/10 shadow-elev-2",
         ].join(" ")}
       >
@@ -506,7 +506,7 @@ function AssignAccountsModal({
         aria-label={`Assign accounts for ${user.full_name}`}
         className={[
           "w-[480px] max-h-[80vh] flex flex-col",
-          "rounded-hero bg-lifted-cream dark:bg-[#1c1c1b]",
+          "rounded-hero bg-lifted-cream dark:bg-[#252422]",
           "border border-ghost-cream dark:border-white/10 shadow-elev-2",
         ].join(" ")}
       >
@@ -795,7 +795,7 @@ export default function UserManagementPage() {
                         <th className="px-4 py-2.5" />
                       </tr>
                     </thead>
-                    <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
+                    <tbody className="bg-lifted-cream dark:bg-[#252422]">
                       {users.map((u) => (
                         <tr
                           key={u.sk}
@@ -972,7 +972,7 @@ export default function UserManagementPage() {
                         <th className="px-4 py-2.5" />
                       </tr>
                     </thead>
-                    <tbody className="bg-lifted-cream dark:bg-[#1c1c1b]">
+                    <tbody className="bg-lifted-cream dark:bg-[#252422]">
                       {resets.map((u) => (
                         <tr
                           key={u.sk}
@@ -1019,7 +1019,7 @@ export default function UserManagementPage() {
         </div>
 
         {/* Right pane — role permissions matrix */}
-        <div className="bg-lifted-cream dark:bg-[#1c1c1b] border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1 sticky top-4">
+        <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-4 shadow-elev-1 sticky top-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-gray dark:text-gray-600 mb-1">
             Reference
           </p>

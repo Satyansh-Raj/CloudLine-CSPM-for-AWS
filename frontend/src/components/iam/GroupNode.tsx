@@ -11,7 +11,7 @@ export default memo(function GroupNodeComponent({
     <div
       className={[
         "w-40 rounded-xl shadow-elev-1 border",
-        "bg-lifted-cream dark:bg-[#1c1c1b]",
+        "bg-lifted-cream dark:bg-[#252422]",
         "border-ghost-cream dark:border-white/10",
         "cursor-pointer select-none",
         "hover:shadow-elev-2 transition-shadow",

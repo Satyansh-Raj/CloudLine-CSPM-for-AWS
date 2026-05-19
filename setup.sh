@@ -412,12 +412,11 @@ while true; do
 done
 
 while true; do
-  read -rsp "$(echo -e "${BOLD}Admin password (min 8 chars, 1 uppercase, 1 number, 1 special):${NC} ")" ADMIN_PASSWORD
+  read -rsp "$(echo -e "${BOLD}Admin password (min 12 chars, 1 number, 1 special char):${NC} ")" ADMIN_PASSWORD
   echo ""
-  if [[ ${#ADMIN_PASSWORD} -ge 8 ]] \
-     && [[ "$ADMIN_PASSWORD" =~ [A-Z] ]] \
+  if [[ ${#ADMIN_PASSWORD} -ge 12 ]] \
      && [[ "$ADMIN_PASSWORD" =~ [0-9] ]] \
-     && [[ "$ADMIN_PASSWORD" =~ [^a-zA-Z0-9] ]]; then
+     && [[ "$ADMIN_PASSWORD" =~ [!@#\$%^\&*()\-_=+\[\]{}|:\;\'\",.\<\>?/\\~\`] ]]; then
     read -rsp "$(echo -e "${BOLD}Confirm password:${NC} ")" ADMIN_PASSWORD_CONFIRM
     echo ""
     if [[ "$ADMIN_PASSWORD" == "$ADMIN_PASSWORD_CONFIRM" ]]; then
@@ -425,7 +424,7 @@ while true; do
     fi
     warn "Passwords do not match"
   else
-    warn "Password too weak — need 8+ chars, uppercase, number, special character"
+    warn "Password too weak — need 12+ chars, 1 number, 1 special character (!@#\$%^&* etc.)"
   fi
 done
 success "Admin account configured: $ADMIN_EMAIL"

@@ -100,7 +100,7 @@ function FrameworkCard({
         w-full
         flex flex-col items-center justify-center
         gap-2 text-center
-        bg-lifted-cream dark:bg-ink-black
+        bg-lifted-cream dark:bg-[#252422]
         border rounded-hero p-3 shadow-elev-1
         transition-all duration-200
         ${
@@ -235,7 +235,7 @@ function DrillDown({ framework }: DrillDownProps) {
   return (
     <div
       data-testid="drilldown-section"
-      className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1"
+      className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1"
     >
       <h3 className="text-base font-bold text-ink-black dark:text-canvas-cream mb-4 tracking-tight">
         {label} — Controls

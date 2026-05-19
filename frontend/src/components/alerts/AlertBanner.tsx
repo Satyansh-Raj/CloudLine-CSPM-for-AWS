@@ -43,7 +43,7 @@ function ToastItem({
 
   const severity = alert.data.severity;
   const border = borderColors[severity] ?? "border-l-slate-gray/50";
-  const bg = bgColors[severity] ?? "bg-lifted-cream dark:bg-ink-black";
+  const bg = bgColors[severity] ?? "bg-lifted-cream dark:bg-[#252422]";
 
   return (
     <div

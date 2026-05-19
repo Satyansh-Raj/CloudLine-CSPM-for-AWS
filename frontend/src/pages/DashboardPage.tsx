@@ -17,7 +17,7 @@ import { triggerScan } from "@/api";
 function SkeletonCard({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 animate-pulse ${className}`}
+      className={`bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 animate-pulse ${className}`}
     >
       <div className="h-3 w-28 bg-ghost-cream dark:bg-white/10 rounded-pill mb-3" />
       <div className="h-8 w-20 bg-ghost-cream dark:bg-white/10 rounded-pill mb-2" />
@@ -137,7 +137,7 @@ function MacieSummaryCard({ findings }: { findings: MacieFinding[] }) {
   const highCount = findings.filter((f) => f.severity === "High").length;
 
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
       <EyebrowLabel className="mb-2">Data Protection</EyebrowLabel>
       <h2 className="text-xs uppercase tracking-eyebrow text-slate-gray mb-3">
         Sensitive Findings

@@ -44,7 +44,7 @@ export default function ComplianceScoreDonut({ data }: Props) {
         : "#ef4444";
 
   return (
-    <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
+    <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-5 shadow-elev-1">
       <div className="flex items-center justify-between mb-4">
         <div>
           <EyebrowLabel className="mb-1">Posture</EyebrowLabel>

@@ -1,12 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { requestPasswordReset, resetPassword } from "@/api/auth";
 import EyebrowLabel from "@/components/shared/EyebrowLabel";
+import CloudLineLogo from "@/components/shared/CloudLineLogo";
+
+function SunIcon() {
+  return (
+    <svg
+      className="w-[18px] h-[18px]"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364-.707-.707M6.343 6.343l-.707-.707m12.728 0-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+      />
+    </svg>
+  );
+}
+function MoonIcon() {
+  return (
+    <svg
+      className="w-[18px] h-[18px]"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+      />
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const [dark, setDark] = useState(
+    () => localStorage.getItem("theme") === "dark",
+  );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [dark]);
   const location = useLocation();
   const from =
     (location.state as { from?: Location })?.from?.pathname ?? "/dashboard";
@@ -76,7 +126,9 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })
         ?.response?.data?.detail;
-      setSetPasswordError(msg ?? "Failed to reset password. Check that the reset was approved.");
+      setSetPasswordError(
+        msg ?? "Failed to reset password. Check that the reset was approved.",
+      );
     } finally {
       setSetPasswordSubmitting(false);
     }
@@ -89,30 +141,22 @@ export default function LoginPage() {
     "dark:focus:border-canvas-cream/50 dark:focus:ring-canvas-cream/20";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-canvas-cream dark:bg-ink-black px-4">
+    <div className="min-h-screen flex items-center justify-center bg-canvas-cream dark:bg-ink-black px-4 relative">
+      <button
+        onClick={() => setDark(!dark)}
+        className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/10 hover:text-ink-black dark:hover:text-canvas-cream transition-colors"
+        aria-label="Toggle dark mode"
+      >
+        {dark ? <SunIcon /> : <MoonIcon />}
+      </button>
       <div className="w-full max-w-sm">
         {/* Brand */}
-        <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="w-8 h-8 rounded-full bg-ink-black dark:bg-canvas-cream flex items-center justify-center">
-            <svg
-              className="w-4 h-4 text-canvas-cream dark:text-ink-black"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold tracking-tight text-ink-black dark:text-canvas-cream leading-none">
-              CloudLine
-            </p>
-            <p className="text-[10px] text-slate-gray mt-0.5">AWS Security</p>
-          </div>
+        <div className="flex items-center justify-center mb-3">
+          <CloudLineLogo className="w-full h-auto dark:hidden" />
+          <CloudLineLogo dark className="w-full h-auto hidden dark:block" />
         </div>
 
-        <div className="bg-lifted-cream dark:bg-ink-black rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
+        <div className="bg-lifted-cream dark:bg-[#252422] rounded-hero border border-ghost-cream dark:border-white/10 shadow-elev-2 p-6">
           <EyebrowLabel className="mb-3">Secure Access</EyebrowLabel>
           <h1 className="text-base font-semibold text-ink-black dark:text-canvas-cream mb-5">
             Sign in

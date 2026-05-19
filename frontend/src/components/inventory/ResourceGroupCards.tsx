@@ -168,7 +168,7 @@ export default function ResourceGroupCards({ data, onCategoryClick }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero p-8 text-center shadow-elev-1">
+      <div className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero p-8 text-center shadow-elev-1">
         <p className="text-sm text-slate-gray">
           No resources found. Run a scan to populate the inventory.
         </p>
@@ -229,7 +229,7 @@ export default function ResourceGroupCards({ data, onCategoryClick }: Props) {
         <div
           key={g.category}
           data-testid="category-card"
-          className="bg-lifted-cream dark:bg-ink-black border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 overflow-hidden"
+          className="bg-lifted-cream dark:bg-[#252422] border border-ghost-cream dark:border-white/5 rounded-hero shadow-elev-1 overflow-hidden"
         >
           {/* Card header */}
           {onCategoryClick ? (

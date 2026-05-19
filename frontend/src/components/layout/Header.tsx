@@ -103,7 +103,7 @@ export default function Header() {
 
   return (
     <header className="shrink-0 px-6 pt-6 pb-2 bg-canvas-cream dark:bg-ink-black">
-      <div className="flex items-center justify-between px-5 h-12 rounded-pill bg-lifted-cream dark:bg-[#1c1c1b] shadow-elev-1 gap-4">
+      <div className="flex items-center justify-between px-5 h-12 rounded-pill bg-lifted-cream dark:bg-[#252422] shadow-elev-1 gap-4">
         {/* Live indicator */}
         <div className="flex items-center gap-1.5">
           <span
@@ -139,7 +139,7 @@ export default function Header() {
               )}
             </button>
             {feedOpen && (
-              <div className="absolute right-0 mt-2 w-80 h-96 flex flex-col bg-lifted-cream dark:bg-ink-black border border-dust-taupe dark:border-white/10 rounded-hero shadow-elev-2 overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-80 h-96 flex flex-col bg-lifted-cream dark:bg-[#252422] border border-dust-taupe dark:border-white/10 rounded-hero shadow-elev-2 overflow-hidden z-50">
                 <DriftAlertFeed
                   onNavigate={(path) => {
                     setFeedOpen(false);
@@ -179,7 +179,7 @@ export default function Header() {
                 </span>
               </button>
               {menuOpen && (
-                <div className="absolute right-0 mt-1 w-44 rounded-xl border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-ink-black shadow-elev-1 overflow-hidden z-50">
+                <div className="absolute right-0 mt-1 w-44 rounded-xl border border-dust-taupe dark:border-white/10 bg-lifted-cream dark:bg-[#252422] shadow-elev-1 overflow-hidden z-50">
                   <button
                     type="button"
                     onClick={() => {

@@ -456,7 +456,7 @@ export default function PoliciesPage() {
   const showingSubset = totalCount > 0 && filteredCount !== totalCount;
 
   const panelCls =
-    "bg-lifted-cream dark:bg-ink-black border" +
+    "bg-lifted-cream dark:bg-[#252422] border" +
     " border-ghost-cream dark:border-white/5" +
     " rounded-hero p-5 shadow-elev-1";
 
@@ -724,7 +724,7 @@ export default function PoliciesPage() {
                                     <span
                                       className={
                                         "text-[10px]" +
-                                        " text-slate-gray/70" +
+                                        " text-slate-gray/70 dark:text-[#a0a0a0]" +
                                         " bg-ghost-cream" +
                                         " dark:bg-white/5" +
                                         " px-1.5 py-0.5" +
