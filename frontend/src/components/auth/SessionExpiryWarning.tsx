@@ -157,14 +157,16 @@ export default function SessionExpiryWarning() {
       aria-label="Session expiring soon"
       className="fixed inset-0 z-[9999] flex items-end justify-center pb-6 px-4 pointer-events-none"
     >
-      <div className="pointer-events-auto w-full max-w-sm bg-white dark:bg-neutral-900 border border-amber-200 dark:border-amber-500/30 rounded-2xl shadow-2xl p-5">
+      <div className="pointer-events-auto w-full max-w-sm bg-canvas-cream dark:bg-[#252422] border border-signal-orange/25 dark:border-signal-orange/20 rounded-hero shadow-elev-2 p-5 animate-slide-up">
         <div className="flex items-start gap-3">
-          <span className="text-amber-500 text-xl leading-none mt-0.5">⚠</span>
+          <span className="text-signal-orange text-xl leading-none mt-0.5">
+            ⚠
+          </span>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-gray-900 dark:text-white">
+            <p className="text-[13px] font-semibold text-ink-black dark:text-white">
               Session expiring soon
             </p>
-            <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-[12px] text-slate-gray mt-0.5">
               Your session will expire in about 2 minutes.
             </p>
             <div className="flex gap-2 mt-3">
@@ -172,14 +174,14 @@ export default function SessionExpiryWarning() {
                 type="button"
                 onClick={() => void handleExtend()}
                 disabled={extending}
-                className="px-3 py-1.5 text-[12px] font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-1.5 text-[12px] font-medium rounded-btn bg-ink-black text-canvas-cream dark:bg-canvas-cream dark:text-ink-black hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {extending ? "Extending…" : "Extend Session"}
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="px-3 py-1.5 text-[12px] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+                className="px-3 py-1.5 text-[12px] rounded-btn text-slate-gray hover:bg-ghost-cream dark:hover:bg-white/5"
               >
                 Dismiss
               </button>

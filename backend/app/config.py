@@ -113,7 +113,7 @@ class Settings(BaseSettings):
     # JWT Authentication
     jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = 1440  # 24 hours
     refresh_token_expire_days: int = 7
     auth_enabled: bool = True
 
